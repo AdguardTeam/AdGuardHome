@@ -26,6 +26,7 @@ vi.mock('panel/stores/toasts', () => ({
 }));
 
 import { getDnsStatus, getClients, dashboardState } from 'panel/stores/dashboard';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 describe('getDnsStatus', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -62,7 +63,7 @@ describe('getDnsStatus', () => {
 describe('getClients — clientsInitialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        dashboardState.clientsInitialized = false;
+        resetStore(dashboardState, { clientsInitialized: false });
     });
 
     it('marks clientsInitialized after a successful request', async () => {

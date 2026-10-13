@@ -17,6 +17,7 @@ vi.mock('panel/stores/toasts', () => ({
 }));
 
 import { toggleClientBlock, setAccessList, getAccessList, accessState } from 'panel/stores/access';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 describe('toggleClientBlock', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -116,7 +117,7 @@ describe('setAccessList', () => {
 describe('getAccessList — initialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        accessState.initialized = false;
+        resetStore(accessState, { initialized: false });
     });
 
     it('marks initialized after a successful request', async () => {

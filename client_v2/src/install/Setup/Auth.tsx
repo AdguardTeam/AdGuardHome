@@ -5,7 +5,7 @@ import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { PRIVACY_POLICY_LINK, TERMS_LINK } from 'panel/helpers/constants';
 import cn from 'clsx';
-import { PasswordRequirements } from 'panel/install/Setup/blocks';
+import { PasswordRequirements, type PasswordRequirementsState } from 'panel/install/Setup/blocks';
 import { PasswordInput } from '../../common/controls/Input/PasswordInput';
 import { Controls } from './Controls';
 import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
@@ -54,6 +54,7 @@ export const Auth = (props: Props) => {
         validateOn: 'change',
     });
 
+    const username = () => (getValue(authForm, 'username') as string) ?? '';
     const password = () => (getValue(authForm, 'password') as string) ?? '';
     const confirmPassword = () => (getValue(authForm, 'confirm_password') as string) ?? '';
 
@@ -85,7 +86,7 @@ export const Auth = (props: Props) => {
         return undefined;
     };
 
-    const requirements = createMemo(() => {
+    const requirements = createMemo((): PasswordRequirementsState => {
         const pwd = password();
         const confirmPwd = confirmPassword();
         return {
@@ -105,7 +106,7 @@ export const Auth = (props: Props) => {
         const requirementsMet = requirements();
 
         return (
-            validateRequiredValue(getValue(authForm, 'username') as string) === undefined &&
+            validateRequiredValue(username()) === undefined &&
             validatePasswordLength(password()) === undefined &&
             requirementsMet.minLength &&
             requirementsMet.allowedChars &&

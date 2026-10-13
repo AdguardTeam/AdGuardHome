@@ -147,26 +147,46 @@ export const togglePrivatePtrResolvers = () => {
 };
 
 /** Toggles `resolve_clients`. Used by PrivateReverse page switch. */
-export const toggleResolveClients = () =>
-    saveToggle(() => ({ resolve_clients: !state.resolve_clients }));
+export const toggleResolveClients = () => {
+    const resolveClients = state.resolve_clients;
+
+    return saveToggle(() => ({ resolve_clients: !resolveClients }));
+};
 
 /** Toggles `dnssec_enabled`. Used by ServerConfig Section 2, Row 7. */
-export const toggleDnssecEnabled = () =>
-    saveToggle(() => ({ dnssec_enabled: !state.dnssec_enabled }));
+export const toggleDnssecEnabled = () => {
+    const dnssecEnabled = state.dnssec_enabled;
+
+    return saveToggle(() => ({ dnssec_enabled: !dnssecEnabled }));
+};
 
 /** Toggles `disable_ipv6` (inverted in UI). Used by ServerConfig Section 2, Row 8. */
-export const toggleDisableIPv6 = () => saveToggle(() => ({ disable_ipv6: !state.disable_ipv6 }));
+export const toggleDisableIPv6 = () => {
+    const disableIPv6 = state.disable_ipv6;
+
+    return saveToggle(() => ({ disable_ipv6: !disableIPv6 }));
+};
 
 /** Toggles `cache_enabled`. Used by Cache Section 3 header switch. */
-export const toggleCacheEnabled = () => saveToggle(() => ({ cache_enabled: !state.cache_enabled }));
+export const toggleCacheEnabled = () => {
+    const cacheEnabled = state.cache_enabled;
+
+    return saveToggle(() => ({ cache_enabled: !cacheEnabled }));
+};
 
 /** Toggles `cache_optimistic`. Used by Cache Section 3, Row 4. */
-export const toggleOptimisticCaching = () =>
-    saveToggle(() => ({ cache_optimistic: !state.cache_optimistic }));
+export const toggleOptimisticCaching = () => {
+    const cacheOptimistic = state.cache_optimistic;
+
+    return saveToggle(() => ({ cache_optimistic: !cacheOptimistic }));
+};
 
 /** Toggles `edns_cs_enabled`. Used by ServerConfig Section 2, Row 6 switch-link. */
-export const toggleEdnsCsEnabled = () =>
-    saveToggle(() => ({ edns_cs_enabled: !state.edns_cs_enabled }));
+export const toggleEdnsCsEnabled = () => {
+    const ednsCsEnabled = state.edns_cs_enabled;
+
+    return saveToggle(() => ({ edns_cs_enabled: !ednsCsEnabled }));
+};
 
 /**
  * Splits a newline-delimited string into an array.

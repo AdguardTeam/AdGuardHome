@@ -34,6 +34,7 @@ import {
     encryptionState,
 } from 'panel/stores/encryption';
 import { copy } from 'panel/__tests__/helpers/copy';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 /**
  * The backend marshals a cleared server name and a port that is turned off with
@@ -376,7 +377,7 @@ describe('getTlsStatus', () => {
     });
 
     it('marks initialized after a successful request', async () => {
-        encryptionState.initialized = false;
+        resetStore(encryptionState, { initialized: false });
         mocks.tlsStatus.mockResolvedValue({ ...RESPONSE_WITHOUT_EMPTIES });
 
         await getTlsStatus();
@@ -385,7 +386,7 @@ describe('getTlsStatus', () => {
     });
 
     it('marks initialized after a failed request so the loader cannot get stuck', async () => {
-        encryptionState.initialized = false;
+        resetStore(encryptionState, { initialized: false });
         mocks.tlsStatus.mockRejectedValue(new Error('network'));
 
         await getTlsStatus();

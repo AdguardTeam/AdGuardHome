@@ -13,14 +13,16 @@ export const RequirementIcon = (props: RequirementIconProps) => {
     return <Icon icon={iconName()} color={iconColor()} />;
 };
 
+export type PasswordRequirementsState = {
+    minLength: boolean;
+    allowedChars: boolean;
+    lowercase: boolean;
+    uppercase: boolean;
+    match: boolean;
+};
+
 type PasswordRequirementsProps = {
-    requirements: {
-        minLength: boolean;
-        allowedChars: boolean;
-        lowercase: boolean;
-        uppercase: boolean;
-        match: boolean;
-    };
+    requirements: PasswordRequirementsState;
     class?: string;
 };
 

@@ -10,9 +10,15 @@ vi.mock('panel/stores/install', () => ({
     prevStep: vi.fn(),
 }));
 
-const setup = () => {
+type InitialValues = {
+    username?: string;
+    password?: string;
+    privacy_consent?: boolean;
+};
+
+const setup = (initialValues?: InitialValues) => {
     const onAuthSubmit = vi.fn();
-    render(() => <Auth onAuthSubmit={onAuthSubmit} />);
+    render(() => <Auth onAuthSubmit={onAuthSubmit} initialValues={initialValues} />);
 
     return { onAuthSubmit };
 };
@@ -35,6 +41,12 @@ const errorTextFor = (id: string) => {
 };
 
 const nextButton = () => document.querySelector('#install_next') as HTMLButtonElement;
+
+/** Whether each of the five checklist items is satisfied (first checklist instance). */
+const requirementStates = () =>
+    Array.from(document.querySelectorAll('[class*="bannerItem"]'))
+        .slice(0, 5)
+        .map((item) => Boolean(item.querySelector('[class*="green"]')));
 
 const acceptConsent = () => {
     const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
@@ -76,21 +88,21 @@ describe('install wizard Auth step', () => {
         );
     });
 
-    it('accepts a password with Cyrillic letters and emoji', async () => {
+    it('accepts a password with accented letters and emoji', async () => {
         const { onAuthSubmit } = setup();
-        fillValidForm('Пароль🔑🔒');
+        fillValidForm('Grün🔑🔒');
         acceptConsent();
 
         await waitFor(() => expect(nextButton().disabled).toBe(false));
         submitForm();
 
         await waitFor(() => expect(onAuthSubmit).toHaveBeenCalledTimes(1));
-        expect(onAuthSubmit.mock.calls[0][0].password).toBe('Пароль🔑🔒');
+        expect(onAuthSubmit.mock.calls[0][0].password).toBe('Grün🔑🔒');
     });
 
     it('rejects a password without an uppercase letter', async () => {
         const { onAuthSubmit } = setup();
-        fillValidForm('пароль🔑🔒');
+        fillValidForm('grün🔑🔒');
         acceptConsent();
 
         expect(nextButton().disabled).toBe(true);
@@ -104,7 +116,7 @@ describe('install wizard Auth step', () => {
 
     it('rejects a password without numbers or special characters', async () => {
         setup();
-        fillValidForm('ПарольПароль');
+        fillValidForm('GrünGrün');
 
         submitForm();
         await waitFor(() =>
@@ -144,8 +156,111 @@ describe('install wizard Auth step', () => {
         acceptConsent();
         await waitFor(() => expect(nextButton().disabled).toBe(false));
 
-        typeInto('install_password', 'ПарольПароль');
+        typeInto('install_password', 'GrünGrün');
         await waitFor(() => expect(nextButton().disabled).toBe(true));
+    });
+
+    it('restores initial values when returning to the step', async () => {
+        const { onAuthSubmit } = setup({
+            username: 'admin',
+            password: 'P@ssw0rd🔑',
+            privacy_consent: true,
+        });
+
+        expect((document.querySelector('#install_username') as HTMLInputElement).value).toBe(
+            'admin',
+        );
+        expect((document.querySelector('#install_password') as HTMLInputElement).value).toBe(
+            'P@ssw0rd🔑',
+        );
+        expect(
+            (document.querySelector('#install_confirm_password') as HTMLInputElement).value,
+        ).toBe('P@ssw0rd🔑');
+        await waitFor(() => expect(nextButton().disabled).toBe(false));
+
+        submitForm();
+        await waitFor(() => expect(onAuthSubmit).toHaveBeenCalledTimes(1));
+    });
+
+    it('requires a username', async () => {
+        const { onAuthSubmit } = setup();
+        typeInto('install_password', 'P@ssw0rd🔑');
+        typeInto('install_confirm_password', 'P@ssw0rd🔑');
+        acceptConsent();
+
+        expect(nextButton().disabled).toBe(true);
+
+        submitForm();
+        await waitFor(() =>
+            expect(errorTextFor('install_username')).toBe(copy('form_error_required')),
+        );
+        expect(onAuthSubmit).not.toHaveBeenCalled();
+    });
+
+    it('treats a whitespace-only username as empty', () => {
+        setup();
+        typeInto('install_username', '   ');
+        typeInto('install_password', 'P@ssw0rd🔑');
+        typeInto('install_confirm_password', 'P@ssw0rd🔑');
+        acceptConsent();
+
+        expect(nextButton().disabled).toBe(true);
+    });
+
+    it('requires the password confirmation', async () => {
+        setup();
+        typeInto('install_username', 'admin');
+        typeInto('install_password', 'P@ssw0rd🔑');
+        acceptConsent();
+
+        expect(nextButton().disabled).toBe(true);
+
+        submitForm();
+        await waitFor(() =>
+            expect(errorTextFor('install_confirm_password')).toBe(copy('form_error_required')),
+        );
+    });
+
+    it('rejects a password longer than 72 bytes', async () => {
+        setup();
+        fillValidForm(`Aa1!${'a'.repeat(70)}`);
+
+        expect(nextButton().disabled).toBe(true);
+
+        submitForm();
+        await waitFor(() =>
+            expect(errorTextFor('install_password')).toBe(
+                copy('password_requirements_characters'),
+            ),
+        );
+    });
+
+    it('counts emoji as 4 bytes in the length limit', async () => {
+        setup();
+        // 44 UTF-16 code units but 84 UTF-8 bytes.
+        fillValidForm(`Aa1!${'🔑'.repeat(20)}`);
+
+        expect(nextButton().disabled).toBe(true);
+
+        submitForm();
+        await waitFor(() =>
+            expect(errorTextFor('install_password')).toBe(
+                copy('password_requirements_characters'),
+            ),
+        );
+    });
+
+    it('updates the requirements checklist while typing', () => {
+        setup();
+        typeInto('install_username', 'admin');
+        typeInto('install_password', 'P@ssw0rd🔑');
+
+        // The confirmation is still empty, so only the match requirement fails.
+        expect(requirementStates()).toEqual([true, true, true, true, false]);
+
+        typeInto('install_confirm_password', 'P@ssw0rd🔑');
+
+        expect(requirementStates()).toEqual([true, true, true, true, true]);
     });
 
     it('renders all five requirement labels from the design', () => {
