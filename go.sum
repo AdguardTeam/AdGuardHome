@@ -6,8 +6,8 @@ cloud.google.com/go/compute/metadata v0.10.0 h1:pyKMUQSwchgkIBBJGdILqQbs/BNJXqwS
 cloud.google.com/go/compute/metadata v0.10.0/go.mod h1:rGFHRrIif570kSibjFTMbt6/4/tzgJWFGI/HVol4GIk=
 github.com/AdguardTeam/dnscrypt v0.0.3 h1:o2Zg+/CRCPS2lPobMzYs59aE3RNdMKfOBk34bPbbUbg=
 github.com/AdguardTeam/dnscrypt v0.0.3/go.mod h1:qCFs51rLfNzEDZqb6nz1tocVLnEearJ1zng6O3I6ecA=
-github.com/AdguardTeam/dnsproxy v0.86.0 h1:t9966vx4c3Wm6/9dhM4YI9L6uvIJ/EMNw9JpbEAyKYw=
-github.com/AdguardTeam/dnsproxy v0.86.0/go.mod h1:6kCM5M/gtuQr/0BjtnReHlK6+N0BTee+WHOq3m1JNq4=
+github.com/AdguardTeam/dnsproxy v0.86.1-0.20261013041016-38b46ec379dc h1:TkoMthBk48XnhLSibgkkLOyTGuHF6Wvd9O5sKK2+np8=
+github.com/AdguardTeam/dnsproxy v0.86.1-0.20261013041016-38b46ec379dc/go.mod h1:DS4fb/Y++hr7Dyt77Xr+0O5Bo3NjJaRaHYDRIPOQGeU=
 github.com/AdguardTeam/golibs v0.35.16 h1:e9dyk7jfzpxMcyVZ8RktKV6JMeiQ9MpEhp/Ahm3j/R4=
 github.com/AdguardTeam/golibs v0.35.16/go.mod h1:lGsRwlo3R3ma5o8mgdDv3I+6DYTiCHfrhNyUamqhbK8=
 github.com/AdguardTeam/urlfilter v0.23.4 h1:3cwt5xj7lpK2t3sWtr9WI8mmsKP+RtpkdnEy7lrn8cg=
@@ -237,8 +237,8 @@ golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACk
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/crypto v0.58.0 h1:COkYLr4k7nDI4r6QtMML2AfzeIswWHAJthLS6K/M/54=
 golang.org/x/crypto v0.58.0/go.mod h1:Xh+kl5A+M0gMiWDytH2Hhr5Z7WbNCpv/eB/EFgfSk+w=
-golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba h1:Ck8QetSgk912qxWLMCKxd0in+aiyBQyDSMae6e/xmpU=
-golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba/go.mod h1:50RgIsmK7OwqzTTeqcSXQW8SswW0o8fRcDxmqGluJ8E=
+golang.org/x/exp v0.0.0-20261007192929-f45ad48fbe92 h1:kc+Gi2MFkd0KWtdDlVxVwjw4KB98/77usJDFj+6YFQ8=
+golang.org/x/exp v0.0.0-20261007192929-f45ad48fbe92/go.mod h1:SRjTzy5WcYqRRqquLUvHeeovSwLO0CZ3xcltZNO4Fck=
 golang.org/x/exp/typeparams v0.0.0-20261011100332-faecfb24eb49 h1:QQX5BLn7Tv9kje1f1pMpGa8W/P7Hsu+XRnr5x25oNkQ=
 golang.org/x/exp/typeparams v0.0.0-20261011100332-faecfb24eb49/go.mod h1:qkMnvgP8C7+xkci04txL2SJFc/0PGqnkf6gs5JUC43E=
 golang.org/x/lint v0.0.0-20200302205851-738671d3881b/go.mod h1:3xt1FjdF8hUf6vQPIChWIBhFzV8gjjsPE/fR3IyQdNY=
