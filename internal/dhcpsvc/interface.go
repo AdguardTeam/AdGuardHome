@@ -46,7 +46,7 @@ type netInterface struct {
 	logger *slog.Logger
 
 	// addressChecker checks if an address is available for leasing.
-	addressChecker addressChecker
+	addressChecker AddressChecker
 
 	// indexMu protects the index, leases, and leasedOffsets.
 	indexMu *sync.RWMutex
@@ -200,7 +200,7 @@ func (iface *netInterface) allocateLease(
 		}
 
 		var ok bool
-		ok, err = iface.addressChecker.IsAvailable(lease.IP)
+		ok, err = iface.addressChecker.IsAvailable(ctx, lease.IP)
 		if err != nil {
 			return nil, fmt.Errorf("checking address availability: %w", err)
 		}

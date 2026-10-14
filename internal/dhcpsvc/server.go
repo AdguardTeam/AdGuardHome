@@ -33,6 +33,10 @@ type DHCPServer struct {
 	// deviceManager is the manager of network devices.
 	deviceManager NetworkDeviceManager
 
+	// addrChecker is used to check the availability of IP addresses.  It should
+	// not be nil.
+	addrChecker AddressChecker
+
 	// devices are the network devices opened in [DHCPServer.Start], mapped to
 	// their names.  Those are closed in [DHCPServer.Shutdown].
 	//
@@ -82,6 +86,7 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 	srv = &DHCPServer{
 		enabled:       enabled,
 		logger:        l,
+		addrChecker:   conf.AddressChecker,
 		deviceManager: conf.NetworkDeviceManager,
 		localTLD:      conf.LocalDomainName,
 		serveWG:       &sync.WaitGroup{},

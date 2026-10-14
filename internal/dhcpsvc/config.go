@@ -14,6 +14,10 @@ import (
 
 // Config is the configuration for the DHCP service.
 type Config struct {
+	// AddressChecker is used to check the availability of IP addresses.  It
+	// should not be nil.
+	AddressChecker AddressChecker
+
 	// Database is the storage for DHCP leases.  It must not be nil.
 	Database Database
 
@@ -58,6 +62,7 @@ func (conf *Config) Validate() (err error) {
 	errs := []error{
 		validate.NotNegative("conf.ICMPTimeout", conf.ICMPTimeout),
 		validate.NotNilInterface("conf.Database", conf.Database),
+		validate.NotNilInterface("conf.AddressChecker", conf.AddressChecker),
 		validate.NotNil("conf.Logger", conf.Logger),
 		validate.NotNilInterface("conf.NetworkDeviceManager", conf.NetworkDeviceManager),
 	}

@@ -20,6 +20,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// unit is a convenience alias for an empty struct.
+type unit = struct{}
+
 // testLocalTLD is a common local TLD for tests.
 const testLocalTLD = "local"
 
@@ -508,6 +511,10 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 	conf.NetworkDeviceManager = cmp.Or[dhcpsvc.NetworkDeviceManager](
 		conf.NetworkDeviceManager,
 		dhcpsvc.EmptyNetworkDeviceManager{},
+	)
+	conf.AddressChecker = cmp.Or[dhcpsvc.AddressChecker](
+		conf.AddressChecker,
+		dhcpsvc.EmptyAddressChecker{},
 	)
 	conf.Logger = cmp.Or(conf.Logger, testLogger)
 	conf.LocalDomainName = cmp.Or(conf.LocalDomainName, testLocalTLD)
