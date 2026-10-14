@@ -334,12 +334,7 @@ func dhcpConfigToInternal(
 	workDir string,
 ) (s *dhcpd.ServerConfig) {
 	return &dhcpd.ServerConfig{
-		Conf6: dhcpd.V6ServerConf{
-			RangeStart:    c.Conf6.RangeStart,
-			LeaseDuration: c.Conf6.LeaseDuration,
-			RASLAACOnly:   c.Conf6.RASLAACOnly,
-			RAAllowSLAAC:  c.Conf6.RAAllowSLAAC,
-		},
+		Conf6:              dhcpV6ConfigToInternal(c.Conf6),
 		CommandConstructor: executil.SystemCommandConstructor{},
 		ConfModifier:       confModifier,
 		HTTPReg:            httpReg,
@@ -350,16 +345,39 @@ func dhcpConfigToInternal(
 		// needed.
 		WorkDir: workDir,
 		DataDir: filepath.Join(workDir, dataDir),
-		Conf4: dhcpd.V4ServerConf{
-			GatewayIP:     c.Conf4.GatewayIP,
-			RangeStart:    c.Conf4.RangeStart,
-			RangeEnd:      c.Conf4.RangeEnd,
-			SubnetMask:    c.Conf4.SubnetMask,
-			Options:       c.Conf4.Options,
-			LeaseDuration: c.Conf4.LeaseDuration,
-			ICMPTimeout:   c.Conf4.ICMPTimeout,
-		},
+		Conf4:   dhcpV4ConfigToInternal(c.Conf4),
 		Enabled: c.Enabled,
+	}
+}
+
+// dhcpV4ConfigToInternal converts c to the DHCPv4 server settings.
+func dhcpV4ConfigToInternal(c *configmgr.DHCPv4Config) (s dhcpd.V4ServerConf) {
+	if c == nil {
+		return dhcpd.V4ServerConf{}
+	}
+
+	return dhcpd.V4ServerConf{
+		GatewayIP:     c.GatewayIP,
+		RangeStart:    c.RangeStart,
+		RangeEnd:      c.RangeEnd,
+		SubnetMask:    c.SubnetMask,
+		Options:       c.Options,
+		LeaseDuration: c.LeaseDuration,
+		ICMPTimeout:   c.ICMPTimeout,
+	}
+}
+
+// dhcpV6ConfigToInternal converts c to the DHCPv6 server settings.
+func dhcpV6ConfigToInternal(c *configmgr.DHCPv6Config) (s dhcpd.V6ServerConf) {
+	if c == nil {
+		return dhcpd.V6ServerConf{}
+	}
+
+	return dhcpd.V6ServerConf{
+		RangeStart:    c.RangeStart,
+		LeaseDuration: c.LeaseDuration,
+		RASLAACOnly:   c.RASLAACOnly,
+		RAAllowSLAAC:  c.RAAllowSLAAC,
 	}
 }
 

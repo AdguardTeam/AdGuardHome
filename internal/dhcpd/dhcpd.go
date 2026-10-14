@@ -245,8 +245,13 @@ func (s *server) WriteDiskConfig(dc *configmgr.DHCPConfig) {
 	dc.InterfaceName = s.conf.InterfaceName
 	dc.LocalDomainName = s.conf.LocalDomainName
 
-	s.srv4.WriteDiskConfig4(dc.Conf4)
-	s.srv6.WriteDiskConfig6(dc.Conf6)
+	if dc.Conf4 != nil {
+		s.srv4.WriteDiskConfig4(dc.Conf4)
+	}
+
+	if dc.Conf6 != nil {
+		s.srv6.WriteDiskConfig6(dc.Conf6)
+	}
 }
 
 // Start will listen on port 67 and serve DHCP requests.

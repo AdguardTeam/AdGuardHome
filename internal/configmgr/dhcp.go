@@ -11,10 +11,10 @@ import (
 
 // DHCPConfig is the on-disk DHCP configuration.
 type DHCPConfig struct {
-	// Conf4 is the configuration of the DHCPv4 server.  It must not be nil.
+	// Conf4 is the configuration of the DHCPv4 server.
 	Conf4 *DHCPv4Config `yaml:"dhcpv4"`
 
-	// Conf6 is the configuration of the DHCPv6 server.  It must not be nil.
+	// Conf6 is the configuration of the DHCPv6 server.
 	Conf6 *DHCPv6Config `yaml:"dhcpv6"`
 
 	// InterfaceName is the name of the network interface the DHCP server
@@ -96,18 +96,22 @@ func (c *DHCPConfig) Validate() (err error) {
 	}
 
 	if !c.Enabled {
-		return errors.Join(
-			validate.NotNil("dhcpv4", c.Conf4),
-			validate.NotNil("dhcpv6", c.Conf6),
-		)
+		return nil
 	}
 
-	// TODO(d.kolyshev):  Add validations.
+	// TODO(a.garipov):  Consider unconditional validation.
+	var errs []error
+	if c.Conf4 != nil && c.Conf4.RangeStart.IsValid() {
+		errs = validate.Append(errs, "dhcpv4", c.Conf4)
+	}
 
-	return errors.Join(
-		errors.Annotate(c.Conf4.Validate(), "dhcpv4: %w"),
-		errors.Annotate(c.Conf6.Validate(), "dhcpv6: %w"),
-	)
+	if c.Conf6 != nil && c.Conf6.RangeStart.IsValid() {
+		errs = validate.Append(errs, "dhcpv6", c.Conf6)
+	}
+
+	// TODO(d.kolyshev):  Add more validations.
+
+	return errors.Join(errs...)
 }
 
 // type check
@@ -207,6 +211,11 @@ var _ validate.Interface = (*DHCPv6Config)(nil)
 
 // Validate implements the [validate.Interface] interface for *DHCPv6Config.
 func (c *DHCPv6Config) Validate() (err error) {
+	if c == nil {
+		return errors.ErrNoValue
+	}
+
 	// TODO(d.kolyshev):  Add validations.
+
 	return nil
 }
