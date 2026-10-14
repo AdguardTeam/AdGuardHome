@@ -157,7 +157,7 @@ type V4ServerConf struct {
 	//
 	// Option with IP data (only 1 IP is supported):
 	//     DEC_CODE ip IP_ADDR
-	Options []string `json:"-"`
+	Options []string
 
 	// dnsIPAddrs is the IPv4 addresses to return to DHCP clients as DNS server
 	// addresses.

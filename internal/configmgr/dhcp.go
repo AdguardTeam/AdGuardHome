@@ -60,6 +60,8 @@ type DHCPv4Config struct {
 	//
 	// Option with IP data (only 1 IP is supported):
 	//     DEC_CODE ip IP_ADDR
+	//
+	// It must not mutate.
 	Options []string `yaml:"options"`
 
 	// ICMPTimeout is the time in milliseconds to wait for an ICMP reply during
