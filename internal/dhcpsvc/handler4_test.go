@@ -39,40 +39,25 @@ func TestDHCPServer_ServeEther4_discover(t *testing.T) {
 		in       gopacket.Packet
 		wantOpts layers.DHCPOptions
 	}{{
-		name: "new",
-		in:   newDHCPDISCOVER(t, testHWUnknown),
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-		},
+		name:     "new",
+		in:       newDHCPDISCOVER(t, testHWUnknown),
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeOffer, ""),
 	}, {
-		name: "existing_static",
-		in:   newDHCPDISCOVER(t, testHWStatic),
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameStatic),
-		},
+		name:     "existing_static",
+		in:       newDHCPDISCOVER(t, testHWStatic),
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeOffer, testLease4HostnameStatic),
 	}, {
-		name: "existing_dynamic",
-		in:   newDHCPDISCOVER(t, testHWDynamic),
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameDynamic),
-		},
+		name:     "existing_dynamic",
+		in:       newDHCPDISCOVER(t, testHWDynamic),
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeOffer, testLease4HostnameDynamic),
 	}, {
-		name: "existing_dynamic_expired",
-		in:   newDHCPDISCOVER(t, testHWExpired),
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeOffer),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameExpired),
-		},
+		name:     "existing_dynamic_near_expiry",
+		in:       newDHCPDISCOVER(t, testHWRenewing),
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeOffer, testLease4HostnameRenewing),
+	}, {
+		name:     "existing_dynamic_expired",
+		in:       newDHCPDISCOVER(t, testHWExpired),
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeOffer, testLease4HostnameExpired),
 	}}
 
 	for _, tc := range testCases {
@@ -113,11 +98,7 @@ func TestDHCPServer_ServeEther4_discoverExpired(t *testing.T) {
 
 	testutil.RequireSend(t, inCh, pkt, testTimeout)
 
-	assertValidResponse4(t, req, outCh, layers.DHCPOptions{
-		newOptMessageType(t, layers.DHCPMsgTypeOffer),
-		newOptServerID(t, testIfaceAddrV4),
-		newOptLeaseTime(t, testLeaseTTL),
-	})
+	assertValidResponse4(t, req, outCh, newWantRespOpts4(t, layers.DHCPMsgTypeOffer, ""))
 }
 
 // TODO(e.burkov):  Test static case.
@@ -207,12 +188,8 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			Hostname: "",
 			IsStatic: false,
 		},
-		name: "success",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeAck),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-		},
+		name:     "success",
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeAck, ""),
 	}, {
 		discover: newDHCPDISCOVER(t, testHWStatic),
 		request: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -236,12 +213,9 @@ func TestDHCPServer_ServeEther4_requestSelecting(t *testing.T) {
 			clientHWAddr: testHWStatic,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		want: nil,
-		name: "wrong_ip",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeNak),
-			newOptServerID(t, testIfaceAddrV4),
-		},
+		want:     nil,
+		name:     "wrong_ip",
+		wantOpts: newWantNAKOpts4(t),
 	}, {
 		discover: newDHCPDISCOVER(t, testHWStatic),
 		request: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -324,13 +298,9 @@ func TestDHCPServer_ServeEther4_requestSelectingNoLease(t *testing.T) {
 
 	testutil.RequireSend(t, inCh, request, testTimeout)
 
-	assertValidResponse4(t, dhcpv4FromPacket(t, request), outCh, layers.DHCPOptions{
-		newOptMessageType(t, layers.DHCPMsgTypeNak),
-		newOptServerID(t, testIfaceAddrV4),
-	})
+	assertValidResponse4(t, dhcpv4FromPacket(t, request), outCh, newWantNAKOpts4(t))
 }
 
-// TODO(e.burkov):  Test expired.
 func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 	t.Parallel()
 
@@ -345,26 +315,18 @@ func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 			clientHWAddr: testHWStatic,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		want: testLease4Static,
-		name: "success",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeAck),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameStatic),
-		},
+		want:     testLease4Static,
+		name:     "success",
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeAck, testLease4HostnameStatic),
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{
 			options:      layers.DHCPOptions{newOptRequestIP(t, testIPv4OtherSubnet)},
 			clientHWAddr: testHWStatic,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		want: nil,
-		name: "wrong_subnet",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeNak),
-			newOptServerID(t, testIfaceAddrV4),
-		},
+		want:     nil,
+		name:     "wrong_subnet",
+		wantOpts: newWantNAKOpts4(t),
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{
 			options:      layers.DHCPOptions{newOptRequestIP(t, testIPv4Static)},
@@ -380,22 +342,30 @@ func TestDHCPServer_ServeEther4_requestInitReboot(t *testing.T) {
 			clientHWAddr: testHWStatic,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		want: nil,
-		name: "wrong_ip",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeNak),
-			newOptServerID(t, testIfaceAddrV4),
-		},
+		want:     nil,
+		name:     "wrong_ip",
+		wantOpts: newWantNAKOpts4(t),
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{
 			options:      layers.DHCPOptions{newOptRequestIP(t, testIPv4Dynamic)},
 			clientHWAddr: testHWStatic,
 		}),
-		want: nil,
-		name: "wrong_ip_no_broadcast",
+		want:     nil,
+		name:     "wrong_ip_no_broadcast",
+		wantOpts: newWantNAKOpts4(t),
+	}, {
+		req: newDHCPREQUEST(t, &dhcpRequestConfig{
+			options:      layers.DHCPOptions{newOptRequestIP(t, testIPv4Expired)},
+			clientHWAddr: testHWExpired,
+			flags:        dhcpsvc.FlagsBroadcast,
+		}),
+		want: testLease4ExpiredRenewed,
+		name: "expired_extends",
 		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeNak),
+			newOptMessageType(t, layers.DHCPMsgTypeAck),
 			newOptServerID(t, testIfaceAddrV4),
+			newOptLeaseTime(t, 0),
+			newOptHostname(t, testLease4HostnameExpired),
 		},
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{
@@ -458,55 +428,44 @@ func TestDHCPServer_ServeEther4_requestRenewSuccess(t *testing.T) {
 			clientIP:     testIPv4Dynamic,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		want: testLease4Dynamic,
-		name: "success",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeAck),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameDynamic),
-		},
+		want:     testLease4Dynamic,
+		name:     "success",
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeAck, testLease4HostnameDynamic),
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{
 			clientHWAddr: testHWStatic,
 			clientIP:     testIPv4Static,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		want: testLease4Static,
-		name: "static",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeAck),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameStatic),
-		},
+		want:     testLease4Static,
+		name:     "static",
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeAck, testLease4HostnameStatic),
+	}, {
+		req: newDHCPREQUEST(t, &dhcpRequestConfig{
+			clientHWAddr: testHWRenewing,
+			clientIP:     testIPv4Renewing,
+			flags:        dhcpsvc.FlagsBroadcast,
+		}),
+		want:     testLease4Renewed,
+		name:     "near_expiry",
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeAck, testLease4HostnameRenewing),
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{
 			clientHWAddr: testHWDynamic,
 			clientIP:     testIPv4Dynamic,
 			relayAgentIP: testIPv4RelayAgent,
 		}),
-		want: testLease4Dynamic,
-		name: "relay_agent",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeAck),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameDynamic),
-		},
+		want:     testLease4Dynamic,
+		name:     "relay_agent",
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeAck, testLease4HostnameDynamic),
 	}, {
 		req: newDHCPREQUEST(t, &dhcpRequestConfig{
 			clientHWAddr: testHWDynamic,
 			clientIP:     testIPv4Dynamic,
 		}),
-		want: testLease4Dynamic,
-		name: "ciaddr_unicast",
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeAck),
-			newOptServerID(t, testIfaceAddrV4),
-			newOptLeaseTime(t, testLeaseTTL),
-			newOptHostname(t, testLease4HostnameDynamic),
-		},
+		want:     testLease4Dynamic,
+		name:     "ciaddr_unicast",
+		wantOpts: newWantRespOpts4(t, layers.DHCPMsgTypeAck, testLease4HostnameDynamic),
 	}}
 
 	for _, tc := range testCases {
@@ -570,10 +529,7 @@ func TestDHCPServer_ServeEther4_requestRenewFail(t *testing.T) {
 			clientIP:     testIPv4Dynamic,
 			flags:        dhcpsvc.FlagsBroadcast,
 		}),
-		wantOpts: layers.DHCPOptions{
-			newOptMessageType(t, layers.DHCPMsgTypeNak),
-			newOptServerID(t, testIfaceAddrV4),
-		},
+		wantOpts: newWantNAKOpts4(t),
 	}}
 
 	for _, tc := range testCases {
@@ -809,6 +765,39 @@ func newDHCPDECLINE(
 	}
 
 	return newTestPacket(tb, layers.LinkTypeEthernet, eth, ip, udp, dhcp)
+}
+
+// newWantRespOpts4 returns the expected basic DHCPv4 response options for the
+// given message type.  [testLeaseTTL] used in TTL option.  If hostname is
+// non-empty, the hostname option is appended.
+func newWantRespOpts4(
+	tb testing.TB,
+	msgType layers.DHCPMsgType,
+	hostname string,
+) (opts layers.DHCPOptions) {
+	tb.Helper()
+
+	opts = layers.DHCPOptions{
+		newOptMessageType(tb, msgType),
+		newOptServerID(tb, testIfaceAddrV4),
+		newOptLeaseTime(tb, testLeaseTTL),
+	}
+
+	if hostname != "" {
+		opts = append(opts, newOptHostname(tb, hostname))
+	}
+
+	return opts
+}
+
+// newWantNAKOpts4 returns the expected DHCPv4 NAK response options.
+func newWantNAKOpts4(tb testing.TB) (opts layers.DHCPOptions) {
+	tb.Helper()
+
+	return layers.DHCPOptions{
+		newOptMessageType(tb, layers.DHCPMsgTypeNak),
+		newOptServerID(tb, testIfaceAddrV4),
+	}
 }
 
 // newIPv4UDPLayer creates IPv4 and UDP layers for testing.  Invalid src is

@@ -140,7 +140,7 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 			l.DebugContext(ctx, "different requested ip", "requested", reqIP, "lease", lease.IP)
 		}
 
-		lease.updateExpiry(now, iface.common.leaseTTL)
+		lease.setExpiry(now.Add(iface.common.leaseTTL))
 		iface.respondOffer(ctx, req, fd, lease, idOpt)
 
 		return
@@ -251,17 +251,9 @@ func (iface *dhcpInterfaceV4) handleSelecting(
 		return
 	}
 
-	// Commit the lease and send ACK.
-	lease.Hostname = hostname4(req)
-	err := iface.updateLease(ctx, lease)
-	if err != nil {
-		l.ErrorContext(ctx, "selecting request failed", slogutil.KeyError, err)
-		iface.respondNAK(ctx, req, fd, idOpt)
+	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
 
-		return
-	}
-
-	iface.respondACK(ctx, req, fd, lease, idOpt)
+	iface.updateAndRespond(ctx, l, fd, req, idOpt, lease)
 }
 
 // handleInitReboot handles messages of type DHCPREQUEST in INIT-REBOOT state.
@@ -312,15 +304,14 @@ func (iface *dhcpInterfaceV4) handleInitReboot(
 
 	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
 
-	err := iface.updateLease(ctx, lease)
-	if err != nil {
-		l.ErrorContext(ctx, "init-reboot request failed", slogutil.KeyError, err)
-		iface.respondNAK(ctx, req, fd, idOpt)
+	// If the client has not requested a specific lease in the DHCPDISCOVER
+	// message and the client already has an assigned network address, the
+	// server returns the lease expiration time previously assigned to that
+	// address.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.1.
 
-		return
-	}
-
-	iface.respondACK(ctx, req, fd, lease, idOpt)
+	iface.updateAndRespond(ctx, l, fd, req, idOpt, lease)
 }
 
 // handleRenew handles messages of type DHCPREQUEST in RENEWING or REBINDING
@@ -360,16 +351,13 @@ func (iface *dhcpInterfaceV4) handleRenew(
 
 	lease.Hostname = cmp.Or(hostname4(req), lease.Hostname)
 
-	err := iface.updateLease(ctx, lease)
-	if err != nil {
-		l.ErrorContext(ctx, "renew request failed", slogutil.KeyError, err)
+	// Update the lease's expiry so that the client extending the lease will not
+	// get an already-expired one.
+	//
+	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
+	lease.setExpiry(iface.clock.Now().Add(iface.common.leaseTTL))
 
-		iface.respondNAK(ctx, req, fd, idOpt)
-
-		return
-	}
-
-	iface.respondACK(ctx, req, fd, lease, idOpt)
+	iface.updateAndRespond(ctx, l, fd, req, idOpt, lease)
 }
 
 // handleDecline handles messages of type DHCPDECLINE.  req must be a
@@ -462,4 +450,26 @@ func (iface *dhcpInterfaceV4) leaseByMacWithIP(
 	}
 
 	return lease
+}
+
+// updateAndRespond updates the lease in the storage and responds with it to the
+// client.  l, fd, idOpt, and lease must not be nil, req must be a valid DHCPv4
+// message.
+func (iface *dhcpInterfaceV4) updateAndRespond(
+	ctx context.Context,
+	l *slog.Logger,
+	fd *frameData4,
+	req *layers.DHCPv4,
+	idOpt []byte,
+	lease *Lease,
+) {
+	err := iface.updateLease(ctx, lease)
+	if err != nil {
+		l.ErrorContext(ctx, "request failed", slogutil.KeyError, err)
+		iface.respondNAK(ctx, req, fd, idOpt)
+
+		return
+	}
+
+	iface.respondACK(ctx, req, fd, lease, idOpt)
 }
