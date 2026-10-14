@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/httphdr"
+	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -346,11 +347,11 @@ func TestAuthMiddlewareDefault_public(t *testing.T) {
 }
 
 // newTestUser creates a new test user.
-func newTestUser(t *testing.T, userPassword string, login aghuser.Login) (user *aghuser.User) {
-	t.Helper()
+func newTestUser(tb testing.TB, userPassword string, login aghuser.Login) (user *aghuser.User) {
+	tb.Helper()
 
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
-	require.NoError(t, err)
+	require.NoError(tb, err)
 
 	return &aghuser.User{
 		Login:    login,
@@ -784,4 +785,82 @@ func TestRealIP(t *testing.T) {
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
+}
+
+// BenchmarkAuthMiddlewareDefault measures the response time of an arbitrary
+// handler wrapped in the default authentication middleware.  It is used to
+// check that failed logins take comparable time regardless of whether the
+// username exists, mitigating timing attacks.
+func BenchmarkAuthMiddlewareDefault(b *testing.B) {
+	const login = aghuser.Login(testUsername)
+
+	user := newTestUser(b, testPassword, login)
+	users := map[aghuser.Login]*aghuser.User{
+		login: user,
+	}
+
+	usersDB := newTestUsersDB()
+	usersDB.onAll = func(_ context.Context) (us []*aghuser.User, err error) {
+		return slices.Collect(maps.Values(users)), nil
+	}
+	usersDB.onByLogin = func(_ context.Context, login aghuser.Login) (u *aghuser.User, err error) {
+		return users[login], nil
+	}
+
+	mw := newAuthMiddlewareDefault(&authMiddlewareDefaultConfig{
+		logger:      testLogger,
+		rateLimiter: emptyRateLimiter{},
+		sessions:    newTestSessionStorage(),
+		users:       usersDB,
+	})
+
+	h := mw.Wrap(httputil.PlainTextHandler("OK"))
+
+	benchCases := []struct {
+		name     string
+		user     string
+		pass     string
+		wantCode int
+	}{{
+		name:     "success",
+		user:     testUsername,
+		pass:     testPassword,
+		wantCode: http.StatusOK,
+	}, {
+		name:     "unknown_user",
+		user:     "unknown",
+		pass:     testPassword,
+		wantCode: http.StatusUnauthorized,
+	}, {
+		name:     "wrong_password",
+		user:     testUsername,
+		pass:     "wrong",
+		wantCode: http.StatusUnauthorized,
+	}}
+
+	for _, bc := range benchCases {
+		b.Run(bc.name, func(b *testing.B) {
+			req := authRequest("/control/profile", nil, bc.user, bc.pass)
+
+			var w *httptest.ResponseRecorder
+
+			b.ReportAllocs()
+			for b.Loop() {
+				w = httptest.NewRecorder()
+				h.ServeHTTP(w, req)
+			}
+
+			assert.Equal(b, bc.wantCode, w.Code)
+		})
+	}
+
+	// Most recent results:
+	//
+	//	goos: darwin
+	//	goarch: arm64
+	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/home
+	//	cpu: Apple M1 Pro
+	//	BenchmarkAuthMiddlewareDefault/success-8         	10	63334050 ns/op	6739 B/op	25 allocs/op
+	//	BenchmarkAuthMiddlewareDefault/unknown_user-8    	10	63429683 ns/op	5686 B/op	20 allocs/op
+	//	BenchmarkAuthMiddlewareDefault/wrong_password-8  	10	63391754 ns/op	5644 B/op	20 allocs/op
 }
