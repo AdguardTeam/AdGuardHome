@@ -74,7 +74,7 @@ type DHCPv4Config struct {
 type DHCPv6Config struct {
 	// RangeStart is the first IPv6 address of the dynamic lease range.  The
 	// last allowed IP address ends with the 0xff byte.
-	RangeStart net.IP `yaml:"range_start"`
+	RangeStart netip.Addr `yaml:"range_start"`
 
 	// LeaseDuration is the duration of lease in seconds.
 	LeaseDuration uint32 `yaml:"lease_duration"`

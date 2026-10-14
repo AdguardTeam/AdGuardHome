@@ -185,7 +185,7 @@ func (s *server) setServers(
 	v6conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6conf.InterfaceName = s.conf.InterfaceName
 	v6conf.notify = s.onNotify
-	v6conf.Enabled = s.conf.Enabled && len(v6conf.RangeStart) != 0
+	v6conf.Enabled = s.conf.Enabled && v6conf.RangeStart.IsValid()
 
 	s.srv6, err = newV6Server(v6conf)
 	if err != nil {

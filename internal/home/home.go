@@ -325,7 +325,7 @@ func newHostsContainer(
 }
 
 // dhcpConfigToInternal converts c to the DHCP server settings.  All arguments
-// must not be nil.
+// must not be nil, workDir must not be empty.
 func dhcpConfigToInternal(
 	c *configmgr.DHCPConfig,
 	baseLogger *slog.Logger,

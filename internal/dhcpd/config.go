@@ -113,25 +113,25 @@ type V4ServerConf struct {
 
 	// GatewayIP is the IPv4 address of the network gateway advertised to DHCP
 	// clients.  It must be outside the RangeStart–RangeEnd range.
-	GatewayIP netip.Addr `json:"gateway_ip"`
+	GatewayIP netip.Addr
 
 	// RangeStart is the first IPv4 address of the dynamic lease range.
 	//
 	// Bytes [0..2] of the last allowed IP address must match the first IP.
-	RangeStart netip.Addr `json:"range_start"`
+	RangeStart netip.Addr
 
 	// RangeEnd is the last IPv4 address of the dynamic lease range.
-	RangeEnd netip.Addr `json:"range_end"`
+	RangeEnd netip.Addr
 
 	// SubnetMask is the IPv4 subnet mask of the served network.
-	SubnetMask netip.Addr `json:"subnet_mask"`
+	SubnetMask netip.Addr
 
 	// ipRange is the dynamic lease range.  It must not be nil.
 	ipRange *ipRange
 
 	// Logger is used for logging the operation of the DHCPv4 server.  It must
 	// not be nil.
-	Logger *slog.Logger `json:"-"`
+	Logger *slog.Logger
 
 	// notify is a way to signal to other components that leases have been
 	// changed.  notify must be called outside of locked sections, since the
@@ -147,7 +147,7 @@ type V4ServerConf struct {
 
 	// InterfaceName is the name of the network interface the DHCPv4 server
 	// listens on.
-	InterfaceName string `json:"-"`
+	InterfaceName string
 
 	// Options is the list of custom DHCPv4 options.
 	//
@@ -167,14 +167,14 @@ type V4ServerConf struct {
 	leaseTime time.Duration
 
 	// LeaseDuration is the duration of a lease in seconds.
-	LeaseDuration uint32 `json:"lease_duration"`
+	LeaseDuration uint32
 
 	// ICMPTimeout is the time in milliseconds to wait for an ICMP reply during
 	// IP conflict detection.  A value of 0 disables the detection.
-	ICMPTimeout uint32 `json:"-"`
+	ICMPTimeout uint32
 
 	// Enabled defines if the DHCPv4 server is enabled.
-	Enabled bool `json:"-"`
+	Enabled bool
 }
 
 // errNilConfig is an error returned by validation method if the config is nil.
@@ -273,20 +273,21 @@ func (c *V4ServerConf) Validate() (err error) {
 type V6ServerConf struct {
 	// Logger is used for logging the operation of the DHCPv6 server.  It must
 	// not be nil.
-	Logger *slog.Logger `json:"-"`
+	Logger *slog.Logger
 
 	// notify is called when the leases data changes.
 	notify func(uint32)
 
 	// InterfaceName is the name of the network interface the DHCPv6 server
 	// listens on.
-	InterfaceName string `json:"-"`
+	InterfaceName string
 
 	// RangeStart is the first IPv6 address of the dynamic lease range.  The
 	// last allowed IP address ends with the 0xff byte.
-	RangeStart net.IP `json:"range_start"`
+	RangeStart netip.Addr
 
-	// ipStart is the starting IP address for dynamic leases.
+	// ipStart is the starting IP address for dynamic leases.  It must be IPv6
+	// address.
 	ipStart net.IP
 
 	// dnsIPAddrs is the IPv6 addresses to return to DHCP clients as DNS server
@@ -297,14 +298,14 @@ type V6ServerConf struct {
 	leaseTime time.Duration
 
 	// LeaseDuration is the duration of a lease in seconds.
-	LeaseDuration uint32 `json:"lease_duration"`
+	LeaseDuration uint32
 
 	// Enabled defines if the DHCPv6 server is enabled.
-	Enabled bool `json:"-"`
+	Enabled bool
 
 	// RASLAACOnly defines whether to send ICMPv6.RA packets without MO flags.
-	RASLAACOnly bool `json:"-"`
+	RASLAACOnly bool
 
 	// RAAllowSLAAC defines whether to send ICMPv6.RA packets with MO flags.
-	RAAllowSLAAC bool `json:"-"`
+	RAAllowSLAAC bool
 }

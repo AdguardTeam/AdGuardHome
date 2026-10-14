@@ -113,7 +113,7 @@ type configuration struct {
 	// TLS is a block with TLS configuration params.
 	TLS tlsConfigSettings `yaml:"tls"`
 
-	// QueryLog is a block with DNS configuration params.
+	// QueryLog is a block with query log configuration params.
 	QueryLog configmgr.QueryLogConfig `yaml:"querylog"`
 
 	// Stats is a block with statistics configuration settings.

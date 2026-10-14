@@ -816,7 +816,8 @@ func newV6Server(conf V6ServerConf) (srv DHCPServer, err error) {
 		return s, nil
 	}
 
-	s.conf.ipStart = conf.RangeStart
+	ipStart := conf.RangeStart.As16()
+	s.conf.ipStart = ipStart[:]
 	if s.conf.ipStart == nil || s.conf.ipStart.To16() == nil {
 		return s, fmt.Errorf("dhcpv6: invalid range-start IP: %s", conf.RangeStart)
 	}

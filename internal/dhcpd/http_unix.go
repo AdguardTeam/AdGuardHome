@@ -29,9 +29,9 @@ import (
 
 type v4ServerConfJSON struct {
 	GatewayIP     netip.Addr `json:"gateway_ip"`
-	SubnetMask    netip.Addr `json:"subnet_mask"`
 	RangeStart    netip.Addr `json:"range_start"`
 	RangeEnd      netip.Addr `json:"range_end"`
+	SubnetMask    netip.Addr `json:"subnet_mask"`
 	LeaseDuration uint32     `json:"lease_duration"`
 }
 
@@ -60,19 +60,19 @@ func v6JSONToServerConf(j *v6ServerConfJSON) V6ServerConf {
 	}
 
 	return V6ServerConf{
-		RangeStart:    j.RangeStart.AsSlice(),
+		RangeStart:    j.RangeStart,
 		LeaseDuration: j.LeaseDuration,
 	}
 }
 
 // dhcpStatusResponse is the response for /control/dhcp/status endpoint.
 type dhcpStatusResponse struct {
-	IfaceName    string          `json:"interface_name"`
-	V4           V4ServerConf    `json:"v4"`
-	V6           V6ServerConf    `json:"v6"`
-	Leases       []*leaseDynamic `json:"leases"`
-	StaticLeases []*leaseStatic  `json:"static_leases"`
-	Enabled      bool            `json:"enabled"`
+	IfaceName    string            `json:"interface_name"`
+	V4           *v4ServerConfJSON `json:"v4"`
+	V6           *v6ServerConfJSON `json:"v6"`
+	Leases       []*leaseDynamic   `json:"leases"`
+	StaticLeases []*leaseStatic    `json:"static_leases"`
+	Enabled      bool              `json:"enabled"`
 }
 
 // leaseStatic is the JSON form of static DHCP lease.
@@ -151,14 +151,14 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 	status := &dhcpStatusResponse{
 		Enabled:   s.conf.Enabled,
 		IfaceName: s.conf.InterfaceName,
-		V4: V4ServerConf{
+		V4: &v4ServerConfJSON{
 			GatewayIP:     dc4.GatewayIP,
 			RangeStart:    dc4.RangeStart,
 			RangeEnd:      dc4.RangeEnd,
 			SubnetMask:    dc4.SubnetMask,
 			LeaseDuration: dc4.LeaseDuration,
 		},
-		V6: V6ServerConf{
+		V6: &v6ServerConfJSON{
 			RangeStart:    dc6.RangeStart,
 			LeaseDuration: dc6.LeaseDuration,
 		},
@@ -286,7 +286,7 @@ func (s *server) handleDHCPSetConfigV6(
 
 	v6Conf := v6JSONToServerConf(conf.V6)
 	v6Conf.Enabled = conf.Enabled == aghalg.NBTrue
-	if len(v6Conf.RangeStart) == 0 {
+	if !v6Conf.RangeStart.IsValid() {
 		v6Conf.Enabled = false
 	}
 
