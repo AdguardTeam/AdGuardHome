@@ -141,4 +141,6 @@
     --fills-switch-knob-disabled: var(--gray-50);
     /* Logo */
     --default-logo-color: var(--gray-100);
+    /* Text selection */
+    --selected-background: var(--product-tertiary-20);
 }
