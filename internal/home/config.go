@@ -565,29 +565,10 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		return err
 	}
 
-	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
-
-	udpPorts := aghalg.UniqChecker[udpPort]{}
-	addPorts(udpPorts, udpPort(config.DNS.Port))
-
-	if config.TLS.Enabled {
-		addPorts(
-			tcpPorts,
-			tcpPort(config.TLS.PortHTTPS),
-			tcpPort(config.TLS.PortDNSOverTLS),
-			tcpPort(config.TLS.PortDNSCrypt),
-		)
-
-		// TODO(e.burkov):  Consider adding a udpPort with the same value when
-		// we add support for HTTP/3 for web admin interface.
-		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
-	}
-
-	if err = tcpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating tcp ports: %w", err)
-	} else if err = udpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating udp ports: %w", err)
+	err = validateConfigPorts(config)
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return err
 	}
 
 	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
@@ -615,6 +596,40 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	}
 
 	return nil
+}
+
+// validateConfigPorts returns an error in case the given conf has conflict
+// ports.  conf must not be nil.
+func validateConfigPorts(conf *configuration) (err error) {
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(tcpPorts, tcpPort(conf.HTTPConfig.Address.Port()))
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(conf.DNS.Port))
+
+	if conf.TLS.Enabled {
+		addPorts(
+			tcpPorts,
+			tcpPort(conf.TLS.PortHTTPS),
+			tcpPort(conf.TLS.PortDNSOverTLS),
+			tcpPort(conf.TLS.PortDNSCrypt),
+		)
+
+		// TODO(e.burkov):  Consider adding a udpPort with the same value when
+		// we add support for HTTP/3 for web admin interface.
+		addPorts(udpPorts, udpPort(conf.TLS.PortDNSOverQUIC))
+	}
+
+	var errs []error
+	if err = tcpPorts.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("validating tcp ports: %w", err))
+	}
+
+	if err = udpPorts.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("validating udp ports: %w", err))
+	}
+
+	return errors.Join(errs...)
 }
 
 // udpPort is the port number for UDP protocol.

@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -429,7 +428,7 @@ func setupBindOpts(opts options) (err error) {
 		config.HTTPConfig.Address = bindAddr
 
 		if config.HTTPConfig.Address.Port() != 0 {
-			err = checkPorts()
+			err = validateConfigPorts(config)
 			if err != nil {
 				// Don't wrap the error, because it's informative enough as is.
 				return err
@@ -445,7 +444,7 @@ func setupBindOpts(opts options) (err error) {
 			opts.bindPort,
 		)
 
-		err = checkPorts()
+		err = validateConfigPorts(config)
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
@@ -585,34 +584,6 @@ func setupDNSFilteringConf(
 	})
 	if err != nil {
 		return fmt.Errorf("initializing safesearch: %w", err)
-	}
-
-	return nil
-}
-
-// checkPorts is a helper for ports validation in config.
-func checkPorts() (err error) {
-	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
-
-	udpPorts := aghalg.UniqChecker[udpPort]{}
-	addPorts(udpPorts, udpPort(config.DNS.Port))
-
-	if config.TLS.Enabled {
-		addPorts(
-			tcpPorts,
-			tcpPort(config.TLS.PortHTTPS),
-			tcpPort(config.TLS.PortDNSOverTLS),
-			tcpPort(config.TLS.PortDNSCrypt),
-		)
-
-		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
-	}
-
-	if err = tcpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating tcp ports: %w", err)
-	} else if err = udpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
 	return nil
