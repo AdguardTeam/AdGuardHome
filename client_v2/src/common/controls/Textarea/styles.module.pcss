@@ -165,7 +165,8 @@
 
 .overlay {
     white-space: pre-wrap;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
     padding: 16px;
     box-sizing: border-box;
     font-size: 16px;
@@ -200,7 +201,12 @@
     resize: none !important;
     outline: none;
     white-space: pre-wrap;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
+
+    &::selection {
+        color: var(--default-main-text);
+    }
 
     &::placeholder {
         color: var(--default-placeholder);

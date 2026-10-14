@@ -10,33 +10,34 @@ For code guidelines, architecture, and project structure, see
 
 ## Table of Contents
 
-- [Development Guide — client\_v2](#development-guide--client_v2)
-  - [Table of Contents](#table-of-contents)
-  - [Prerequisites](#prerequisites)
-  - [Getting Started](#getting-started)
-    - [Clone and Install](#clone-and-install)
-    - [Running the Dev Server](#running-the-dev-server)
-    - [Production Build](#production-build)
-  - [Development Workflow](#development-workflow)
-    - [Branching and Pull Requests](#branching-and-pull-requests)
-    - [Code Style and Formatting](#code-style-and-formatting)
-    - [Type Checking](#type-checking)
-    - [Running Tests](#running-tests)
-    - [Translations](#translations)
-  - [Common Tasks](#common-tasks)
-    - [Adding a Component](#adding-a-component)
-    - [Adding a Store](#adding-a-store)
-    - [Adding an API Method](#adding-an-api-method)
-    - [Adding a Translation Key](#adding-a-translation-key)
-    - [Debugging in VS Code](#debugging-in-vs-code)
-  - [Troubleshooting](#troubleshooting)
-    - [Dev server cannot find `../AdguardHome.yaml`](#dev-server-cannot-find-adguardhomeyaml)
-    - [API requests return 404 or connection refused](#api-requests-return-404-or-connection-refused)
-    - [E2e tests fail to start](#e2e-tests-fail-to-start)
-    - ["Multiple instances of Solid" errors in tests](#multiple-instances-of-solid-errors-in-tests)
-    - [Port already in use](#port-already-in-use)
-    - [Type errors after adding imports](#type-errors-after-adding-imports)
-  - [Additional Resources](#additional-resources)
+- [Development Guide — client_v2](#development-guide--client_v2)
+    - [Table of Contents](#table-of-contents)
+    - [Prerequisites](#prerequisites)
+    - [Getting Started](#getting-started)
+        - [Clone and Install](#clone-and-install)
+        - [Running the Dev Server](#running-the-dev-server)
+        - [Production Build](#production-build)
+    - [Development Workflow](#development-workflow)
+        - [Branching and Pull Requests](#branching-and-pull-requests)
+        - [Code Style and Formatting](#code-style-and-formatting)
+        - [Type Checking](#type-checking)
+        - [Running Tests](#running-tests)
+        - [Translations](#translations)
+    - [Common Tasks](#common-tasks)
+        - [Adding a Component](#adding-a-component)
+        - [Adding a Store](#adding-a-store)
+        - [Adding an API Method](#adding-an-api-method)
+        - [Adding a Translation Key](#adding-a-translation-key)
+        - [Debugging in VS Code](#debugging-in-vs-code)
+    - [Troubleshooting](#troubleshooting)
+        - [Dev server cannot find `../AdguardHome.yaml`](#dev-server-cannot-find-adguardhomeyaml)
+        - [No backend to check the UI against](#no-backend-to-check-the-ui-against)
+        - [API requests return 404 or connection refused](#api-requests-return-404-or-connection-refused)
+        - [E2e tests fail to start](#e2e-tests-fail-to-start)
+        - ["Multiple instances of Solid" errors in tests](#multiple-instances-of-solid-errors-in-tests)
+        - [Port already in use](#port-already-in-use)
+        - [Type errors after adding imports](#type-errors-after-adding-imports)
+    - [Additional Resources](#additional-resources)
 
 ## Prerequisites
 
@@ -280,6 +281,40 @@ The dev server reads the backend host and port from the root
 contains `bind_host` and `bind_port`. If it is missing, the server falls back
 to `0.0.0.0:80` and the proxy will not reach the backend. Start the backend or
 create the config file.
+
+The same applies when the file exists but is unreadable — for example
+root-owned with mode `0600`, i.e. a service running as `root`: there is no way
+to point the proxy at another backend, so use the disposable instance from
+[No backend to check the UI against](#no-backend-to-check-the-ui-against).
+
+### No backend to check the UI against
+
+Look for one first — with `curl` or `netstat`, not `lsof`, which hides
+root-owned sockets when run as a non-root user:
+
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3001/control/status
+```
+
+`401`/`200` means AdGuard Home (login required / auth disabled), `404` is
+another server, and a connection error means nothing listens. The port is
+`bind_port` from `AdguardHome.yaml`; if that file is unreadable, probe the
+ports from `netstat -an -p tcp | grep LISTEN`.
+
+Otherwise start the disposable instance the e2e suite uses — no root, no
+changes to the root config. `npm run test:e2e` writes its config first (or
+call `tests/e2e/prepareConfig.mjs` with the `E2E_*` values from
+`playwright.config.ts`), then:
+
+```sh
+# from the repository root
+./AdGuardHome --local-frontend -v -c /tmp/AdGuard.e2e.yaml --work-dir /tmp/AdGuard.e2e.work
+```
+
+Open `http://127.0.0.1:3000/` and sign in with the test account from
+`tests/constants.ts`. `--local-frontend` serves `build/static/`, so
+`npm run build-dev` in `client_v2/` is enough to see UI changes; stop it with
+`kill $(lsof -ti :3000)`.
 
 ### API requests return 404 or connection refused
 

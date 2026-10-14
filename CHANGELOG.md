@@ -46,6 +46,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Invalid secondary bootstrap resolver IPv4 address ([#8637]).
 
+- The *Server addresses* dialog overflowing horizontally when a long value is entered.
+
+- Long unbreakable values in the settings rows overflowing the page.
+
 ### Removed
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27.1-notes].
