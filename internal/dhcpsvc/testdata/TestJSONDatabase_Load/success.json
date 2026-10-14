@@ -22,6 +22,13 @@
       "static": false
     },
     {
+      "expires": "2025-01-01T02:01:01Z",
+      "ip": "192.0.2.104",
+      "hostname": "renewing4",
+      "mac": "00:00:5e:00:53:06",
+      "static": false
+    },
+    {
       "expires": "",
       "ip": "2001:db8::65",
       "hostname": "static6",
@@ -40,6 +47,13 @@
       "ip": "2001:db8::67",
       "hostname": "expired6",
       "mac": "00:00:5e:00:53:04",
+      "static": false
+    },
+    {
+      "expires": "2025-01-01T02:01:01Z",
+      "ip": "2001:db8::68",
+      "hostname": "renewing6",
+      "mac": "00:00:5e:00:53:06",
       "static": false
     }
   ],
