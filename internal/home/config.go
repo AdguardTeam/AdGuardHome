@@ -584,6 +584,39 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		return err
 	}
 
+	err = validateTransportPorts()
+	if err != nil {
+		// Don't wrap the error, because it is informative enough as is.
+		return err
+	}
+
+	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
+		config.Filtering.FiltersUpdateIntervalHours = 24
+	}
+
+	if err = config.HTTPConfig.Validate(); err != nil {
+		return fmt.Errorf("validating http config: %w", err)
+	}
+
+	if config.TLS.Enabled && config.TLS.PortHTTPS != 0 && len(config.HTTPConfig.DoH.Routes) == 0 {
+		return fmt.Errorf(
+			"doh routes: %w; expected at least one value with enabled doh",
+			errors.ErrNoValue,
+		)
+	}
+
+	if len(config.Users) == 0 {
+		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
+	}
+
+	validateLanguage(l, ctx, config.Language)
+
+	return nil
+}
+
+// validateTransportPorts validates the specified TCP and UDP ports and returns
+// an error if any of them are invalid.
+func validateTransportPorts() (err error) {
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
 	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
 
@@ -603,39 +636,6 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
 	}
 
-	err = validateTransportPorts(tcpPorts, udpPorts)
-	if err != nil {
-		// Don't wrap the error, because it is informative enough as is.
-		return err
-	}
-
-	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
-		config.Filtering.FiltersUpdateIntervalHours = 24
-	}
-
-	if err = config.HTTPConfig.Validate(); err != nil {
-		return fmt.Errorf("validating http config: %w", err)
-	}
-
-	if config.TLS.Enabled && config.TLS.PortHTTPS != 0 && len(config.HTTPConfig.DoH.Routes) == 0 {
-		return errors.Error("doh is enabled but no routes are configured")
-	}
-
-	if len(config.Users) == 0 {
-		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
-	}
-
-	validateLanguage(l, ctx, config.Language)
-
-	return nil
-}
-
-// validateTransportPorts validates the specified TCP and UDP ports and returns
-// an error if any of them are invalid.
-func validateTransportPorts(
-	tcpPorts aghalg.UniqChecker[tcpPort],
-	udpPorts aghalg.UniqChecker[udpPort],
-) (err error) {
 	err = tcpPorts.Validate()
 	if err != nil {
 		return fmt.Errorf("validating tcp ports: %w", err)
@@ -649,8 +649,8 @@ func validateTransportPorts(
 	return nil
 }
 
-// validateLanguage validates the specified language and clears with a warning
-// if it is unsupported.  l must not be nil.
+// validateLanguage validates the specified language and clears it with a
+// warning if it is unsupported.  l must not be nil.
 func validateLanguage(l *slog.Logger, ctx context.Context, language string) {
 	if language != "" && !allowedLanguages.Has(language) {
 		l.WarnContext(ctx, "unsupported language", "lang", language)
