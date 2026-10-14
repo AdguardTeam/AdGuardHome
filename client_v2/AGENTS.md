@@ -9,6 +9,7 @@
 - [Project Structure](#project-structure)
 - [Build And Test Commands](#build-and-test-commands)
     - [Fast verification loop](#fast-verification-loop)
+    - [Backend for UI checks](#backend-for-ui-checks)
 - [Contribution Instructions](#contribution-instructions)
 - [Code Guidelines](#code-guidelines)
     - [System Design](#system-design)
@@ -167,6 +168,33 @@ runs; confirm the command actually ran before trusting its log. A stale log
 from an earlier run is the easiest way to "verify" a fix that was never
 checked.
 
+### Backend for UI checks
+
+Find a running instance with `curl` or `netstat`, never `lsof`: as a non-root
+user `lsof` hides root-owned sockets, and a root-owned (mode `0600`)
+`AdGuardHome.yaml` means the instance runs as a service under `root`. The
+signature is `GET /control/status` — `401` (login required) or `200` (auth
+disabled) on AdGuard Home, `404` on an unrelated server, and a connection
+error when nothing listens. The port is `bind_port` from `AdGuardHome.yaml`;
+if that file is unreadable, probe the ports listed by
+`netstat -an -p tcp | grep LISTEN`.
+
+If no instance is running, do not hand-roll a backend or a proxy — start the
+disposable one the e2e suite uses, from the repository root:
+
+```sh
+./AdGuardHome --local-frontend -v -c /tmp/AdGuard.e2e.yaml --work-dir /tmp/AdGuard.e2e.work
+```
+
+- `npm run test:e2e` writes that config and work dir through
+  `tests/e2e/prepareConfig.mjs`; the `webServer` block in
+  `playwright.config.ts` holds the exact command and the `E2E_*` values.
+- `--local-frontend` serves `../build/static/` from disk, so
+  `npm run build-dev` plus a page reload shows your change.
+- It listens on `http://127.0.0.1:3000` (not `bind_port`) and is disposable:
+  sign in with the test account in `tests/constants.ts`, not with the user's
+  `.env.local` credentials. Outside CI, Playwright reuses a running instance.
+
 # Contribution Instructions
 
 - You MUST verify your work with the linter, formatter, and type checker.
@@ -194,20 +222,21 @@ checked.
   typecheck, and all unit tests must pass before the task is done.
 
 - You MUST verify UI changes against the running AdGuard Home instance, not
-  the webpack dev server. Rebuild with `npm run build-dev` (quick iteration)
+  the webpack dev server: rebuild with `npm run build-dev` (quick iteration)
   or `npm run build-prod` (final check) — both emit to `../build/static/` —
-  then open `http://127.0.0.1:<bind_port>/`, where `bind_port` comes from the
-  local `AdGuardHome.yaml` (commonly `3001` or `80`). Do not use webpack's
-  default port `8080`; the dev server, when used, runs on `bind_port + 8000`.
+  and open `http://127.0.0.1:<bind_port>/` from the local `AdGuardHome.yaml`
+  (commonly `3001` or `80`, never webpack's `8080`). See "Backend for UI
+  checks" above to find or start an instance when nothing is running, or when
+  that config is unreadable (root-owned) and the dev server falls back to
+  `0.0.0.0:80` without a backend.
 
 - When you need to sign in to the running AdGuard Home instance to verify UI
   changes in the browser, read the credentials from `client_v2/.env.local`
-  (git-ignored; keys `ADGUARD_TEST_USERNAME` / `ADGUARD_TEST_PASSWORD` —
-  relative to `client_v2/` it is `.env.local`). Never echo the password into
-  the chat, terminal output, or log files, and never commit or copy the file
-  elsewhere. If the file is missing, ask the user for the login and password
-  with `#tool:vscode/askQuestions` — do not guess credentials or reuse
-  hardcoded ones.
+  (git-ignored; keys `ADGUARD_TEST_USERNAME` / `ADGUARD_TEST_PASSWORD`).
+  Never echo the password into the chat, terminal output, or log files, and
+  never commit or copy the file elsewhere. If the file is missing, ask the
+  user for the login and password with `#tool:vscode/askQuestions` — do not
+  guess credentials or reuse hardcoded ones.
 
 - When making changes to the project structure, ensure the Project Structure
   section in `AGENTS.md` is updated and remains valid.
@@ -352,7 +381,7 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   when no class-based solution exists — justify it in a comment.
 - **Comments**: Write comments only where they earn their place, and keep
   them useful and compact — one or two lines explaining a non-obvious
-  *why*: a workaround, a browser quirk, or a cross-file constraint a
+  _why_: a workaround, a browser quirk, or a cross-file constraint a
   reader would otherwise break. Do not narrate what a rule or function
   does, restate selector/property names, or spell out measurements,
   arithmetic, and design history; that belongs with the value it

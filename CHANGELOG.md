@@ -46,6 +46,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Invalid secondary bootstrap resolver IPv4 address ([#8637]).
 
+- The *Server addresses* dialog overflowing horizontally when a long value is entered. Long unbreakable values in the settings rows overflowing the page.
+
 - Encrypted DNS server addresses not appearing in the Setup Guide until the page was reloaded after enabling encryption.
 
 ### Removed
