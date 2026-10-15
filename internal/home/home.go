@@ -201,23 +201,40 @@ func setupContext(
 	if isFirstRun {
 		baseLogger.InfoContext(ctx, "this is the first time adguard home has been launched")
 		checkNetworkPermissions(ctx, baseLogger)
-
-		return
 	}
+
+	confFileExists := false
 
 	// TODO(s.chzhen):  Consider adding a key prefix.
 	err := parseConfig(ctx, baseLogger, workDir, confPath)
 	if err != nil {
-		baseLogger.ErrorContext(ctx, "failed to parse configuration file", slogutil.KeyError, err)
+		if !errors.Is(err, fs.ErrNotExist) || !isFirstRun {
+			baseLogger.ErrorContext(
+				ctx,
+				"failed to parse configuration file",
+				slogutil.KeyError, err,
+			)
 
-		os.Exit(osutil.ExitCodeFailure)
+			os.Exit(osutil.ExitCodeFailure)
+		}
+
+		baseLogger.InfoContext(
+			ctx,
+			"configuration file does not exist, because this is the first run",
+		)
+	} else {
+		confFileExists = true
 	}
 
-	if opts.checkConfig {
+	if !opts.checkConfig {
+		return
+	}
+
+	if confFileExists {
 		baseLogger.InfoContext(ctx, "configuration file is ok")
-
-		os.Exit(osutil.ExitCodeSuccess)
 	}
+
+	os.Exit(osutil.ExitCodeSuccess)
 }
 
 // logIfUnsupported logs a formatted warning if the error is one of the
