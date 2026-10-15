@@ -36,6 +36,8 @@ type ManagerConfig struct {
 
 	// RootDir is the root directory of the current OS.  It's used to access the
 	// configuration files of the services.  It must not be nil.
+	//
+	// TODO(e.burkov):  Use.
 	RootDir *os.Root
 }
 

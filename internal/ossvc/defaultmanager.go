@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
@@ -22,9 +21,9 @@ import (
 // TODO(e.burkov):  Replace it with the native implementations for every
 // supported OS and remove it along with this file.
 type manager struct {
-	logger        *slog.Logger
 	clock         timeutil.Clock
 	cmdCons       executil.CommandConstructor
+	logger        *slog.Logger
 	isOpenWrt     bool
 	isUnixSystemV bool
 }
@@ -144,15 +143,7 @@ const optionSvcInfo = "SvcInfo"
 func (m *manager) install(ctx context.Context, action *ActionInstall) (err error) {
 	m.logger.InfoContext(ctx, "installing service", "name", action.ServiceName)
 
-	execPath := action.ExecutablePath
-	if execPath == "" {
-		execPath, err = os.Executable()
-		if err != nil {
-			return fmt.Errorf("getting executable path: %w", err)
-		}
-	}
-
-	execPath, err = filepath.Abs(execPath)
+	execPath, err := filepath.Abs(action.ExecutablePath)
 	if err != nil {
 		return fmt.Errorf("getting absolute executable path: %w", err)
 	}

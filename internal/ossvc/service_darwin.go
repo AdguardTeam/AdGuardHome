@@ -115,7 +115,7 @@ func (d *darwinService) Uninstall() (err error) {
 	// configured to write into, so remove them here.
 	//
 	// TODO(e.burkov): Pass context.
-	removeLaunchdStdLogs(context.TODO(), d.logger)
+	d.removeLaunchdStdLogs(context.TODO())
 
 	return nil
 }
@@ -202,14 +202,14 @@ const (
 
 // removeLaunchdStdLogs removes launchd stdout and stderr log files, if needed,
 // and logs errors at warning level.
-func removeLaunchdStdLogs(ctx context.Context, logger *slog.Logger) {
+func (d *darwinService) removeLaunchdStdLogs(ctx context.Context) {
 	err := os.Remove(launchdStdoutPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		logger.WarnContext(ctx, "removing stdout file", "err", err)
+		d.logger.WarnContext(ctx, "removing stdout file", "err", err)
 	}
 
 	err = os.Remove(launchdStderrPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		logger.WarnContext(ctx, "removing stderr file", "err", err)
+		d.logger.WarnContext(ctx, "removing stderr file", "err", err)
 	}
 }
