@@ -15,7 +15,6 @@ export const RequirementIcon = (props: RequirementIconProps) => {
 
 export type PasswordRequirementsState = {
     minLength: boolean;
-    allowedChars: boolean;
     lowercase: boolean;
     uppercase: boolean;
     match: boolean;
@@ -34,11 +33,6 @@ export const PasswordRequirements = (props: PasswordRequirementsProps) => (
             <li class={styles.bannerItem}>
                 <RequirementIcon ok={props.requirements.minLength} />
                 {intl.getMessage('password_requirements_characters')}
-            </li>
-
-            <li class={styles.bannerItem}>
-                <RequirementIcon ok={props.requirements.allowedChars} />
-                {intl.getMessage('password_requirements_special')}
             </li>
 
             <li class={styles.bannerItem}>

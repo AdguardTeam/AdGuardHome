@@ -13,8 +13,6 @@ import {
     hasMinLength,
     hasLowercase,
     hasUppercase,
-    hasAllowedChars,
-    hasNumberOrSpecial,
 } from './helpers/helpers';
 import styles from './styles.module.pcss';
 
@@ -79,19 +77,11 @@ export const Auth = (props: Props) => {
         return undefined;
     };
 
-    const validatePasswordSpecial = (value: string) => {
-        if (value && !(hasAllowedChars(value) && hasNumberOrSpecial(value))) {
-            return intl.getMessage('password_requirements_special');
-        }
-        return undefined;
-    };
-
     const requirements = createMemo((): PasswordRequirementsState => {
         const pwd = password();
         const confirmPwd = confirmPassword();
         return {
             minLength: pwd.length > 0 && hasMinLength(pwd),
-            allowedChars: pwd.length > 0 && hasAllowedChars(pwd) && hasNumberOrSpecial(pwd),
             lowercase: pwd.length > 0 && hasLowercase(pwd),
             uppercase: pwd.length > 0 && hasUppercase(pwd),
             match: pwd.length > 0 && confirmPwd.length > 0 && pwd === confirmPwd,
@@ -109,7 +99,6 @@ export const Auth = (props: Props) => {
             validateRequiredValue(username()) === undefined &&
             validatePasswordLength(password()) === undefined &&
             requirementsMet.minLength &&
-            requirementsMet.allowedChars &&
             requirementsMet.lowercase &&
             requirementsMet.uppercase &&
             requirementsMet.match &&
@@ -151,7 +140,6 @@ export const Auth = (props: Props) => {
                                 validatePasswordLengthMsg,
                                 validatePasswordLowercase,
                                 validatePasswordUppercase,
-                                validatePasswordSpecial,
                             ]}
                         >
                             {(field, props) => (

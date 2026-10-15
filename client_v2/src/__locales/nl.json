@@ -510,7 +510,6 @@
   "password_requirements_characters": "Minimaal 8 tekens",
   "password_requirements_lowercase": "Minimaal 1 kleine letter",
   "password_requirements_match": "Wachtwoorden komen overeen",
-  "password_requirements_special": "Engelse letters, cijfers en speciale tekens",
   "password_requirements_uppercase": "Minstens 1 hoofdletter",
   "pause_for_hour": "Pauzeren voor %count% uur",
   "pause_for_minutes": "| Pauzeren voor %count% minuut | Pauzeren voor %count% minuten",

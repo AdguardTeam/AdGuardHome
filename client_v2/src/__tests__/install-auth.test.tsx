@@ -42,10 +42,10 @@ const errorTextFor = (id: string) => {
 
 const nextButton = () => document.querySelector('#install_next') as HTMLButtonElement;
 
-/** Whether each of the five checklist items is satisfied (first checklist instance). */
+/** Whether each of the four checklist items is satisfied (first checklist instance). */
 const requirementStates = () =>
     Array.from(document.querySelectorAll('[class*="bannerItem"]'))
-        .slice(0, 5)
+        .slice(0, 4)
         .map((item) => Boolean(item.querySelector('[class*="green"]')));
 
 const acceptConsent = () => {
@@ -114,14 +114,14 @@ describe('install wizard Auth step', () => {
         expect(onAuthSubmit).not.toHaveBeenCalled();
     });
 
-    it('rejects a password without numbers or special characters', async () => {
-        setup();
+    it('accepts a password without numbers or special characters', async () => {
+        const { onAuthSubmit } = setup();
         fillValidForm('GrünGrün');
+        acceptConsent();
 
+        await waitFor(() => expect(nextButton().disabled).toBe(false));
         submitForm();
-        await waitFor(() =>
-            expect(errorTextFor('install_password')).toBe(copy('password_requirements_special')),
-        );
+        await waitFor(() => expect(onAuthSubmit).toHaveBeenCalledTimes(1));
     });
 
     it('rejects a too-short password', async () => {
@@ -156,7 +156,7 @@ describe('install wizard Auth step', () => {
         acceptConsent();
         await waitFor(() => expect(nextButton().disabled).toBe(false));
 
-        typeInto('install_password', 'GrünGrün');
+        typeInto('install_password', 'grüngrün');
         await waitFor(() => expect(nextButton().disabled).toBe(true));
     });
 
@@ -256,19 +256,18 @@ describe('install wizard Auth step', () => {
         typeInto('install_password', 'P@ssw0rd🔑');
 
         // The confirmation is still empty, so only the match requirement fails.
-        expect(requirementStates()).toEqual([true, true, true, true, false]);
+        expect(requirementStates()).toEqual([true, true, true, false]);
 
         typeInto('install_confirm_password', 'P@ssw0rd🔑');
 
-        expect(requirementStates()).toEqual([true, true, true, true, true]);
+        expect(requirementStates()).toEqual([true, true, true, true]);
     });
 
-    it('renders all five requirement labels from the design', () => {
+    it('renders all four requirement labels from the design', () => {
         setup();
 
         const labels = [
             copy('password_requirements_characters'),
-            copy('password_requirements_special'),
             copy('password_requirements_lowercase'),
             copy('password_requirements_uppercase'),
             copy('password_requirements_match'),

@@ -510,7 +510,6 @@
   "password_requirements_characters": "Tối thiểu 8 ký tự",
   "password_requirements_lowercase": "Ít nhất 1 chữ cái viết thường",
   "password_requirements_match": "Mật khẩu trùng khớp",
-  "password_requirements_special": "Chữ cái tiếng Anh, số và ký tự đặc biệt",
   "password_requirements_uppercase": "Ít nhất 1 chữ cái viết hoa",
   "pause_for_hour": "Tạm dừng trong %count% giờ",
   "pause_for_minutes": "Tạm dừng trong %count% phút | Tạm dừng trong %count% phút",

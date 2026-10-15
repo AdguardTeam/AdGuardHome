@@ -510,7 +510,6 @@
   "password_requirements_characters": "Najmanje 8 znakova",
   "password_requirements_lowercase": "Najmanje 1 malo slovo",
   "password_requirements_match": "Lozinke se podudaraju",
-  "password_requirements_special": "Engleska slova, brojevi i specijalni znakovi",
   "password_requirements_uppercase": "Najmanje 1 veliko slovo",
   "pause_for_hour": "Pauziraj na %count% sat",
   "pause_for_minutes": "| Pauziraj na %count% minut | Pauziraj na %count% minuta | Pauziraj na %count% minuta",
