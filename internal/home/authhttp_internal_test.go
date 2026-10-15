@@ -841,12 +841,10 @@ func BenchmarkAuthMiddlewareDefault(b *testing.B) {
 	for _, bc := range benchCases {
 		b.Run(bc.name, func(b *testing.B) {
 			req := authRequest("/control/profile", nil, bc.user, bc.pass)
-
-			var w *httptest.ResponseRecorder
+			w := httptest.NewRecorder()
 
 			b.ReportAllocs()
 			for b.Loop() {
-				w = httptest.NewRecorder()
 				h.ServeHTTP(w, req)
 			}
 
@@ -860,7 +858,7 @@ func BenchmarkAuthMiddlewareDefault(b *testing.B) {
 	//	goarch: arm64
 	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/home
 	//	cpu: Apple M1 Pro
-	//	BenchmarkAuthMiddlewareDefault/success-8         	10	63334050 ns/op	6739 B/op	25 allocs/op
-	//	BenchmarkAuthMiddlewareDefault/unknown_user-8    	10	63429683 ns/op	5686 B/op	20 allocs/op
-	//	BenchmarkAuthMiddlewareDefault/wrong_password-8  	10	63391754 ns/op	5644 B/op	20 allocs/op
+	//	BenchmarkAuthMiddlewareDefault/success-8         	      16	  66631250 ns/op	    5749 B/op	      17 allocs/op
+	//	BenchmarkAuthMiddlewareDefault/unknown_user-8    	      18	  64178595 ns/op	    5400 B/op	      16 allocs/op
+	//	BenchmarkAuthMiddlewareDefault/wrong_password-8  	      18	  64253727 ns/op	    5387 B/op	      16 allocs/op
 }

@@ -223,7 +223,7 @@ func newCookie(
 
 		// Run fakePassword.Authenticate against received password for unknown
 		// usernames so known and unknown paths take comparable time.
-		fakePassword.Authenticate(ctx, req.Password)
+		_ = fakePassword.Authenticate(ctx, req.Password)
 
 		return nil, errInvalidLogin
 	}
@@ -587,7 +587,7 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 	if user == nil {
 		// Run fakePassword.Authenticate against received password for unknown
 		// usernames so known and unknown paths take comparable time.
-		fakePassword.Authenticate(ctx, pass)
+		_ = fakePassword.Authenticate(ctx, pass)
 
 		return nil, errInvalidLogin
 	}
