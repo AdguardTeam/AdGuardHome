@@ -478,6 +478,7 @@ func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) 
 	// Do the upgrade if necessary.
 	config.fileData, err = readConfigFile(ctx, l, workDir, confPath)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
