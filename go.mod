@@ -4,7 +4,8 @@ go 1.27.2
 
 require (
 	github.com/AdguardTeam/dnscrypt v0.0.3
-	github.com/AdguardTeam/dnsproxy v0.86.0
+	// TODO(d.kolyshev):  Update to tagged version.
+	github.com/AdguardTeam/dnsproxy v0.86.1-0.20261015020140-e97c5b4d62d5
 	github.com/AdguardTeam/golibs v0.35.16
 	github.com/AdguardTeam/urlfilter v0.23.4
 	github.com/NYTimes/gziphandler v1.1.1
@@ -103,7 +104,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba // indirect
+	golang.org/x/exp v0.0.0-20261007192929-f45ad48fbe92 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20261011100332-faecfb24eb49 // indirect
 	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
