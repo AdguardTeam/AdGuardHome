@@ -20,9 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// unit is a convenience alias for an empty struct.
-type unit = struct{}
-
 // testLocalTLD is a common local TLD for tests.
 const testLocalTLD = "local"
 

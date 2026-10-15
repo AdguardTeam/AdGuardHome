@@ -183,6 +183,7 @@ func TestConfig_Validate(t *testing.T) {
 	t.Parallel()
 
 	valid := &dhcpsvc.Config{
+		AddressChecker:       dhcpsvc.EmptyAddressChecker{},
 		Interfaces:           testInterfaceConf,
 		NetworkDeviceManager: dhcpsvc.EmptyNetworkDeviceManager{},
 		Logger:               testLogger,
@@ -211,6 +212,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		name: "bad_icmp_timeout",
 		conf: &dhcpsvc.Config{
+			AddressChecker:       valid.AddressChecker,
 			Interfaces:           valid.Interfaces,
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               valid.Logger,
@@ -223,6 +225,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		name: "bad_db_filepath",
 		conf: &dhcpsvc.Config{
+			AddressChecker:       valid.AddressChecker,
 			Interfaces:           valid.Interfaces,
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               valid.Logger,
@@ -235,6 +238,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		name: "no_interfaces",
 		conf: &dhcpsvc.Config{
+			AddressChecker:       valid.AddressChecker,
 			Interfaces:           nil,
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               valid.Logger,
@@ -247,6 +251,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		name: "nil_network_manager",
 		conf: &dhcpsvc.Config{
+			AddressChecker:       valid.AddressChecker,
 			Interfaces:           valid.Interfaces,
 			NetworkDeviceManager: nil,
 			Logger:               valid.Logger,
@@ -259,6 +264,7 @@ func TestConfig_Validate(t *testing.T) {
 	}, {
 		name: "no_logger",
 		conf: &dhcpsvc.Config{
+			AddressChecker:       valid.AddressChecker,
 			Interfaces:           valid.Interfaces,
 			NetworkDeviceManager: valid.NetworkDeviceManager,
 			Logger:               nil,
@@ -268,6 +274,19 @@ func TestConfig_Validate(t *testing.T) {
 			Enabled:              valid.Enabled,
 		},
 		wantErrMsg: "conf.Logger: no value",
+	}, {
+		name: "nil_address_checker",
+		conf: &dhcpsvc.Config{
+			AddressChecker:       nil,
+			Interfaces:           valid.Interfaces,
+			NetworkDeviceManager: valid.NetworkDeviceManager,
+			Logger:               valid.Logger,
+			LocalDomainName:      valid.LocalDomainName,
+			Database:             valid.Database,
+			ICMPTimeout:          valid.ICMPTimeout,
+			Enabled:              valid.Enabled,
+		},
+		wantErrMsg: "conf.AddressChecker: no value",
 	}}
 
 	for _, tc := range testCases {

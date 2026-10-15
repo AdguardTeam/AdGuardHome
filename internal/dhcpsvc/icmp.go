@@ -227,8 +227,7 @@ func sendEchoRequest(
 // waitEchoResponse reads conn until either an echo reply from ip matching the
 // request with the [echoSequenceNumber] sequence number is received or the
 // deadline of conn is exceeded.  It reports whether such a reply has been
-// received.  Any other messages are skipped, since raw sockets receive all the
-// ICMP traffic of the host.
+// received.
 func waitEchoResponse(
 	ctx context.Context,
 	l *slog.Logger,
@@ -277,8 +276,8 @@ func icmpTypes(ip netip.Addr) (reqType, replyType icmp.Type) {
 }
 
 // isMatchingEchoReply reports whether msg is an echo reply of type replyType to
-// the request with the [echoSequenceNumber] sequence number received from ip.
-// It doesn't check for a matching ID.
+// the request with the [echoSequenceNumber] received from ip.  It doesn't check
+// for a matching ID.
 func isMatchingEchoReply(
 	msg *icmp.Message,
 	replyType icmp.Type,
