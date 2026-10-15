@@ -510,7 +510,7 @@
   "password_requirements_characters": "Minimum 8 characters",
   "password_requirements_lowercase": "At least 1 lowercase letter",
   "password_requirements_match": "Passwords match",
-  "password_requirements_special": "Letters, numbers, and special characters",
+  "password_requirements_special": "Any letters, numbers, and special characters",
   "password_requirements_uppercase": "At least 1 uppercase letter",
   "pause_for_hour": "Pause for %count% hour",
   "pause_for_minutes": "| Pause for %count% minute | Pause for %count% minutes",
