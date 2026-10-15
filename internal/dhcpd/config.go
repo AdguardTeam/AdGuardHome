@@ -29,7 +29,8 @@ type ServerConfig struct {
 	// nil.
 	ConfModifier agh.ConfigModifier
 
-	// HTTPReg is used to register an HTTP handler.
+	// HTTPReg is used to register an HTTP handler.  It may be nil, in which
+	// case no HTTP handlers are registered.
 	HTTPReg aghhttp.Registrar
 
 	// Logger is used for logging the operation of the DHCP server.  It must not
@@ -37,12 +38,13 @@ type ServerConfig struct {
 	Logger *slog.Logger
 
 	// InterfaceName is the name of the network interface the DHCP server
-	// listens on.
+	// listens on.  It must be a valid network interface name.
 	InterfaceName string
 
 	// LocalDomainName is the domain name used for DHCP hosts.  For example, a
 	// DHCP client with the hostname "myhost" can be addressed as "myhost.lan"
-	// when LocalDomainName is "lan".
+	// when LocalDomainName is "lan".  It must be a valid domain name if it is
+	// not empty.
 	//
 	// TODO(e.burkov):  Probably, remove this field.  See the TODO on
 	// [Interface.Enabled].

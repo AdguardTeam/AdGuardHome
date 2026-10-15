@@ -236,6 +236,9 @@ const (
 	defaultParentalBlockHost     = "family-block.dns.adguard.com"
 )
 
+// defaultLocalDomainName is the default domain name used for DHCP hosts.
+const defaultLocalDomainName = "lan"
+
 // config is the global configuration structure.
 //
 // TODO(a.garipov, e.burkov): This global is awful and must be removed.
@@ -381,7 +384,7 @@ var config = &configuration{
 			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
 		},
 		InterfaceName:   "",
-		LocalDomainName: "lan",
+		LocalDomainName: defaultLocalDomainName,
 		Enabled:         false,
 	},
 	Clients: &clientsConfig{

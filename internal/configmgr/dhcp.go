@@ -18,12 +18,14 @@ type DHCPConfig struct {
 	Conf6 *DHCPv6Config `yaml:"dhcpv6"`
 
 	// InterfaceName is the name of the network interface the DHCP server
-	// listens on.
+	// listens on.  It must be a valid network interface name if Enabled is
+	// true.
 	InterfaceName string `yaml:"interface_name"`
 
 	// LocalDomainName is the domain name used for DHCP hosts.  For example, a
 	// DHCP client with the hostname "myhost" can be addressed as "myhost.lan"
-	// when LocalDomainName is "lan".
+	// when LocalDomainName is "lan".  It must be a valid domain name if it is
+	// not empty.
 	//
 	// TODO(e.burkov):  Probably, remove this field.  See the TODO on
 	// [dhcpd.Interface.Enabled].
@@ -61,7 +63,7 @@ type DHCPv4Config struct {
 	// Option with IP data (only 1 IP is supported):
 	//     DEC_CODE ip IP_ADDR
 	//
-	// It must not mutate.
+	// It must not be mutated after the configuration is loaded.
 	Options []string `yaml:"options"`
 
 	// ICMPTimeout is the time in milliseconds to wait for an ICMP reply during
