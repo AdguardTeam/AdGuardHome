@@ -99,10 +99,7 @@ export const Footer = () => {
                                 onClick={() => getVersion(true)}
                             >
                                 {versionLabel()}
-                                <Icon
-                                    icon={dashboardState.processingVersion ? 'loader' : 'refresh'}
-                                    color="green"
-                                />
+                                <Icon icon="refresh" color="green" />
                             </button>
                         </Show>
                     </Show>

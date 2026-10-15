@@ -22,6 +22,7 @@ vi.mock('panel/stores/toasts', () => ({
 }));
 vi.mock('panel/stores/dashboard', () => ({
     getDnsStatus: vi.fn(),
+    refreshDnsStatus: vi.fn(),
     dashboardState: { httpPort: 80, dnsPort: 53 },
 }));
 vi.mock('panel/helpers/helpers', () => ({
