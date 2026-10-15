@@ -25,7 +25,7 @@ vi.mock('panel/stores/toasts', () => ({
     addNoticeToast: mocks.addNoticeToast,
 }));
 
-import { getDnsStatus, getClients, dashboardState } from 'panel/stores/dashboard';
+import { getDnsStatus, getClients, refreshDnsStatus, dashboardState } from 'panel/stores/dashboard';
 
 describe('getDnsStatus', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -56,6 +56,55 @@ describe('getDnsStatus', () => {
         // allow microtasks for chained getVersion/getTlsStatus/getProfile
         await new Promise((r) => setTimeout(r, 0));
         expect(mocks.tlsStatus).toHaveBeenCalled();
+    });
+});
+
+describe('refreshDnsStatus', () => {
+    beforeEach(() => vi.clearAllMocks());
+
+    /** Serves `body` as the next status response. */
+    const respondWithStatus = (body: Record<string, unknown>) =>
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+            new Response(JSON.stringify(body), { status: 200 }),
+        );
+
+    it('updates the DNS addresses and ports', async () => {
+        respondWithStatus({
+            running: true,
+            dns_port: 53,
+            dns_addresses: ['https://dns.example.com:443/dns-query', '1.2.3.4'],
+            http_port: 80,
+        });
+
+        await refreshDnsStatus();
+
+        expect(dashboardState.dnsAddresses).toEqual([
+            'https://dns.example.com:443/dns-query',
+            '1.2.3.4',
+        ]);
+        expect(dashboardState.dnsPort).toBe(53);
+        expect(dashboardState.httpPort).toBe(80);
+    });
+
+    it('keeps the previous addresses and stays quiet when the request fails', async () => {
+        respondWithStatus({ running: true, dns_addresses: ['1.2.3.4'], dns_port: 53, http_port: 80 });
+        await refreshDnsStatus();
+
+        vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+        await refreshDnsStatus();
+
+        expect(dashboardState.dnsAddresses).toEqual(['1.2.3.4']);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
+    it('keeps the previous addresses while the core is not running', async () => {
+        respondWithStatus({ running: true, dns_addresses: ['1.2.3.4'], dns_port: 53, http_port: 80 });
+        await refreshDnsStatus();
+
+        respondWithStatus({ running: false });
+        await refreshDnsStatus();
+
+        expect(dashboardState.dnsAddresses).toEqual(['1.2.3.4']);
     });
 });
 
