@@ -33,6 +33,7 @@ import (
 type Updater struct {
 	client *http.Client
 	logger *slog.Logger
+	rename func(oldPath, newPath string) (err error)
 
 	cmdCons executil.CommandConstructor
 
@@ -54,8 +55,9 @@ type Updater struct {
 	// TODO(a.garipov): See if all of these fields actually have to be in
 	// this struct.
 	currentExeName string // current binary executable
-	updateDir      string // "workDir/agh-update-v0.103.0"
-	packageName    string // "workDir/agh-update-v0.103.0/pkg_name.tar.gz"
+	tempDir        string // temporary update staging directory
+	updateDir      string // "tempDir/agh-update-v0.103.0"
+	packageName    string // "tempDir/agh-update-v0.103.0/pkg_name.tar.gz"
 	backupDir      string // "workDir/agh-backup"
 	backupExeName  string // "workDir/agh-backup/AdGuardHome[.exe]"
 	updateExeName  string // "workDir/agh-update-v0.103.0/AdGuardHome[.exe]"
@@ -134,6 +136,7 @@ func NewUpdater(conf *Config) *Updater {
 	return &Updater{
 		client: conf.Client,
 		logger: conf.Logger,
+		rename: os.Rename,
 
 		cmdCons: conf.CommandConstructor,
 
@@ -222,7 +225,18 @@ func (u *Updater) NewVersion() (nv string) {
 
 // prepare fills all necessary fields in Updater object.
 func (u *Updater) prepare(ctx context.Context) (err error) {
-	u.updateDir = filepath.Join(u.workDir, fmt.Sprintf("agh-update-%s", u.newVersion))
+	u.tempDir, err = os.MkdirTemp("", "agh-update-*")
+	if err != nil {
+		return fmt.Errorf("creating temporary update dir: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(u.tempDir)
+		}
+	}()
+
+	u.updateDir = filepath.Join(u.tempDir, fmt.Sprintf("agh-update-%s", u.newVersion))
 
 	_, pkgNameOnly := filepath.Split(u.packageURL)
 	if pkgNameOnly == "" {
@@ -350,42 +364,85 @@ func (u *Updater) replace(ctx context.Context) (err error) {
 		return fmt.Errorf("copySupportingFiles(%s, %s) failed: %w", u.updateDir, u.workDir, err)
 	}
 
+	stagedExeName, err := u.stageExecutable()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = os.Remove(stagedExeName) }()
+
 	u.logger.InfoContext(
 		ctx,
 		"backing up current executable",
 		"from", u.currentExeName,
 		"to", u.backupExeName,
 	)
-	err = os.Rename(u.currentExeName, u.backupExeName)
+	err = u.rename(u.currentExeName, u.backupExeName)
 	if err != nil {
 		return err
 	}
 
 	if u.goos == "windows" {
 		// Use copy, since renaming fails with "File in use" error.
-		err = copyFile(u.updateExeName, u.currentExeName, aghos.DefaultPermExe)
+		err = copyFile(stagedExeName, u.currentExeName, aghos.DefaultPermExe)
 	} else {
-		err = os.Rename(u.updateExeName, u.currentExeName)
+		err = u.rename(stagedExeName, u.currentExeName)
 	}
 	if err != nil {
-		return err
+		return u.restoreExecutable(err)
 	}
 
 	u.logger.InfoContext(
 		ctx,
 		"replacing current executable",
-		"from", u.updateExeName,
+		"from", stagedExeName,
 		"to", u.currentExeName,
 	)
 
 	return nil
 }
 
+func (u *Updater) stageExecutable() (name string, err error) {
+	f, err := os.CreateTemp(filepath.Dir(u.currentExeName), ".agh-update-*")
+	if err != nil {
+		return "", fmt.Errorf("creating staged executable: %w", err)
+	}
+	name = f.Name()
+
+	err = f.Close()
+	if err == nil {
+		err = copyFile(u.updateExeName, name, aghos.DefaultPermExe)
+	}
+	if err == nil {
+		err = os.Chmod(name, aghos.DefaultPermExe)
+	}
+	if err != nil {
+		_ = os.Remove(name)
+
+		return "", fmt.Errorf("staging executable: %w", err)
+	}
+
+	return name, nil
+}
+
+func (u *Updater) restoreExecutable(installErr error) (err error) {
+	err = os.Remove(u.currentExeName)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return errors.Join(installErr, fmt.Errorf("removing failed executable: %w", err))
+	}
+
+	err = u.rename(u.backupExeName, u.currentExeName)
+	if err != nil {
+		return errors.Join(installErr, fmt.Errorf("restoring executable: %w", err))
+	}
+
+	return installErr
+}
+
 // clean removes the temporary directory itself and all it's contents.
 func (u *Updater) clean(ctx context.Context) {
-	err := os.RemoveAll(u.updateDir)
+	err := os.RemoveAll(u.tempDir)
 	if err != nil {
-		u.logger.WarnContext(ctx, "removing update dir", slogutil.KeyError, err)
+		u.logger.WarnContext(ctx, "removing temp update dir", slogutil.KeyError, err)
 	}
 }
 
