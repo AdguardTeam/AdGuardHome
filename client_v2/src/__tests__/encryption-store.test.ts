@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
     redirectToCurrentProtocol: vi.fn(),
+    refreshDnsStatus: vi.fn(),
 }));
 
 vi.mock('panel/api/generated', () => ({
@@ -20,6 +21,7 @@ vi.mock('panel/stores/toasts', () => ({
 }));
 vi.mock('panel/stores/dashboard', () => ({
     getDnsStatus: vi.fn(),
+    refreshDnsStatus: mocks.refreshDnsStatus,
     dashboardState: { httpPort: 80 },
 }));
 vi.mock('panel/helpers/helpers', () => ({
@@ -262,6 +264,18 @@ describe('setTlsConfig', () => {
         });
     });
 
+    it('refreshes the dashboard DNS status after a successful save', async () => {
+        mocks.tlsConfigure.mockImplementation(async (v: any) => ({
+            ...v,
+            certificate_chain: '',
+            private_key: '',
+        }));
+
+        await setTlsConfig({ certificate_chain: '', private_key: '', enabled: true });
+
+        expect(mocks.refreshDnsStatus).toHaveBeenCalledTimes(1);
+    });
+
     it('resolves { ok: false, error } and still toasts on failure by default', async () => {
         mocks.tlsConfigure.mockRejectedValue(
             new Error('http://127.0.0.1/control/tls/configure | saving: boom | 500'),
@@ -273,6 +287,7 @@ describe('setTlsConfig', () => {
         });
         expect(mocks.addErrorToast).toHaveBeenCalledTimes(1);
         expect(encryptionState.processingConfig).toBe(false);
+        expect(mocks.refreshDnsStatus).not.toHaveBeenCalled();
     });
 
     it('suppresses the error toast when requested so callers can render it inline', async () => {

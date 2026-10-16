@@ -36,17 +36,17 @@ func TestDB(t *testing.T) {
 
 	var (
 		userWithID = &aghuser.User{
-			ID:       aghuser.MustNewUserID(),
+			ID:       aghuser.NewUserID(),
 			Login:    "user_with_id",
 			Password: userWithIDPass,
 		}
 		userSecond = &aghuser.User{
-			ID:       aghuser.MustNewUserID(),
+			ID:       aghuser.NewUserID(),
 			Login:    "user_second",
 			Password: userSecondPass,
 		}
 		userDuplicateLogin = &aghuser.User{
-			ID:       aghuser.MustNewUserID(),
+			ID:       aghuser.NewUserID(),
 			Login:    userWithID.Login,
 			Password: userWithIDPass,
 		}
