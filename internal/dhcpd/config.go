@@ -31,6 +31,8 @@ type ServerConfig struct {
 
 	// HTTPReg is used to register an HTTP handler.  It may be nil, in which
 	// case no HTTP handlers are registered.
+	//
+	// TODO(d.kolyshev):  Use [aghhttp.EmptyRegistrar].
 	HTTPReg aghhttp.Registrar
 
 	// Logger is used for logging the operation of the DHCP server.  It must not
