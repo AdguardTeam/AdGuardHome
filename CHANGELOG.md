@@ -18,6 +18,10 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- DNS cache statistics on the dashboard: the number and the percentage of cache hits, the number of cache entries, and the cache memory usage ([#1453], [#8128]). See `openapi/CHANGELOG.md`.
+
 ### Security
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.2][go-1.27.2].
@@ -58,6 +62,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
 
+[#1453]:           https://github.com/AdguardTeam/AdGuardHome/issues/1453
+[#8128]:           https://github.com/AdguardTeam/AdGuardHome/issues/8128
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608

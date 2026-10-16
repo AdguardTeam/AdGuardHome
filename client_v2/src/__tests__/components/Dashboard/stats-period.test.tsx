@@ -55,6 +55,7 @@ vi.mock('panel/stores/stats', async () => {
         statsState,
         getStats: mocks.getStats,
         getStatsConfig: mocks.getStatsConfig,
+        getCacheInfo: vi.fn(),
         enableStatistics: vi.fn(),
     };
 });
