@@ -49,7 +49,7 @@ func (c *testBlockedClientChecker) IsBlockedClient(
 func newPersistentClient(name string) (c *client.Persistent) {
 	return &client.Persistent{
 		Name: name,
-		UID:  client.MustNewUID(),
+		UID:  client.NewUID(),
 		BlockedServices: &filtering.BlockedServices{
 			Schedule: schedule.EmptyWeekly(),
 		},
