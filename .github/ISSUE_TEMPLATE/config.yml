@@ -16,7 +16,7 @@
     'name': 'Q&A Discussions'
     'url': 'https://github.com/AdguardTeam/AdGuardHome/discussions'
   - 'about': >
-      Please check our Wiki for configuration file description, frequently asked questions, and other documentation
+      Please check our Knowledge Base for configuration file description, frequently asked questions, and other documentation
 
-    'name': 'Wiki'
-    'url': 'https://github.com/AdguardTeam/AdGuardHome/wiki'
+    'name': 'AdGuard DNS Knowledge Base'
+    'url': 'https://adguard-dns.io/kb/adguard-home/overview/'
