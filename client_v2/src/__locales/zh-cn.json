@@ -510,7 +510,6 @@
   "password_requirements_characters": "至少 8 个字符",
   "password_requirements_lowercase": "至少 1 个小写字母",
   "password_requirements_match": "密码匹配",
-  "password_requirements_special": "英文字母、数字和特殊字符",
   "password_requirements_uppercase": "至少 1 个大写字母",
   "pause_for_hour": "暂停 %count% 小时",
   "pause_for_minutes": "暂停 %count% 分钟 | 暂停 %count% 分钟",

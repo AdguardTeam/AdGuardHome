@@ -25,6 +25,7 @@ vi.mock('panel/stores/toasts', () => ({
     addNoticeToast: mocks.addNoticeToast,
 }));
 
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 import { getDnsStatus, getClients, refreshDnsStatus, dashboardState } from 'panel/stores/dashboard';
 
 describe('getDnsStatus', () => {
@@ -64,9 +65,9 @@ describe('refreshDnsStatus', () => {
 
     /** Serves `body` as the next status response. */
     const respondWithStatus = (body: Record<string, unknown>) =>
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-            new Response(JSON.stringify(body), { status: 200 }),
-        );
+        vi
+            .spyOn(globalThis, 'fetch')
+            .mockResolvedValue(new Response(JSON.stringify(body), { status: 200 }));
 
     it('updates the DNS addresses and ports', async () => {
         respondWithStatus({
@@ -87,7 +88,12 @@ describe('refreshDnsStatus', () => {
     });
 
     it('keeps the previous addresses and stays quiet when the request fails', async () => {
-        respondWithStatus({ running: true, dns_addresses: ['1.2.3.4'], dns_port: 53, http_port: 80 });
+        respondWithStatus({
+            running: true,
+            dns_addresses: ['1.2.3.4'],
+            dns_port: 53,
+            http_port: 80,
+        });
         await refreshDnsStatus();
 
         vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
@@ -98,7 +104,12 @@ describe('refreshDnsStatus', () => {
     });
 
     it('keeps the previous addresses while the core is not running', async () => {
-        respondWithStatus({ running: true, dns_addresses: ['1.2.3.4'], dns_port: 53, http_port: 80 });
+        respondWithStatus({
+            running: true,
+            dns_addresses: ['1.2.3.4'],
+            dns_port: 53,
+            http_port: 80,
+        });
         await refreshDnsStatus();
 
         respondWithStatus({ running: false });
@@ -111,7 +122,7 @@ describe('refreshDnsStatus', () => {
 describe('getClients — clientsInitialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        dashboardState.clientsInitialized = false;
+        resetStore(dashboardState, { clientsInitialized: false });
     });
 
     it('marks clientsInitialized after a successful request', async () => {

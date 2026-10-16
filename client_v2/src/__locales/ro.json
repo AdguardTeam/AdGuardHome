@@ -510,7 +510,6 @@
   "password_requirements_characters": "Minimum 8 caractere",
   "password_requirements_lowercase": "Cel puțin 1 literă mică",
   "password_requirements_match": "Parolele corespund",
-  "password_requirements_special": "Litere englezești, cifre și caractere speciale",
   "password_requirements_uppercase": "Cel puțin 1 literă mare",
   "pause_for_hour": "Întrerupeți pentru %count% oră",
   "pause_for_minutes": "| Pauză pentru %count% minut | Pauză pentru %count% minute | Pauză pentru %count% de minute",

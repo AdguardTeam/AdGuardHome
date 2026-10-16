@@ -510,7 +510,6 @@
   "password_requirements_characters": "Minst 8 tecken",
   "password_requirements_lowercase": "Minst 1 gemen bokstav",
   "password_requirements_match": "Lösenorden matchar",
-  "password_requirements_special": "Engelska bokstäver, siffror och specialtecken",
   "password_requirements_uppercase": "Minst 1 versal bokstav",
   "pause_for_hour": "Pausa i %count% timme",
   "pause_for_minutes": "| Pausa i %count% minut | Pausa i %count% minuter",

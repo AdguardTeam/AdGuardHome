@@ -510,7 +510,6 @@
   "password_requirements_characters": "8 أحرف على الأقل",
   "password_requirements_lowercase": "على الأقل 1 حرف صغير",
   "password_requirements_match": "كلمتا المرور متطابقتان",
-  "password_requirements_special": "حروف إنجليزية وأرقام ورموز خاصة",
   "password_requirements_uppercase": "على الأقل 1 حرف كبير",
   "pause_for_hour": "إيقاف مؤقت لمدة %count% ساعة",
   "pause_for_minutes": "| إيقاف مؤقت لمدة دقيقة واحدة | إيقاف مؤقت لمدة دقيقتين | إيقاف مؤقت لمدة %count% دقائق | إيقاف مؤقت لمدة %count% دقيقة | إيقاف مؤقت لمدة %count% دقيقة",
