@@ -510,7 +510,6 @@
   "password_requirements_characters": "Minimal 8 karakter",
   "password_requirements_lowercase": "Setidaknya 1 huruf kecil",
   "password_requirements_match": "Kata sandi cocok",
-  "password_requirements_special": "Huruf Inggris, angka, dan karakter khusus",
   "password_requirements_uppercase": "Setidaknya 1 huruf besar",
   "pause_for_hour": "Jeda selama %count% jam",
   "pause_for_minutes": "Jeda selama %count% menit | Jeda selama %count% menit",

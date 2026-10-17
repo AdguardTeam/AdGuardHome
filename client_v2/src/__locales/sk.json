@@ -510,7 +510,6 @@
   "password_requirements_characters": "Minimálne 8 znakov",
   "password_requirements_lowercase": "Aspoň 1 malé písmeno",
   "password_requirements_match": "Heslá sa zhodujú",
-  "password_requirements_special": "Anglické písmená, čísla a špeciálne znaky",
   "password_requirements_uppercase": "Aspoň 1 veľké písmeno",
   "pause_for_hour": "Pauza na %count% hodinu",
   "pause_for_minutes": "| Pozastaviť na %count% minútu | Pozastaviť na %count% minúty | Pozastaviť na %count% minút",

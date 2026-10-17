@@ -510,7 +510,6 @@
   "password_requirements_characters": "Щонайменше 8 символів",
   "password_requirements_lowercase": "Щонайменше 1 мала літера",
   "password_requirements_match": "Паролі збігаються",
-  "password_requirements_special": "Латинські літери, цифри та спеціальні символи",
   "password_requirements_uppercase": "Щонайменше 1 велика літера",
   "pause_for_hour": "Не фільтрувати %count% годину",
   "pause_for_minutes": "| Призупинити на %count% хвилину | Призупинити на %count% хвилини | Призупинити на %count% хвилин",

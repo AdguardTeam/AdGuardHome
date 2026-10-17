@@ -510,7 +510,6 @@
   "password_requirements_characters": "Co najmniej 8 znaków",
   "password_requirements_lowercase": "Co najmniej 1 mała litera",
   "password_requirements_match": "Hasła są zgodne",
-  "password_requirements_special": "Angielskie litery, cyfry i znaki specjalne",
   "password_requirements_uppercase": "Co najmniej 1 wielka litera",
   "pause_for_hour": "Zatrzymaj na %count% godzinę",
   "pause_for_minutes": "| Wstrzymaj na %count% minutę | Wstrzymaj na %count% minuty | Wstrzymaj na %count% minut",

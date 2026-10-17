@@ -25,6 +25,7 @@ import {
     togglePrivatePtrResolvers,
     toggleResolveClients,
 } from 'panel/stores/dnsConfig';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 describe('getDnsConfig', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -42,7 +43,7 @@ describe('getDnsConfig', () => {
     });
 
     it('marks initialized after a successful request', async () => {
-        dnsConfigState.initialized = false;
+        resetStore(dnsConfigState, { initialized: false });
         mocks.dnsInfo.mockResolvedValue({});
 
         await getDnsConfig();
@@ -51,7 +52,7 @@ describe('getDnsConfig', () => {
     });
 
     it('marks initialized after a failed request so the loader cannot get stuck', async () => {
-        dnsConfigState.initialized = false;
+        resetStore(dnsConfigState, { initialized: false });
         mocks.dnsInfo.mockRejectedValue(new Error('network'));
 
         await getDnsConfig();

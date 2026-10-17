@@ -25,11 +25,12 @@ vi.mock('panel/common/intl', async () =>
 );
 
 import { getRewritesList, rewritesState } from 'panel/stores/rewrites';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 describe('getRewritesList — initialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        rewritesState.initialized = false;
+        resetStore(rewritesState, { initialized: false });
     });
 
     it('marks initialized after a successful request', async () => {

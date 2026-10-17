@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 import {
     addErrorToast,
     addSuccessToast,
@@ -8,9 +8,18 @@ import {
 } from '../stores/toasts';
 
 describe('toasts store', () => {
+    // Error toasts are logged to the console, so the fixture messages would
+    // otherwise flood the test output.
+    let consoleError: MockInstance;
+
     beforeEach(() => {
+        consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
         // Clear all notices between tests.
         toastsState.notices.forEach((n: any) => removeToast(n.id));
+    });
+
+    afterEach(() => {
+        consoleError.mockRestore();
     });
 
     it('addNoticeToast stores the message', () => {
@@ -28,6 +37,8 @@ describe('toasts store', () => {
         expect(last.options).toEqual({ x: 1 });
         expect(last.action).toEqual(action);
         expect(last.type).toBe('error');
+        // Error toasts are also logged for debugging.
+        expect(consoleError).toHaveBeenCalledWith('boom');
     });
 
     it('addSuccessToast preserves code on object payload', () => {

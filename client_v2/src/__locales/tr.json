@@ -510,7 +510,6 @@
   "password_requirements_characters": "En az 8 karakter",
   "password_requirements_lowercase": "En az 1 küçük harf",
   "password_requirements_match": "Parolalar eşleşti",
-  "password_requirements_special": "İngilizce harfler, rakamlar ve özel karakterler",
   "password_requirements_uppercase": "En az 1 büyük harf",
   "pause_for_hour": "%count% saatliğine duraklat",
   "pause_for_minutes": "%count% dakikalığına duraklat | %count% dakikalığına duraklat",

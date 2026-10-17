@@ -86,6 +86,9 @@ describe('Dashboard top clients block/unblock action', () => {
 
         await userEvent.click(actionButton('block_client'));
         expect(screen.getByTestId(CLIENT_BLOCK_CONFIRM_SUBMIT_TEST_ID)).toBeInTheDocument();
+        // The dialog builds its copy from the client, so the description must
+        // carry the interpolated name.
+        expect(screen.getByRole('dialog').textContent).toContain(CLIENT);
     });
 
     it('switches the action when the client becomes blocked', async () => {

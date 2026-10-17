@@ -510,7 +510,6 @@
   "password_requirements_characters": "Minimum 8 tegn",
   "password_requirements_lowercase": "Minimum 1 minuskel",
   "password_requirements_match": "Adgangskoder matcher",
-  "password_requirements_special": "Engelske bogstaver, tal og specialtegn",
   "password_requirements_uppercase": "Minimum 1 majuskel",
   "pause_for_hour": "Pauseret i %count% time",
   "pause_for_minutes": "| Pauseret i %count% minut | Pauseret i %count% minutter",

@@ -52,6 +52,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Encrypted DNS server addresses not appearing in the Setup Guide until the page was reloaded after enabling encryption.
 
+- Passwords containing emoji being rejected by the first-run setup wizard in the new web interface.
+
 ### Removed
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
