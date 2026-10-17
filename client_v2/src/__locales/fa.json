@@ -510,7 +510,6 @@
   "password_requirements_characters": "حداقل 8 کاراکتر",
   "password_requirements_lowercase": "حداقل 1 حرف کوچک",
   "password_requirements_match": "گذرواژه‌ها مطابقت دارند",
-  "password_requirements_special": "حروف انگلیسی، اعداد و کاراکترهای ویژه",
   "password_requirements_uppercase": "حداقل 1 حرف بزرگ",
   "pause_for_hour": "توقف به مدت %count% ساعت",
   "pause_for_minutes": "| توقف به مدت %count% دقیقه | توقف به مدت %count% دقیقه",

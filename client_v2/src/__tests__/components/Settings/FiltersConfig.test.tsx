@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@solidjs/testing-library';
+import { MemoryRouter, Route, createMemoryHistory } from '@solidjs/router';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 import { FiltersConfig } from 'panel/components/Settings/FiltersConfig';
@@ -20,13 +21,31 @@ vi.mock('panel/stores/toasts', () => ({
     createUndoToast: vi.fn(),
 }));
 
+/**
+ * `FiltersConfig` puts router links in its description, so it must render
+ * inside a route for `<Link>` to resolve.
+ */
+const renderFiltersConfig = (initialValues: { interval: number; enabled: boolean }) => {
+    const history = createMemoryHistory();
+    history.set({ value: '/' });
+
+    return render(() => (
+        <MemoryRouter history={history}>
+            <Route
+                path="/"
+                component={() => (
+                    <FiltersConfig initialValues={initialValues} processing={false} />
+                )}
+            />
+        </MemoryRouter>
+    ));
+};
+
 describe('FiltersConfig', () => {
     beforeEach(() => vi.clearAllMocks());
 
     it('does not call setFiltersConfig on mount when values did not change', () => {
-        render(() => (
-            <FiltersConfig initialValues={{ interval: 24, enabled: true }} processing={false} />
-        ));
+        renderFiltersConfig({ interval: 24, enabled: true });
 
         expect(mocks.apiSetFiltersConfig).not.toHaveBeenCalled();
     });
@@ -43,9 +62,7 @@ describe('FiltersConfig', () => {
 
         const statusPromise = getFilteringStatus();
 
-        render(() => (
-            <FiltersConfig initialValues={{ interval: 24, enabled: true }} processing={false} />
-        ));
+        renderFiltersConfig({ interval: 24, enabled: true });
 
         await statusPromise;
 
@@ -54,9 +71,7 @@ describe('FiltersConfig', () => {
     });
 
     it('calls setFiltersConfig when the switch is toggled', async () => {
-        render(() => (
-            <FiltersConfig initialValues={{ interval: 1, enabled: true }} processing={false} />
-        ));
+        renderFiltersConfig({ interval: 1, enabled: true });
 
         fireEvent.click(screen.getByRole('checkbox'));
 

@@ -510,7 +510,6 @@
   "password_requirements_characters": "8文字以上",
   "password_requirements_lowercase": "小文字が1文字以上",
   "password_requirements_match": "パスワードが一致している",
-  "password_requirements_special": "英字、数字、特殊文字",
   "password_requirements_uppercase": "大文字が1文字以上",
   "pause_for_hour": "一時停止（%count%時間）",
   "pause_for_minutes": "一時停止（%count%分） | 一時停止（%count%分）",

@@ -510,7 +510,6 @@
   "password_requirements_characters": "Vähintään 8 merkkiä",
   "password_requirements_lowercase": "Ainakin yksi pieni kirjain",
   "password_requirements_match": "Salasanat täsmäävät",
-  "password_requirements_special": "Englannin kirjaimet, numerot ja erikoismerkit",
   "password_requirements_uppercase": "Vähintään yksi iso kirjain",
   "pause_for_hour": "Keskeytä %count% tunniksi",
   "pause_for_minutes": "| Tauko %count% minuutti | Tauko %count% minuuttia",

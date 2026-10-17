@@ -510,7 +510,6 @@
   "password_requirements_characters": "Минимум 8 символа",
   "password_requirements_lowercase": "Поне 1 малка буква",
   "password_requirements_match": "Паролите съвпадат",
-  "password_requirements_special": "Английски букви, цифри и специални символи",
   "password_requirements_uppercase": "Поне 1 главна буква",
   "pause_for_hour": "Пауза за %count% час",
   "pause_for_minutes": "| Пауза за %count% минута | Пауза за %count% минути",

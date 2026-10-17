@@ -510,7 +510,6 @@
   "password_requirements_characters": "Legalább 8 karakter",
   "password_requirements_lowercase": "Legalább 1 kisbetű",
   "password_requirements_match": "A jelszavak megegyeznek",
-  "password_requirements_special": "Angol betűk, számok és speciális karakterek",
   "password_requirements_uppercase": "Legalább 1 nagybetű",
   "pause_for_hour": "Szünet %count% órára",
   "pause_for_minutes": "| Szünet %count% percre | Szünet %count% percre",
