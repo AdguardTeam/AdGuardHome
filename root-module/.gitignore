@@ -1,0 +1,5 @@
+cache/
+dist/
+
+# .gitignore gốc loại AdGuardHome.yaml*; cấu hình mặc định của module thì phải được commit
+!/module/config/AdGuardHome.yaml
