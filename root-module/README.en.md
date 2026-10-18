@@ -32,7 +32,15 @@ The basic idea follows [twoone-3/AdGuardHomeForRoot](https://github.com/twoone-3
 
 ## Ad-blocking filters
 
-Nine lists are on by default: AdGuard DNS filter, HaGeZi Pro, ABPVN and hostsVN (Vietnam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (about 565,000 rules, AdGuardHome uses about 120 MB of RAM). HaGeZi Pro++/Ultimate, OISD Big, Steven Black, Xiaomi Tracker, Threat Intelligence, URLHaus and Phishing Army are included but off; turn them on in the WebUI (**DNS → Ad-blocking filters**). Upgrades add new default lists without changing the ones you turned off.
+Nine lists are on by default: AdGuard DNS filter, **HaGeZi Pro++**, ABPVN and hostsVN (Vietnam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (about 579,000 rules, AdGuardHome uses about 120 MB of RAM).
+
+43 lists are included in total, toggled in the WebUI (**DNS → Ad-blocking filters**, with a search box):
+
+- **General:** HaGeZi Pro (off because Pro++ includes it), Ultimate, OISD Big, Steven Black, Xiaomi Tracker.
+- **Security:** uBlock Badware, URLHaus, Phishing Army, HaGeZi Threat Intelligence (very large, over 2 million rules).
+- **By country (off by default):** Vietnam (on), South Korea, China, Indonesia, Poland, Turkey, Hungary, Lithuania, Israel, Sweden, Norway, North Macedonia, Iran, Ukraine, Germany, France, Spain, Portugal, Italy, Netherlands, Russia, Arabic, Czechia/Slovakia.
+
+Turning on all 43 uses about 280 MB of RAM. Upgrades add the new lists and, once only, switch HaGeZi Pro++ on / HaGeZi Pro off (you can change that afterwards); your other choices are kept.
 
 **100% is not possible.** DNS blocking can only stop *domains*, so it cannot remove ads served from the same domain as the content (for example YouTube video ads, or ads embedded in some apps) nor CSS-hidden ads on web pages (that is uBlock Origin's job in the browser). Stronger lists (Pro++/Ultimate) block more but can break some sites/apps; turn them off again if that happens.
 

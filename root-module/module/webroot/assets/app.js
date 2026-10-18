@@ -60,6 +60,7 @@
     store.set('lang', lang);
     applyI18n();
     render();
+    if (state.filtersLoaded) renderFilters();
     if (persist && bridge()) ctl(['set-setting', 'language', lang]);
   }
 
@@ -303,33 +304,91 @@
     return m ? m[1] : url;
   }
 
+  // Nhóm bộ lọc theo id: quốc gia, bảo mật, còn lại là chung.  Bộ lọc người dùng tự thêm rơi vào nhóm chung.
+  const COUNTRY_BY_ID = {
+    16: 'VN', 2: 'VN', 15: 'KR', 25: 'KR', 21: 'CN', 29: 'CN', 22: 'ID', 14: 'PL', 41: 'PL', 26: 'TR', 40: 'TR',
+    35: 'HU', 36: 'LT', 43: 'IL', 17: 'SE', 13: 'NO', 20: 'MK', 19: 'IR', 62: 'UA', 110: 'DE', 111: 'FR',
+    112: 'ES', 113: 'PT', 114: 'IT', 115: 'NL', 116: 'RU', 117: 'AR', 118: 'CZ',
+  };
+  const SECURITY_IDS = new Set([50, 44, 11, 18]);
+
+  function filterRow(f) {
+    const row = document.createElement('label');
+    row.className = 'switch-row';
+    const span = document.createElement('span');
+    const strong = document.createElement('strong');
+    strong.textContent = f.name;
+    const small = document.createElement('small');
+    small.textContent = hostOf(f.url);
+    span.append(strong, small);
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'switch';
+    input.checked = f.enabled;
+    input.dataset.id = f.id;
+    input.addEventListener('change', () => { f.enabled = input.checked; updateFilterCount(); updateGroupCounts(); });
+    row.append(span, input);
+    return row;
+  }
+
+  function filterGroup(key, title, list, open) {
+    const d = document.createElement('details');
+    d.className = 'fgroup';
+    d.dataset.group = key;
+    d.open = open;
+    const sum = document.createElement('summary');
+    const label = document.createElement('span');
+    label.textContent = title;
+    const cnt = document.createElement('span');
+    cnt.className = 'gcount';
+    sum.append(label, cnt);
+    d.append(sum);
+    list.forEach((f) => d.append(filterRow(f)));
+    d._list = list;
+    return d;
+  }
+
+  function updateGroupCounts() {
+    $$('#filters-list .fgroup').forEach((d) => {
+      const on = d._list.filter((f) => f.enabled).length;
+      $('.gcount', d).textContent = `${on}/${d._list.length}`;
+    });
+  }
+
   function renderFilters() {
     const box = $('#filters-list');
+    const q = ($('#filters-search').value || '').trim().toLowerCase();
     box.textContent = '';
-    if (!state.filters.length) {
+    const match = (f) => {
+      if (!q) return true;
+      const c = COUNTRY_BY_ID[f.id];
+      const country = c ? `${t(`country.${c}`)} ${c}`.toLowerCase() : '';
+      return `${f.name} ${f.url} ${country}`.toLowerCase().includes(q);
+    };
+    const shown = state.filters.filter(match);
+    if (!shown.length) {
       const p = document.createElement('p');
       p.className = 'muted';
-      p.textContent = t('filters.none');
+      p.textContent = t(state.filters.length ? 'filters.noMatch' : 'filters.none');
       box.append(p);
     }
-    state.filters.forEach((f) => {
-      const row = document.createElement('label');
-      row.className = 'switch-row';
-      const span = document.createElement('span');
-      const strong = document.createElement('strong');
-      strong.textContent = f.name;
-      const small = document.createElement('small');
-      small.textContent = hostOf(f.url);
-      span.append(strong, small);
-      const input = document.createElement('input');
-      input.type = 'checkbox';
-      input.className = 'switch';
-      input.checked = f.enabled;
-      input.dataset.id = f.id;
-      input.addEventListener('change', () => { f.enabled = input.checked; updateFilterCount(); });
-      row.append(span, input);
-      box.append(row);
-    });
+    const general = shown.filter((f) => !COUNTRY_BY_ID[f.id] && !SECURITY_IDS.has(Number(f.id)));
+    const security = shown.filter((f) => SECURITY_IDS.has(Number(f.id)));
+    const byCountry = {};
+    shown.forEach((f) => { const c = COUNTRY_BY_ID[f.id]; if (c) (byCountry[c] = byCountry[c] || []).push(f); });
+    const open = !!q; // khi đang tìm kiếm thì mở hết cho dễ thấy
+    if (general.length) box.append(filterGroup('general', t('filters.group.general'), general, true));
+    if (byCountry.VN) box.append(filterGroup('VN', t('country.VN'), byCountry.VN, true));
+    if (security.length) box.append(filterGroup('security', t('filters.group.security'), security, open));
+    const others = Object.keys(byCountry).filter((c) => c !== 'VN').sort((x, y) => t(`country.${x}`).localeCompare(t(`country.${y}`), state.lang));
+    if (others.length) {
+      const h = document.createElement('p');
+      h.className = 'fsection';
+      h.textContent = t('filters.group.countries');
+      box.append(h);
+      others.forEach((c) => box.append(filterGroup(c, t(`country.${c}`), byCountry[c], open)));
+    }
+    updateGroupCounts();
     updateFilterCount();
   }
 
@@ -504,6 +563,7 @@
     $('#btn-panel').addEventListener('click', openPanel);
     $('#btn-dns-save').addEventListener('click', saveUpstream);
     $('#btn-filters-save').addEventListener('click', saveFilters);
+    $('#filters-search').addEventListener('input', renderFilters);
     $('#btn-set-save').addEventListener('click', saveSettings);
     $('#btn-acc-set').addEventListener('click', setPassword);
     $('#btn-debug').addEventListener('click', collectDebug);

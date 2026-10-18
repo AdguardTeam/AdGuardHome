@@ -32,9 +32,17 @@ Module root (Magisk / KernelSU / APatch) chạy [AdGuardHome](https://github.com
 
 ## Bộ lọc chặn quảng cáo
 
-Mặc định bật 9 danh sách: AdGuard DNS filter, HaGeZi Pro, ABPVN và hostsVN (Việt Nam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (tổng khoảng 565.000 luật, AdGuardHome dùng khoảng 120 MB RAM). Có sẵn thêm HaGeZi Pro++/Ultimate, OISD Big, Steven Black, Xiaomi Tracker, Threat Intelligence, URLHaus, Phishing Army để bạn bật trong WebUI (tab **DNS → Bộ lọc chặn quảng cáo**). Bản nâng cấp tự bổ sung các danh sách mới mà không đổi lựa chọn bạn đã tắt.
+Mặc định bật 9 danh sách: AdGuard DNS filter, **HaGeZi Pro++**, ABPVN và hostsVN (Việt Nam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (tổng khoảng 579.000 luật, AdGuardHome dùng khoảng 120 MB RAM).
 
-**Không thể đạt 100%.** Chặn bằng DNS chỉ ngăn được *tên miền*, nên không chặn được quảng cáo phát từ cùng tên miền với nội dung (ví dụ video quảng cáo trong YouTube, quảng cáo nhúng trong một số ứng dụng), cũng như quảng cáo ẩn bằng CSS trên trang web (việc của uBlock Origin trong trình duyệt). Bật thêm danh sách mạnh tay (Pro++/Ultimate) sẽ chặn nhiều hơn nhưng dễ làm hỏng một số trang/ứng dụng; nếu vậy hãy tắt lại danh sách đó.
+Có sẵn tổng cộng 43 danh sách, bật/tắt trong WebUI (tab **DNS → Bộ lọc chặn quảng cáo**, có ô tìm kiếm):
+
+- **Chung:** HaGeZi Pro (tắt vì Pro++ đã bao gồm), Ultimate, OISD Big, Steven Black, Xiaomi Tracker.
+- **Bảo mật:** uBlock Badware, URLHaus, Phishing Army, HaGeZi Threat Intelligence (rất lớn, hơn 2 triệu luật).
+- **Theo quốc gia (tắt mặc định):** Việt Nam (bật), Hàn Quốc, Trung Quốc, Indonesia, Ba Lan, Thổ Nhĩ Kỳ, Hungary, Litva, Israel, Thụy Điển, Na Uy, Bắc Macedonia, Iran, Ukraina, Đức, Pháp, Tây Ban Nha, Bồ Đào Nha, Ý, Hà Lan, Nga, Ả Rập, Séc/Slovakia.
+
+Bật hết cả 43 danh sách tốn khoảng 280 MB RAM. Bản nâng cấp tự bổ sung các danh sách mới, và một lần duy nhất bật HaGeZi Pro++ / tắt HaGeZi Pro (bạn có thể đổi lại sau đó); các lựa chọn khác của bạn được giữ nguyên.
+
+**Không thể đạt 100%.** Chặn bằng DNS chỉ ngăn được *tên miền*, nên không chặn được quảng cáo phát từ cùng tên miền với nội dung (ví dụ video quảng cáo trong YouTube, quảng cáo nhúng trong một số ứng dụng), cũng như quảng cáo ẩn bằng CSS trên trang web (việc của uBlock Origin trong trình duyệt). Danh sách mạnh tay (Pro++/Ultimate) chặn nhiều hơn nhưng dễ làm hỏng một số trang/ứng dụng; nếu vậy hãy tắt lại danh sách đó.
 
 ## Sử dụng WebUI
 

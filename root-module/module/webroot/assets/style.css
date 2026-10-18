@@ -103,7 +103,7 @@ h2 { font-size: 16px; margin: 0 0 8px; }
 .btn:active:not(:disabled) { transform: scale(.98); }
 
 .label { display: block; margin: 14px 0 6px; font-weight: 600; font-size: 14px; }
-input[type=text], input[type=number], input[type=password], textarea {
+input[type=text], input[type=number], input[type=password], input[type=search], textarea {
   width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line);
   background: var(--bg); color: var(--text); font: inherit;
 }
@@ -173,3 +173,14 @@ pre {
 .head-row h2 { margin: 0; }
 #filters-list { margin-top: 6px; }
 #filters-list .switch-row small { overflow-wrap: anywhere; }
+
+#filters-search { margin-top: 10px; }
+.fgroup { margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.fgroup > summary { cursor: pointer; padding: 11px 12px; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 10px; }
+.fgroup > summary::-webkit-details-marker { display: none; }
+.fgroup > summary::after { content: "▾"; color: var(--muted); }
+.fgroup[open] > summary::after { content: "▴"; }
+.fgroup .gcount { color: var(--muted); font-weight: 600; font-size: 13px; margin-left: auto; }
+.fgroup .switch-row { padding: 9px 12px; }
+.fgroup .switch-row:last-of-type { border-bottom: 0; }
+.fsection { margin: 16px 0 0; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }

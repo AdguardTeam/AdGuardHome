@@ -441,6 +441,10 @@ merge_filters_inner() {
       END { if (inf && !done) dump() }'
   fi
   rm -f "$_new"
+  # Thay đổi mặc định cần áp dụng cho cả cấu hình cũ (ví dụ bật Pro++), chỉ một lần cho mỗi filters.rev
+  _mig=$(grep -E '^[0-9]+:(true|false)$' "$DEFAULT_DIR/filters.migrate" 2>/dev/null)
+  # shellcheck disable=SC2086
+  [ -n "$_mig" ] && filters_inner $_mig
   mark_filters_rev
 }
 
