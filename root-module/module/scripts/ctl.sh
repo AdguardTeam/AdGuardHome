@@ -4,7 +4,8 @@
 # Cách dùng / Usage: ctl.sh <lệnh/command> [tham số/args]
 #   start | stop | restart | toggle | watchdog
 #   status | version | logs <core|history> [dòng/lines] | debug
-#   get-upstream | set-upstream <url>... | set-port <port> | set-password <bcrypt-hash>
+#   get-upstream | set-upstream <url>... | get-filters | set-filters <id:true|false>... | merge-filters
+#   set-port <port> | set-password <bcrypt-hash>
 #   set-setting <key> <value> | reset-config
 
 SELF_DIR=$(cd "${0%/*}" 2>/dev/null && pwd)
@@ -107,7 +108,10 @@ sync_port_from_yaml() {
 prepare_files() {
   mkdir -p "$AGH_DIR" "$WORK_DIR"
   [ -f "$SETTINGS" ] || cp "$DEFAULT_DIR/settings.conf" "$SETTINGS"
-  [ -f "$CONF" ] || cp "$DEFAULT_DIR/AdGuardHome.yaml" "$CONF"
+  if [ ! -f "$CONF" ]; then
+    cp "$DEFAULT_DIR/AdGuardHome.yaml" "$CONF"
+    mark_filters_rev
+  fi
   load_settings
 }
 
@@ -170,6 +174,7 @@ do_start() {
     update_description "🔴 Thiếu tệp thực thi AdGuardHome" "🔴 AdGuardHome binary is missing"
     return 1
   }
+  merge_filters_if_needed
   sync_port_from_yaml
   wait_port_free
 
@@ -250,11 +255,15 @@ do_stop() {
   return 0
 }
 
-# Chạy một hàm trong khi giữ khóa; nếu có lệnh khác đang chạy thì báo bận (mã 2).
+# Mã thoát riêng cho "đang bận" (EX_TEMPFAIL), tách biệt với các lỗi khác (kể cả mã 2 của awk/sh).
+EX_BUSY=75
+LOCK_WAIT="${LOCK_WAIT:-45}"
+
+# Chạy một hàm trong khi giữ khóa; chờ tối đa LOCK_WAIT giây nếu có lệnh khác đang chạy.
 locked() {
-  acquire_lock || {
-    echo "busy" >&2
-    exit 2
+  acquire_lock "$LOCK_WAIT" || {
+    echo "busy: another operation is running" >&2
+    exit "$EX_BUSY"
   }
   trap release_lock EXIT
   "$@"
@@ -351,6 +360,107 @@ cmd_set_upstream() {
   locked with_config_edit upstream_inner "$@"
 }
 
+# ---------------------------------------------------------------- bộ lọc chặn quảng cáo
+# Mỗi bộ lọc trong mục filters: của AdGuardHome.yaml là một phần tử danh sách (enabled/url/name/id).
+
+# filters_list <tệp>: in "id|enabled|name|url" cho từng bộ lọc.
+filters_list() {
+  awk '
+    BEGIN { q = sprintf("%c", 39) }
+    function flush() { if (url != "") print id "|" en "|" name "|" url; id = en = name = url = "" }
+    function kv(t,   k, v) {
+      if (match(t, /^[a-z_]+:/)) {
+        k = substr(t, 1, RLENGTH - 1); v = substr(t, RLENGTH + 1)
+        sub(/^[ \t]+/, "", v); gsub("^[\"" q "]|[\"" q "]$", "", v)
+        if (k == "id") id = v; else if (k == "enabled") en = v; else if (k == "name") name = v; else if (k == "url") url = v
+      }
+    }
+    /^filters:[ \t]*$/ { inf = 1; next }
+    /^[^ \t#-]/ { if (inf) flush(); inf = 0 }
+    inf && /^[ \t]*-[ \t]/ { flush(); t = $0; sub(/^[ \t]*-[ \t]+/, "", t); kv(t); next }
+    inf { t = $0; sub(/^[ \t]+/, "", t); kv(t) }
+    END { if (inf) flush() }' "$1"
+}
+
+cmd_get_filters() {
+  _src=$CONF
+  [ -f "$_src" ] || _src="$DEFAULT_DIR/AdGuardHome.yaml"
+  filters_list "$_src"
+}
+
+# filters_inner <id:true|false>...: đổi enabled theo id, giữ nguyên mọi khóa khác của từng phần tử.
+filters_inner() {
+  _spec=$(printf '%s,' "$@")
+  yaml_rewrite -v spec="$_spec" '
+    BEGIN { n = split(spec, p, ","); for (i = 1; i <= n; i++) if (p[i] != "") { split(p[i], kv, ":"); want[kv[1]] = kv[2] } }
+    function flush(   i, id) {
+      if (cnt == 0) return
+      id = ""
+      for (i = 1; i <= cnt; i++) if (match(buf[i], /(^|[ \t-])id:[ \t]*[0-9]+/)) { id = buf[i]; sub(/.*id:[ \t]*/, "", id); sub(/[^0-9].*$/, "", id) }
+      for (i = 1; i <= cnt; i++) {
+        if (id in want) sub(/enabled:[ \t]*[a-z]+/, "enabled: " want[id], buf[i])
+        print buf[i]
+      }
+      cnt = 0
+    }
+    /^filters:[ \t]*$/ { inf = 1; print; next }
+    /^[^ \t#-]/ { if (inf) flush(); inf = 0 }
+    inf && /^[ \t]*-[ \t]/ { flush(); buf[++cnt] = $0; next }
+    inf && cnt > 0 { buf[++cnt] = $0; next }
+    { print }
+    END { if (inf) flush() }'
+}
+
+cmd_set_filters() {
+  [ "$#" -ge 1 ] || die "need at least one id:true|false"
+  for _f in "$@"; do printf '%s' "$_f" | grep -Eq '^[0-9]+:(true|false)$' || die "invalid filter spec: $_f"; done
+  locked with_config_edit filters_inner "$@"
+}
+
+# Bổ sung các bộ lọc mặc định chưa có trong cấu hình của người dùng (nhận diện theo URL),
+# chỉ chạy một lần cho mỗi phiên bản danh sách (config/filters.rev).
+merge_filters_inner() {
+  _new="$CONF.newfilters"
+  : >"$_new"
+  _used=$(filters_list "$CONF" | cut -d'|' -f1)
+  _max=0
+  for _i in $_used; do is_number "$_i" && [ "$_i" -gt "$_max" ] && _max=$_i; done
+  filters_list "$DEFAULT_DIR/AdGuardHome.yaml" | while IFS='|' read -r _id _en _name _url; do
+    grep -qF "url: $_url" "$CONF" && continue
+    case " $_used " in *" $_id "*) _max=$((_max + 1)); _id=$_max ;; esac
+    printf '  - enabled: %s\n    url: %s\n    name: %s\n    id: %s\n' "$_en" "$_url" "$_name" "$_id" >>"$_new"
+    _used="$_used $_id"
+  done
+  if [ -s "$_new" ]; then
+    yaml_rewrite -v ins="$_new" '
+      function dump(   l) { while ((getline l < ins) > 0) print l; done = 1 }
+      /^filters:[ \t]*\[\][ \t]*$/ { print "filters:"; dump(); next }
+      /^filters:[ \t]*$/ { inf = 1; print; next }
+      /^[^ \t#-]/ { if (inf && !done) dump(); inf = 0 }
+      { print }
+      END { if (inf && !done) dump() }'
+  fi
+  rm -f "$_new"
+  mark_filters_rev
+}
+
+cmd_merge_filters() {
+  locked with_config_edit merge_filters_inner
+}
+
+mark_filters_rev() {
+  cp -f "$DEFAULT_DIR/filters.rev" "$FILTERS_REV_FILE" 2>/dev/null
+  return 0
+}
+
+# Gọi trong do_start (lúc AdGuardHome đang tắt nên sửa YAML là an toàn).
+merge_filters_if_needed() {
+  [ -f "$DEFAULT_DIR/filters.rev" ] && [ -f "$CONF" ] || return 0
+  [ "$(cat "$FILTERS_REV_FILE" 2>/dev/null)" = "$(cat "$DEFAULT_DIR/filters.rev")" ] && return 0
+  merge_filters_inner
+  log "Đã bổ sung bộ lọc mặc định mới" "Added new default filter lists"
+}
+
 port_inner() {
   yaml_set dns port "$1" && setting_set redir_port "$1"
 }
@@ -376,6 +486,7 @@ cmd_set_password() {
 reset_inner() {
   [ -f "$CONF" ] && cp -f "$CONF" "$CONF.bak"
   cp -f "$DEFAULT_DIR/AdGuardHome.yaml" "$CONF"
+  mark_filters_rev
   setting_set redir_port "$(yaml_get dns port)"
 }
 
@@ -462,13 +573,16 @@ version) cmd_version ;;
 logs) shift; cmd_logs "$@" ;;
 debug) cmd_debug ;;
 get-upstream) cmd_get_upstream ;;
+get-filters) cmd_get_filters ;;
+set-filters) shift; cmd_set_filters "$@" ;;
+merge-filters) cmd_merge_filters ;;
 set-upstream) shift; cmd_set_upstream "$@" ;;
 set-port) cmd_set_port "$2" ;;
 set-password) cmd_set_password "$2" ;;
 set-setting) cmd_set_setting "$2" "$3" ;;
 reset-config) cmd_reset_config ;;
 *)
-  sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
   ;;
 esac

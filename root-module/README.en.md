@@ -30,12 +30,18 @@ The basic idea follows [twoone-3/AdGuardHomeForRoot](https://github.com/twoone-3
 
 > Keep Android's **Private DNS** on *Off* or *Automatic*. A hostname-pinned Private DNS (DoT), VPNs and the browser's “Secure DNS” bypass port 53 and are not redirected.
 
+## Ad-blocking filters
+
+Nine lists are on by default: AdGuard DNS filter, HaGeZi Pro, ABPVN and hostsVN (Vietnam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (about 565,000 rules, AdGuardHome uses about 120 MB of RAM). HaGeZi Pro++/Ultimate, OISD Big, Steven Black, Xiaomi Tracker, Threat Intelligence, URLHaus and Phishing Army are included but off; turn them on in the WebUI (**DNS → Ad-blocking filters**). Upgrades add new default lists without changing the ones you turned off.
+
+**100% is not possible.** DNS blocking can only stop *domains*, so it cannot remove ads served from the same domain as the content (for example YouTube video ads, or ads embedded in some apps) nor CSS-hidden ads on web pages (that is uBlock Origin's job in the browser). Stronger lists (Pro++/Ultimate) block more but can break some sites/apps; turn them off again if that happens.
+
 ## Using the WebUI
 
 | Tab | What it does |
 | --- | --- |
 | Overview | Status, PID, version, Start / Stop / Restart, open the AdGuardHome panel |
-| DNS | Quick pick or edit the upstream list (one server per line), *Save and apply* |
+| DNS | Quick pick or edit the upstream list (one server per line); turn ad-blocking filters on or off |
 | Settings | iptables redirect, block IPv6 DNS, auto-restart, DNS port, bypass lists, password, language, maintenance |
 | Logs | Core log, module history, debug info |
 

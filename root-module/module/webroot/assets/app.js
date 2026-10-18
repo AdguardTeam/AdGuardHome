@@ -25,6 +25,8 @@
     busy: false,
     upstream: [],
     upstreamLoaded: false,
+    filters: [],
+    filtersLoaded: false,
     formLoaded: false,
     logKind: 'core',
     debugText: '',
@@ -139,12 +141,15 @@
     }
   }
 
-  // rc 2 = ctl.sh đang bận (khóa), các mã khác khác 0 = lỗi
+  // rc 75 = ctl.sh đang bận (khóa); các mã khác khác 0 = lỗi, kèm dòng lỗi đầu tiên để dễ chẩn đoán
   function reportResult(r, okMsg) {
     if (r.errno === 0) { toast(okMsg); return true; }
-    if (r.errno === 2) toast(t('toast.busy'), true);
+    if (r.errno === 75) toast(t('toast.busy'), true);
     else if (r.errno === -1) toast(t('toast.noBridge'), true);
-    else toast(t('toast.failed'), true);
+    else {
+      const detail = (r.stderr || r.stdout || '').trim().split('\n')[0].slice(0, 120);
+      toast(detail ? t('toast.failedDetail', { e: `${detail} (${r.errno})` }) : t('toast.failed'), true);
+    }
     return false;
   }
 
@@ -183,7 +188,7 @@
     $('#btn-stop').disabled = !has || state.busy || !running;
     $('#btn-restart').disabled = !has || state.busy || !running;
     $('#btn-panel').disabled = !has || state.busy || !running;
-    ['#btn-dns-save', '#btn-set-save', '#btn-acc-set', '#btn-debug', '#btn-reset', '#btn-log-refresh']
+    ['#btn-dns-save', '#btn-filters-save', '#btn-set-save', '#btn-acc-set', '#btn-debug', '#btn-reset', '#btn-log-refresh']
       .forEach((id) => { $(id).disabled = !has || state.busy; });
 
     const banners = $('#banners');
@@ -203,6 +208,7 @@
     }
 
     renderPresets();
+    updateFilterCount();
   }
 
   function sameList(a, b) {
@@ -290,6 +296,70 @@
     }
     view.textContent = text.trim() ? text : t('log.empty');
     view.scrollTop = view.scrollHeight;
+  }
+
+  function hostOf(url) {
+    const m = /^[a-z]+:\/\/([^/]+)/i.exec(url);
+    return m ? m[1] : url;
+  }
+
+  function renderFilters() {
+    const box = $('#filters-list');
+    box.textContent = '';
+    if (!state.filters.length) {
+      const p = document.createElement('p');
+      p.className = 'muted';
+      p.textContent = t('filters.none');
+      box.append(p);
+    }
+    state.filters.forEach((f) => {
+      const row = document.createElement('label');
+      row.className = 'switch-row';
+      const span = document.createElement('span');
+      const strong = document.createElement('strong');
+      strong.textContent = f.name;
+      const small = document.createElement('small');
+      small.textContent = hostOf(f.url);
+      span.append(strong, small);
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'switch';
+      input.checked = f.enabled;
+      input.dataset.id = f.id;
+      input.addEventListener('change', () => { f.enabled = input.checked; updateFilterCount(); });
+      row.append(span, input);
+      box.append(row);
+    });
+    updateFilterCount();
+  }
+
+  function updateFilterCount() {
+    const n = state.filters.filter((f) => f.enabled).length;
+    $('#filters-count').textContent = t('filters.count', { n });
+  }
+
+  async function loadFilters() {
+    const r = await ctl(['get-filters']);
+    if (r.errno !== 0) return;
+    state.filters = r.stdout.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+      const p = l.split('|');
+      return { id: p[0], enabled: p[1] === 'true', name: p.slice(2, -1).join('|'), url: p[p.length - 1] };
+    });
+    state.filtersOrig = state.filters.map((f) => f.enabled);
+    state.filtersLoaded = true;
+    renderFilters();
+  }
+
+  async function saveFilters() {
+    const specs = [];
+    state.filters.forEach((f, i) => {
+      if (f.enabled !== state.filtersOrig[i]) specs.push(`${f.id}:${f.enabled}`);
+    });
+    if (!specs.length) { toast(t('filters.saved')); return; }
+    await run(async () => {
+      const r = await ctl(['set-filters', ...specs]);
+      if (reportResult(r, t('filters.saved'))) await loadFilters();
+    });
   }
 
   // ------------------------------------------------------------ hành động
@@ -398,6 +468,7 @@
         state.upstreamLoaded = false;
         state.formLoaded = false;
         await loadUpstream();
+        await loadFilters();
       }
     });
   }
@@ -408,6 +479,7 @@
     $$('.tabs button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
     $$('.tab').forEach((s) => s.classList.toggle('active', s.id === `tab-${name}`));
     if (name === 'dns' && !state.upstreamLoaded) loadUpstream();
+    if (name === 'dns' && !state.filtersLoaded) loadFilters();
     if (name === 'logs') {
       $$('#log-chips .chip').forEach((c) => c.classList.toggle('active', c.dataset.log === state.logKind));
       loadLog();
@@ -431,6 +503,7 @@
     $('#btn-restart').addEventListener('click', actions.restart);
     $('#btn-panel').addEventListener('click', openPanel);
     $('#btn-dns-save').addEventListener('click', saveUpstream);
+    $('#btn-filters-save').addEventListener('click', saveFilters);
     $('#btn-set-save').addEventListener('click', saveSettings);
     $('#btn-acc-set').addEventListener('click', setPassword);
     $('#btn-debug').addEventListener('click', collectDebug);

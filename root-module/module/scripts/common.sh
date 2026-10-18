@@ -25,6 +25,7 @@ CORE_LOG="$AGH_DIR/core.log"
 HISTORY_LOG="$AGH_DIR/history.log"
 STOP_FLAG="$AGH_DIR/.stopped"
 LOCK_DIR="$AGH_DIR/.lock"
+FILTERS_REV_FILE="$AGH_DIR/.filters_rev"
 
 # Nạp settings.conf; khóa còn thiếu (bản cũ nâng cấp lên) dùng giá trị mặc định dưới đây.
 load_settings() {
@@ -98,19 +99,41 @@ is_dns_listening() {
   return 1
 }
 
-# Khóa không chặn: tránh start/stop/sửa cấu hình chạy chồng lên nhau (WebUI, watchdog, inotify).
-acquire_lock() {
+# Khóa: tránh start/stop/sửa cấu hình chạy chồng lên nhau (WebUI, watchdog, inotify).
+# Khóa coi là hỏng nếu chủ khóa đã chết hoặc khóa quá cũ (lâu hơn mọi thao tác hợp lệ).
+lock_try() {
   mkdir -p "$AGH_DIR" 2>/dev/null
   if mkdir "$LOCK_DIR" 2>/dev/null; then
     echo $$ >"$LOCK_DIR/pid"
+    date +%s >"$LOCK_DIR/ts"
     return 0
   fi
   _holder=$(cat "$LOCK_DIR/pid" 2>/dev/null)
-  if [ -z "$_holder" ] || ! pid_alive "$_holder"; then
+  _ts=$(cat "$LOCK_DIR/ts" 2>/dev/null)
+  _now=$(date +%s)
+  _stale=0
+  if [ -z "$_holder" ] || ! pid_alive "$_holder"; then _stale=1; fi
+  case $_ts in '' | *[!0-9]*) ;; *) [ $((_now - _ts)) -gt $((startup_timeout + 120)) ] && _stale=1 ;; esac
+  if [ "$_stale" = 1 ]; then
     rm -rf "$LOCK_DIR"
-    mkdir "$LOCK_DIR" 2>/dev/null && echo $$ >"$LOCK_DIR/pid" && return 0
+    if mkdir "$LOCK_DIR" 2>/dev/null; then
+      echo $$ >"$LOCK_DIR/pid"
+      date +%s >"$LOCK_DIR/ts"
+      return 0
+    fi
   fi
   return 1
+}
+
+# acquire_lock [giây chờ]: chờ khóa tối đa N giây (mặc định không chờ).
+acquire_lock() {
+  _wait=${1:-0}
+  while ! lock_try; do
+    [ "$_wait" -gt 0 ] || return 1
+    _wait=$((_wait - 1))
+    sleep 1
+  done
+  return 0
 }
 
 release_lock() {

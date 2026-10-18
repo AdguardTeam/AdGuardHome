@@ -30,12 +30,18 @@ Module root (Magisk / KernelSU / APatch) chạy [AdGuardHome](https://github.com
 
 > Nên đặt **Private DNS** của Android ở chế độ *Tắt* hoặc *Tự động*. Chế độ chỉ định tên máy chủ (DoT) và VPN/Chrome “Secure DNS” đi vòng qua cổng 53 nên không bị chuyển hướng.
 
+## Bộ lọc chặn quảng cáo
+
+Mặc định bật 9 danh sách: AdGuard DNS filter, HaGeZi Pro, ABPVN và hostsVN (Việt Nam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (tổng khoảng 565.000 luật, AdGuardHome dùng khoảng 120 MB RAM). Có sẵn thêm HaGeZi Pro++/Ultimate, OISD Big, Steven Black, Xiaomi Tracker, Threat Intelligence, URLHaus, Phishing Army để bạn bật trong WebUI (tab **DNS → Bộ lọc chặn quảng cáo**). Bản nâng cấp tự bổ sung các danh sách mới mà không đổi lựa chọn bạn đã tắt.
+
+**Không thể đạt 100%.** Chặn bằng DNS chỉ ngăn được *tên miền*, nên không chặn được quảng cáo phát từ cùng tên miền với nội dung (ví dụ video quảng cáo trong YouTube, quảng cáo nhúng trong một số ứng dụng), cũng như quảng cáo ẩn bằng CSS trên trang web (việc của uBlock Origin trong trình duyệt). Bật thêm danh sách mạnh tay (Pro++/Ultimate) sẽ chặn nhiều hơn nhưng dễ làm hỏng một số trang/ứng dụng; nếu vậy hãy tắt lại danh sách đó.
+
 ## Sử dụng WebUI
 
 | Tab | Chức năng |
 | --- | --- |
 | Tổng quan | Trạng thái, PID, phiên bản, Khởi động / Dừng / Khởi động lại, mở bảng điều khiển AdGuardHome |
-| DNS | Chọn nhanh hoặc nhập danh sách máy chủ upstream (mỗi dòng một máy chủ), *Lưu và áp dụng* |
+| DNS | Chọn nhanh hoặc nhập danh sách máy chủ upstream (mỗi dòng một máy chủ); bật/tắt bộ lọc chặn quảng cáo |
 | Cài đặt | Chuyển hướng iptables, chặn DNS IPv6, tự khởi động lại, cổng DNS, danh sách bỏ qua, mật khẩu, ngôn ngữ, bảo trì |
 | Nhật ký | Nhật ký lõi, lịch sử module, thông tin gỡ lỗi |
 

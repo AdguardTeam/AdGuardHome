@@ -168,3 +168,8 @@ pre {
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+.head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.head-row h2 { margin: 0; }
+#filters-list { margin-top: 6px; }
+#filters-list .switch-row small { overflow-wrap: anywhere; }

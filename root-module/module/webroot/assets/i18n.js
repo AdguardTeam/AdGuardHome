@@ -46,6 +46,15 @@ window.I18N = {
     "dns.invalid": "Địa chỉ không hợp lệ: {v}",
     "dns.saved": "Đã áp dụng máy chủ DNS mới.",
 
+    "filters.title": "Bộ lọc chặn quảng cáo",
+    "filters.desc": "Danh sách chặn tên miền quảng cáo, theo dõi và mã độc. Bật càng nhiều càng chặn mạnh nhưng tốn RAM hơn và dễ chặn nhầm.",
+    "filters.count": "{n} đang bật",
+    "filters.save": "Lưu bộ lọc",
+    "filters.hint": "Danh sách được tải về khi AdGuardHome khởi động và cập nhật mỗi 24 giờ. Mỗi 100.000 luật tốn khoảng 20 MB RAM.",
+    "filters.saved": "Đã áp dụng bộ lọc.",
+    "filters.none": "Chưa có bộ lọc nào.",
+    "toast.failedDetail": "Thao tác thất bại: {e}",
+
     "set.redirect.title": "Chuyển hướng DNS",
     "set.iptables": "Chuyển hướng DNS bằng iptables",
     "set.iptables.hint": "Bắt mọi truy vấn DNS (cổng 53) của máy và đưa vào AdGuardHome. Tắt nếu bạn tự đặt DNS riêng.",
@@ -147,6 +156,15 @@ window.I18N = {
     "dns.empty": "At least one server is required.",
     "dns.invalid": "Invalid address: {v}",
     "dns.saved": "New DNS servers applied.",
+
+    "filters.title": "Ad-blocking filters",
+    "filters.desc": "Block lists for ad, tracker and malware domains. The more you enable the stronger the blocking, but it uses more RAM and may block things by mistake.",
+    "filters.count": "{n} enabled",
+    "filters.save": "Save filters",
+    "filters.hint": "Lists are downloaded when AdGuardHome starts and refreshed every 24 hours. Every 100,000 rules costs roughly 20 MB of RAM.",
+    "filters.saved": "Filters applied.",
+    "filters.none": "No filters yet.",
+    "toast.failedDetail": "The operation failed: {e}",
 
     "set.redirect.title": "DNS redirect",
     "set.iptables": "Redirect DNS with iptables",

@@ -63,10 +63,70 @@ filters:
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
     name: AdGuard DNS filter
     id: 1
-  - enabled: false
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_48.txt
+    name: HaGeZi Pro
+    id: 48
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
+    name: ABPVN (Việt Nam)
+    id: 16
+  - enabled: true
     url: https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts
     name: hostsVN (Việt Nam)
     id: 2
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_3.txt
+    name: Peter Lowe's Blocklist
+    id: 3
+  - enabled: true
+    url: https://ublockorigin.github.io/uAssets/filters/filters.txt
+    name: uBlock filters
+    id: 101
+  - enabled: true
+    url: https://easylist.to/easylist/easylist.txt
+    name: EasyList
+    id: 102
+  - enabled: true
+    url: https://easylist.to/easylist/easyprivacy.txt
+    name: EasyPrivacy
+    id: 103
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_50.txt
+    name: uBlock Badware risks
+    id: 50
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_51.txt
+    name: HaGeZi Pro++ (mạnh tay hơn)
+    id: 51
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_49.txt
+    name: HaGeZi Ultimate (rất mạnh tay)
+    id: 49
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_27.txt
+    name: OISD Big
+    id: 27
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_33.txt
+    name: Steven Black
+    id: 33
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_60.txt
+    name: HaGeZi Xiaomi Tracker
+    id: 60
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_44.txt
+    name: HaGeZi Threat Intelligence
+    id: 44
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_11.txt
+    name: Malicious URL Blocklist (URLHaus)
+    id: 11
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_18.txt
+    name: Phishing Army
+    id: 18
 whitelist_filters: []
 user_rules: []
 dhcp:
