@@ -32,17 +32,27 @@ The basic idea follows [twoone-3/AdGuardHomeForRoot](https://github.com/twoone-3
 
 ## Ad-blocking filters
 
-Nine lists are on by default: AdGuard DNS filter, **HaGeZi Pro++**, ABPVN and hostsVN (Vietnam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (about 579,000 rules, AdGuardHome uses about 120 MB of RAM).
+On by default: AdGuard DNS filter, uBlock filters, **HaGeZi Pro++** and the Vietnamese lists (ABPVN, hostsVN). The other HaGeZi lists carry a strength note so you can choose:
 
-43 lists are included in total, toggled in the WebUI (**DNS → Ad-blocking filters**, with a search box):
+| List | Strength |
+| --- | --- |
+| AdGuard DNS filter | Balanced, few false positives |
+| uBlock filters | uBlock Origin filters (domain-blocking part) |
+| HaGeZi Pro | Strong - balance of blocking and few breakages |
+| HaGeZi Pro++ | Stronger - occasionally blocks too much |
+| HaGeZi Ultimate | Very strong - can break some websites |
+| HaGeZi Xiaomi Tracker | Blocks Xiaomi trackers and ads |
 
-- **General:** HaGeZi Pro (off because Pro++ includes it), Ultimate, OISD Big, Steven Black, Xiaomi Tracker.
-- **Security:** uBlock Badware, URLHaus, Phishing Army, HaGeZi Threat Intelligence (very large, over 2 million rules).
-- **By country (off by default):** Vietnam (on), South Korea, China, Indonesia, Poland, Turkey, Hungary, Lithuania, Israel, Sweden, Norway, North Macedonia, Iran, Ukraine, Germany, France, Spain, Portugal, Italy, Netherlands, Russia, Arabic, Czechia/Slovakia.
+**By country.** When you open **DNS → Ad-blocking filters** the WebUI detects your country from your IP and shows only that country's lists (*All countries* shows everything; the search box also finds hidden countries). Lists exist for Vietnam, South Korea, China, Indonesia, Poland, Turkey, Hungary, Lithuania, Israel, Sweden, Norway, North Macedonia, Iran, Ukraine, Germany, France, Spain, Portugal, Italy, the Netherlands, Russia, Arabic and Czechia/Slovakia; countries sharing a language share a list (for example Argentina and Mexico use the Spanish one). Detection calls `api.country.is`, `geojs.io` and `ipinfo.io` (those services see your IP); the result is cached for 7 days, and without a network the device language's region is used.
 
-Turning on all 43 uses about 280 MB of RAM. Upgrades add the new lists and, once only, switch HaGeZi Pro++ on / HaGeZi Pro off (you can change that afterwards); your other choices are kept.
+Every 100,000 rules costs roughly 20 MB of RAM; the default set uses about 120 MB. Upgrades drop the lists that no longer ship (EasyList, EasyPrivacy, Peter Lowe's, OISD, Steven Black, the malware/phishing lists) and keep your choices for the rest.
 
-**100% is not possible.** DNS blocking can only stop *domains*, so it cannot remove ads served from the same domain as the content (for example YouTube video ads, or ads embedded in some apps) nor CSS-hidden ads on web pages (that is uBlock Origin's job in the browser). Stronger lists (Pro++/Ultimate) block more but can break some sites/apps; turn them off again if that happens.
+**100% is not possible.** DNS blocking can only stop *domains*:
+
+- It cannot remove ads served from the same domain as the content (for example YouTube video ads, or ads embedded in some apps).
+- It cannot apply path rules (`/pagead.js$...`, `/widget/ads.`) or element-hiding rules (`site##.class`). AdGuardHome accepts those lines but ignores them, so tests such as *adblock.turtlecute.org* (static/dynamic ads, `ads.js`, `pagead.js`) keep reporting "not blocked", while the domain-based checks (ad networks) are blocked. Passing those needs blocking inside the browser (uBlock Origin on Firefox, or Brave).
+
+Strong lists (Pro++, Ultimate) block more but can break some sites/apps; turn them off again if that happens.
 
 ## Using the WebUI
 

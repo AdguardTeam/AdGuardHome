@@ -32,17 +32,27 @@ Module root (Magisk / KernelSU / APatch) chạy [AdGuardHome](https://github.com
 
 ## Bộ lọc chặn quảng cáo
 
-Mặc định bật 9 danh sách: AdGuard DNS filter, **HaGeZi Pro++**, ABPVN và hostsVN (Việt Nam), Peter Lowe's, uBlock filters, EasyList, EasyPrivacy, uBlock Badware (tổng khoảng 579.000 luật, AdGuardHome dùng khoảng 120 MB RAM).
+Mặc định bật: AdGuard DNS filter, uBlock filters, **HaGeZi Pro++** và các danh sách của Việt Nam (ABPVN, hostsVN). Các danh sách HaGeZi còn lại có chú thích mức độ để bạn chọn:
 
-Có sẵn tổng cộng 43 danh sách, bật/tắt trong WebUI (tab **DNS → Bộ lọc chặn quảng cáo**, có ô tìm kiếm):
+| Danh sách | Mức độ |
+| --- | --- |
+| AdGuard DNS filter | Cân bằng, ít chặn nhầm |
+| uBlock filters | Bộ lọc uBlock Origin (phần chặn theo tên miền) |
+| HaGeZi Pro | Mạnh - cân bằng giữa chặn và ít lỗi |
+| HaGeZi Pro++ | Mạnh hơn - thỉnh thoảng chặn nhầm |
+| HaGeZi Ultimate | Rất mạnh - có thể làm hỏng một số trang web |
+| HaGeZi Xiaomi Tracker | Chặn theo dõi và quảng cáo của Xiaomi |
 
-- **Chung:** HaGeZi Pro (tắt vì Pro++ đã bao gồm), Ultimate, OISD Big, Steven Black, Xiaomi Tracker.
-- **Bảo mật:** uBlock Badware, URLHaus, Phishing Army, HaGeZi Threat Intelligence (rất lớn, hơn 2 triệu luật).
-- **Theo quốc gia (tắt mặc định):** Việt Nam (bật), Hàn Quốc, Trung Quốc, Indonesia, Ba Lan, Thổ Nhĩ Kỳ, Hungary, Litva, Israel, Thụy Điển, Na Uy, Bắc Macedonia, Iran, Ukraina, Đức, Pháp, Tây Ban Nha, Bồ Đào Nha, Ý, Hà Lan, Nga, Ả Rập, Séc/Slovakia.
+**Theo quốc gia.** Khi mở tab **DNS → Bộ lọc chặn quảng cáo**, WebUI tự nhận diện quốc gia theo IP và chỉ hiện danh sách của quốc gia đó (nút *Tất cả quốc gia* để xem toàn bộ, ô tìm kiếm tìm được cả quốc gia đang ẩn). Có sẵn danh sách cho Việt Nam, Hàn Quốc, Trung Quốc, Indonesia, Ba Lan, Thổ Nhĩ Kỳ, Hungary, Litva, Israel, Thụy Điển, Na Uy, Bắc Macedonia, Iran, Ukraina, Đức, Pháp, Tây Ban Nha, Bồ Đào Nha, Ý, Hà Lan, Nga, Ả Rập, Séc/Slovakia; các nước cùng ngôn ngữ dùng chung (ví dụ Argentina, Mexico dùng danh sách Tây Ban Nha). Việc nhận diện gọi `api.country.is`, `geojs.io`, `ipinfo.io` (các dịch vụ này thấy IP của bạn), kết quả được nhớ 7 ngày; nếu không có mạng thì dùng vùng của ngôn ngữ máy.
 
-Bật hết cả 43 danh sách tốn khoảng 280 MB RAM. Bản nâng cấp tự bổ sung các danh sách mới, và một lần duy nhất bật HaGeZi Pro++ / tắt HaGeZi Pro (bạn có thể đổi lại sau đó); các lựa chọn khác của bạn được giữ nguyên.
+Mỗi 100.000 luật tốn khoảng 20 MB RAM; bộ mặc định khoảng 120 MB. Bản nâng cấp bỏ các danh sách cũ không còn dùng (EasyList, EasyPrivacy, Peter Lowe's, OISD, Steven Black, các danh sách mã độc/lừa đảo) và giữ nguyên lựa chọn của bạn với các danh sách còn lại.
 
-**Không thể đạt 100%.** Chặn bằng DNS chỉ ngăn được *tên miền*, nên không chặn được quảng cáo phát từ cùng tên miền với nội dung (ví dụ video quảng cáo trong YouTube, quảng cáo nhúng trong một số ứng dụng), cũng như quảng cáo ẩn bằng CSS trên trang web (việc của uBlock Origin trong trình duyệt). Danh sách mạnh tay (Pro++/Ultimate) chặn nhiều hơn nhưng dễ làm hỏng một số trang/ứng dụng; nếu vậy hãy tắt lại danh sách đó.
+**Không thể đạt 100%.** Chặn bằng DNS chỉ ngăn được *tên miền*:
+
+- Không chặn được quảng cáo phát từ cùng tên miền với nội dung (ví dụ video quảng cáo trong YouTube, quảng cáo nhúng trong một số ứng dụng).
+- Không áp dụng được quy tắc theo đường dẫn (`/pagead.js$...`, `/widget/ads.`) hay quy tắc ẩn phần tử trên trang (`site##.class`). AdGuardHome chấp nhận các dòng đó nhưng bỏ qua, nên các bài kiểm tra như *adblock.turtlecute.org* (quảng cáo tĩnh/động, `ads.js`, `pagead.js`) vẫn báo "không chặn", còn các mục kiểm tra theo tên miền (mạng lưới quảng cáo) thì chặn được. Muốn đạt các mục đó cần chặn ngay trong trình duyệt (uBlock Origin trên Firefox, hoặc Brave).
+
+Danh sách mạnh (Pro++, Ultimate) chặn nhiều hơn nhưng dễ làm hỏng một số trang/ứng dụng; nếu vậy hãy tắt lại danh sách đó.
 
 ## Sử dụng WebUI
 

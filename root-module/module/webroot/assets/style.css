@@ -184,3 +184,7 @@ pre {
 .fgroup .switch-row { padding: 9px 12px; }
 .fgroup .switch-row:last-of-type { border-bottom: 0; }
 .fsection { margin: 16px 0 0; font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+.cbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0 0; flex-wrap: wrap; }
+.cbar .muted { margin: 0; }
+.cbar .chip { flex: none; }

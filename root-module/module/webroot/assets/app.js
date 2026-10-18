@@ -27,6 +27,8 @@
     upstreamLoaded: false,
     filters: [],
     filtersLoaded: false,
+    country: null,
+    showAllCountries: false,
     formLoaded: false,
     logKind: 'core',
     debugText: '',
@@ -304,13 +306,57 @@
     return m ? m[1] : url;
   }
 
-  // Nhóm bộ lọc theo id: quốc gia, bảo mật, còn lại là chung.  Bộ lọc người dùng tự thêm rơi vào nhóm chung.
+  // Nhóm bộ lọc theo id: quốc gia, còn lại là chung.  Bộ lọc người dùng tự thêm rơi vào nhóm chung.
+  // "ARAB" và "CZ" là nhóm theo ngôn ngữ/khu vực, không phải mã ISO (AR là Argentina).
   const COUNTRY_BY_ID = {
     16: 'VN', 2: 'VN', 15: 'KR', 25: 'KR', 21: 'CN', 29: 'CN', 22: 'ID', 14: 'PL', 41: 'PL', 26: 'TR', 40: 'TR',
     35: 'HU', 36: 'LT', 43: 'IL', 17: 'SE', 13: 'NO', 20: 'MK', 19: 'IR', 62: 'UA', 110: 'DE', 111: 'FR',
-    112: 'ES', 113: 'PT', 114: 'IT', 115: 'NL', 116: 'RU', 117: 'AR', 118: 'CZ',
+    112: 'ES', 113: 'PT', 114: 'IT', 115: 'NL', 116: 'RU', 117: 'ARAB', 118: 'CZ',
   };
-  const SECURITY_IDS = new Set([50, 44, 11, 18]);
+  // Mã quốc gia ISO -> nhóm danh sách dùng chung ngôn ngữ/khu vực
+  const ISO_TO_GROUP = {};
+  const alias = (group, codes) => codes.split(' ').forEach((c) => { ISO_TO_GROUP[c] = group; });
+  alias('DE', 'AT CH LI');
+  alias('ES', 'MX AR CL CO PE VE EC UY PY BO CR PA DO GT HN NI SV CU PR');
+  alias('PT', 'BR AO MZ');
+  alias('CZ', 'SK');
+  alias('RU', 'BY KZ');
+  alias('ARAB', 'SA AE EG IQ JO KW LB LY MA DZ TN OM QA BH YE SD SY PS');
+
+  // Nhận diện quốc gia theo IP (có nhớ 7 ngày). Thử lần lượt vài dịch vụ; nếu mạng lỗi thì dùng vùng của ngôn ngữ máy.
+  const GEO_SOURCES = [
+    ['https://api.country.is/', (r) => r.json().then((j) => j.country)],
+    ['https://get.geojs.io/v1/ip/country.json', (r) => r.json().then((j) => j.country)],
+    ['https://ipinfo.io/country', (r) => r.text()],
+  ];
+
+  async function fetchCountry() {
+    for (const [url, parse] of GEO_SOURCES) {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 6000);
+        const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+        clearTimeout(timer);
+        if (!res.ok) continue;
+        const cc = String(await parse(res)).trim().toUpperCase();
+        if (/^[A-Z]{2}$/.test(cc)) return cc;
+      } catch (e) { /* thử nguồn tiếp theo */ }
+    }
+    const m = /-([A-Za-z]{2})\b/.exec(navigator.language || '');
+    return m ? m[1].toUpperCase() : '';
+  }
+
+  async function detectCountry() {
+    try {
+      const c = JSON.parse(store.get('country') || 'null');
+      if (c && c.cc && Date.now() - c.ts < 7 * 24 * 3600 * 1000) { state.country = c.cc; return; }
+    } catch (e) { /* bỏ qua */ }
+    const cc = await fetchCountry();
+    state.country = cc;
+    if (cc) store.set('country', JSON.stringify({ cc, ts: Date.now() }));
+  }
+
+  const groupOfCountry = (cc) => (cc ? ISO_TO_GROUP[cc] || (Object.values(COUNTRY_BY_ID).includes(cc) ? cc : '') : '');
 
   function filterRow(f) {
     const row = document.createElement('label');
@@ -319,7 +365,8 @@
     const strong = document.createElement('strong');
     strong.textContent = f.name;
     const small = document.createElement('small');
-    small.textContent = hostOf(f.url);
+    const noteKey = `filters.note.${f.id}`;
+    small.textContent = t(noteKey) !== noteKey ? t(noteKey) : hostOf(f.url);
     span.append(strong, small);
     const input = document.createElement('input');
     input.type = 'checkbox';
@@ -359,11 +406,12 @@
     const box = $('#filters-list');
     const q = ($('#filters-search').value || '').trim().toLowerCase();
     box.textContent = '';
+    const noteOf = (f) => { const k = `filters.note.${f.id}`; return t(k) !== k ? t(k) : ''; };
     const match = (f) => {
       if (!q) return true;
       const c = COUNTRY_BY_ID[f.id];
       const country = c ? `${t(`country.${c}`)} ${c}`.toLowerCase() : '';
-      return `${f.name} ${f.url} ${country}`.toLowerCase().includes(q);
+      return `${f.name} ${f.url} ${noteOf(f)} ${country}`.toLowerCase().includes(q);
     };
     const shown = state.filters.filter(match);
     if (!shown.length) {
@@ -372,22 +420,44 @@
       p.textContent = t(state.filters.length ? 'filters.noMatch' : 'filters.none');
       box.append(p);
     }
-    const general = shown.filter((f) => !COUNTRY_BY_ID[f.id] && !SECURITY_IDS.has(Number(f.id)));
-    const security = shown.filter((f) => SECURITY_IDS.has(Number(f.id)));
+    const general = shown.filter((f) => !COUNTRY_BY_ID[f.id]);
     const byCountry = {};
     shown.forEach((f) => { const c = COUNTRY_BY_ID[f.id]; if (c) (byCountry[c] = byCountry[c] || []).push(f); });
-    const open = !!q; // khi đang tìm kiếm thì mở hết cho dễ thấy
     if (general.length) box.append(filterGroup('general', t('filters.group.general'), general, true));
-    if (byCountry.VN) box.append(filterGroup('VN', t('country.VN'), byCountry.VN, true));
-    if (security.length) box.append(filterGroup('security', t('filters.group.security'), security, open));
-    const others = Object.keys(byCountry).filter((c) => c !== 'VN').sort((x, y) => t(`country.${x}`).localeCompare(t(`country.${y}`), state.lang));
-    if (others.length) {
+
+    // Quốc gia: mặc định chỉ hiện quốc gia nhận diện được (và quốc gia đang có danh sách bật); nút để xem tất cả
+    const mine = groupOfCountry(state.country);
+    const countryKeys = Object.keys(byCountry);
+    if (countryKeys.length || !q) {
       const h = document.createElement('p');
       h.className = 'fsection';
       h.textContent = t('filters.group.countries');
       box.append(h);
-      others.forEach((c) => box.append(filterGroup(c, t(`country.${c}`), byCountry[c], open)));
     }
+    if (!q) {
+      const bar = document.createElement('div');
+      bar.className = 'cbar';
+      const info = document.createElement('p');
+      info.className = 'muted small';
+      const label = state.country ? (t(`country.${mine}`) !== `country.${mine}` && mine ? t(`country.${mine}`) : state.country) : '';
+      if (state.country === null) info.textContent = t('filters.country.detecting');
+      else if (!state.country) info.textContent = t('filters.country.unknown');
+      else if (!mine) info.textContent = `${t('filters.country.detected', { c: state.country })} ${t('filters.country.none', { c: state.country })}`;
+      else info.textContent = t('filters.country.detected', { c: label });
+      const btn = document.createElement('button');
+      btn.className = 'chip';
+      btn.textContent = t(state.showAllCountries ? 'filters.country.mine' : 'filters.country.all');
+      btn.addEventListener('click', () => { state.showAllCountries = !state.showAllCountries; renderFilters(); });
+      bar.append(info, btn);
+      box.append(bar);
+    }
+    const withEnabled = countryKeys.filter((c) => byCountry[c].some((f) => f.enabled));
+    let visible;
+    if (q || state.showAllCountries) visible = countryKeys;
+    else visible = countryKeys.filter((c) => c === mine || withEnabled.includes(c));
+    visible.sort((x, y) => (x === 'VN' ? -1 : y === 'VN' ? 1 : t(`country.${x}`).localeCompare(t(`country.${y}`), state.lang)));
+    const compact = !q && !state.showAllCountries;
+    visible.forEach((c) => box.append(filterGroup(c, t(`country.${c}`), byCountry[c], compact || !!q)));
     updateGroupCounts();
     updateFilterCount();
   }
@@ -407,6 +477,7 @@
     state.filtersOrig = state.filters.map((f) => f.enabled);
     state.filtersLoaded = true;
     renderFilters();
+    if (state.country === null) detectCountry().then(renderFilters);
   }
 
   async function saveFilters() {

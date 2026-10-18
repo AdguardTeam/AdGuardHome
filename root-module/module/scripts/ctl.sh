@@ -340,9 +340,11 @@ cmd_get_upstream() {
 }
 
 upstream_inner() {
-  _list=$(printf '%s\n' "$@")
+  # Danh sách phân tách bằng "|" (không nằm trong bộ ký tự hợp lệ của upstream): awk trên Android
+  # từ chối ký tự xuống dòng trong giá trị -v.
+  _list=$(printf '%s|' "$@")
   yaml_rewrite -v ups="$_list" '
-    BEGIN { n = split(ups, a, "\n"); q = sprintf("%c", 39) }
+    BEGIN { n = split(ups, a, "|"); q = sprintf("%c", 39) }
     /^dns:[ \t]*$/ { in_dns = 1; print; next }
     /^[^ \t#]/ { in_dns = 0; skip = 0 }
     in_dns && /^  upstream_dns:/ {
@@ -441,11 +443,38 @@ merge_filters_inner() {
       END { if (inf && !done) dump() }'
   fi
   rm -f "$_new"
-  # Thay đổi mặc định cần áp dụng cho cả cấu hình cũ (ví dụ bật Pro++), chỉ một lần cho mỗi filters.rev
+  # Danh sách đã bị bỏ khỏi bản mới (config/filters.remove) cũng được gỡ khỏi cấu hình cũ
+  _rm=$(grep -E '^[0-9]+$' "$DEFAULT_DIR/filters.remove" 2>/dev/null)
+  # shellcheck disable=SC2086
+  [ -n "$_rm" ] && filters_remove_inner $_rm
+  # Đổi mặc định cần áp dụng cho cấu hình cũ (bật Pro++): chỉ với cấu hình trước filters.rev 3,
+  # để không ghi đè lựa chọn của người đã dùng bản mới hơn
+  _old=$(cat "$FILTERS_REV_FILE" 2>/dev/null)
+  case $_old in '' | *[!0-9]*) _old=0 ;; esac
   _mig=$(grep -E '^[0-9]+:(true|false)$' "$DEFAULT_DIR/filters.migrate" 2>/dev/null)
   # shellcheck disable=SC2086
-  [ -n "$_mig" ] && filters_inner $_mig
+  [ "$_old" -lt 3 ] && [ -n "$_mig" ] && filters_inner $_mig
   mark_filters_rev
+}
+
+# filters_remove_inner <id>...: xóa phần tử bộ lọc theo id (dùng khi một bản mới bỏ bớt danh sách).
+filters_remove_inner() {
+  _spec=$(printf '%s,' "$@")
+  yaml_rewrite -v rm="$_spec" '
+    BEGIN { n = split(rm, p, ","); for (i = 1; i <= n; i++) if (p[i] != "") drop[p[i]] = 1 }
+    function flush(   i, id) {
+      if (cnt == 0) return
+      id = ""
+      for (i = 1; i <= cnt; i++) if (match(buf[i], /(^|[ \t-])id:[ \t]*[0-9]+/)) { id = buf[i]; sub(/.*id:[ \t]*/, "", id); sub(/[^0-9].*$/, "", id) }
+      if (!(id in drop)) for (i = 1; i <= cnt; i++) print buf[i]
+      cnt = 0
+    }
+    /^filters:[ \t]*$/ { inf = 1; print; next }
+    /^[^ \t#-]/ { if (inf) flush(); inf = 0 }
+    inf && /^[ \t]*-[ \t]/ { flush(); buf[++cnt] = $0; next }
+    inf && cnt > 0 { buf[++cnt] = $0; next }
+    { print }
+    END { if (inf) flush() }'
 }
 
 cmd_merge_filters() {
