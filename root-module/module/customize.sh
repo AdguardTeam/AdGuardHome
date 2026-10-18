@@ -28,7 +28,11 @@ if [ -n "$_built" ] && [ "$_built" != "$ARCH" ]; then
 fi
 
 if [ ! -f "$MODPATH/bin/AdGuardHome" ]; then
-  abort "! bin/AdGuardHome missing / thiếu bin/AdGuardHome"
+  if [ "$language" = en ]; then
+    abort "! This zip has no AdGuardHome binary. Use a release zip or one built with root-module/pack.sh, not a zipped source folder."
+  else
+    abort "! Gói zip này không có binary AdGuardHome. Hãy dùng zip trong Release hoặc zip build bằng root-module/pack.sh, không nén trực tiếp thư mục mã nguồn."
+  fi
 fi
 
 mkdir -p "$AGH_DIR/work"

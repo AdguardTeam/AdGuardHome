@@ -22,6 +22,8 @@ The basic idea follows [twoone-3/AdGuardHomeForRoot](https://github.com/twoone-3
 
 ## Install
 
+> Only install a **packaged zip** (it contains `bin/AdGuardHome`, about 11 MB). A zip of the raw `module/` folder has no binary and the installer will abort.
+
 1. Download `AdGuardHome-for-Superuser_<version>_<arch>.zip` for your architecture (see *Build it yourself*).
 2. Install it from your root manager (Modules → Install from storage), then **reboot**.
 3. Open the module's WebUI → **Settings → Account** and set a password for the AdGuardHome panel.

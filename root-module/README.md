@@ -22,6 +22,8 @@ Module root (Magisk / KernelSU / APatch) chạy [AdGuardHome](https://github.com
 
 ## Cài đặt
 
+> Chỉ cài **zip đã đóng gói** (có `bin/AdGuardHome`, khoảng 11 MB). Zip nén thẳng từ thư mục `module/` thiếu binary nên trình cài đặt sẽ báo lỗi.
+
 1. Tải gói `AdGuardHome-for-Superuser_<phiên bản>_<arch>.zip` đúng kiến trúc (xem mục *Tự đóng gói* nếu muốn tự build).
 2. Cài từ trình quản lý root (Modules → Install from storage), rồi **khởi động lại**.
 3. Mở WebUI của module → tab **Cài đặt → Tài khoản** để đặt mật khẩu cho bảng điều khiển AdGuardHome.
