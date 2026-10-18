@@ -26,6 +26,10 @@ HISTORY_LOG="$AGH_DIR/history.log"
 STOP_FLAG="$AGH_DIR/.stopped"
 LOCK_DIR="$AGH_DIR/.lock"
 FILTERS_REV_FILE="$AGH_DIR/.filters_rev"
+PHASE_FILE="$AGH_DIR/.phase"
+STARTED_FILE="$AGH_DIR/.started"
+VERSION_FILE="$AGH_DIR/.version"
+CHAIN4="ADGUARD_REDIRECT_DNS"
 
 # Nạp settings.conf; khóa còn thiếu (bản cũ nâng cấp lên) dùng giá trị mặc định dưới đây.
 load_settings() {
@@ -68,35 +72,75 @@ update_description() {
   rm -f "$_prop.tmp"
 }
 
+# Các hàm kiểm tra tiến trình dưới đây chỉ dùng lệnh nội bộ của shell (read, case, [ ]): không
+# fork/exec, vì WebUI gọi status liên tục và mỗi lần exec trên Android khá tốn.
+
 # is_agh_pid PID: PID còn sống và đúng là tiến trình AdGuardHome (tránh nhầm PID bị tái sử dụng).
 # Dùng comm (tên tiến trình) thay vì cmdline: cmdline có thể rỗng thoáng qua khi đang exec,
 # và đường dẫn module có thể vô tình chứa chữ "AdGuardHome".
 is_agh_pid() {
-  [ -n "$1" ] && [ "$(cat "/proc/$1/comm" 2>/dev/null)" = "AdGuardHome" ]
+  [ -n "$1" ] && [ -r "/proc/$1/comm" ] || return 1
+  _c=""
+  read -r _c 2>/dev/null <"/proc/$1/comm"
+  [ "$_c" = "AdGuardHome" ]
 }
 
 # pid_alive PID: tiến trình còn tồn tại và chưa thành zombie.  Khác is_agh_pid ở chỗ: cmdline
-# rỗng ngay khi tiến trình nhả bộ nhớ, trước khi socket được đóng; chỉ trạng thái Z/X mới
+# rỗng ngay khi tiến trình nhả bộ nhớ, trước khi socket được đóng; chỉ trạng thái zombie/dead mới
 # đảm bảo cổng đã được nhả.
 pid_alive() {
-  [ -n "$1" ] && [ -d "/proc/$1" ] && ! grep -q '^State:[[:space:]]*[ZX]' "/proc/$1/status" 2>/dev/null
+  [ -n "$1" ] && [ -r "/proc/$1/status" ] || return 1
+  while IFS= read -r _l; do
+    case $_l in
+    State:*zombie* | State:*dead*) return 1 ;;
+    State:*) return 0 ;;
+    esac
+  done 2>/dev/null <"/proc/$1/status"
+  return 0
 }
 
 # running_pid: in PID nếu AdGuardHome đang chạy.
 running_pid() {
-  _p=$(cat "$PID_FILE" 2>/dev/null)
+  _p=""
+  [ -r "$PID_FILE" ] && read -r _p 2>/dev/null <"$PID_FILE"
+  case $_p in '' | *[!0-9]*) return 1 ;; esac
   pid_alive "$_p" && is_agh_pid "$_p" && echo "$_p"
 }
 
 # is_dns_listening: AdGuardHome đã nhận truy vấn DNS trên redir_port chưa.
-# Đọc thẳng /proc/net/udp{,6} nên không cần netstat/ss.
+# Đọc thẳng /proc/net/udp{,6} bằng read/case nên không cần netstat/ss, không exec.
 is_dns_listening() {
   _hex=$(printf '%04X' "$redir_port")
   for _f in /proc/net/udp /proc/net/udp6; do
     [ -r "$_f" ] || continue
-    awk -v pat=":$_hex\$" 'NR > 1 && $2 ~ pat { found = 1 } END { exit !found }' "$_f" && return 0
+    while read -r _sl _la _rest; do
+      case $_la in *:"$_hex") return 0 ;; esac
+    done <"$_f"
   done
   return 1
+}
+
+# Nhịp chờ ngắn: 0,1 giây nếu sleep hỗ trợ số thập phân (toybox/busybox), nếu không thì 1 giây.
+# Dùng: tick_init; _max=$((giây * TPS)); ... nap
+TPS=""
+NAP=""
+tick_init() {
+  [ -n "$TPS" ] && return 0
+  if sleep 0.01 2>/dev/null; then
+    TPS=10
+    NAP=0.1
+  else
+    TPS=1
+    NAP=1
+  fi
+}
+nap() { sleep "$NAP"; }
+
+# phase <tên>: ghi giai đoạn hiện tại của thao tác đang giữ khóa để WebUI hiển thị tiến trình.
+phase() {
+  [ -d "$LOCK_DIR" ] || return 0
+  printf '%s %s\n' "$1" "$(date +%s)" >"$PHASE_FILE" 2>/dev/null
+  return 0
 }
 
 # Khóa: tránh start/stop/sửa cấu hình chạy chồng lên nhau (WebUI, watchdog, inotify).
@@ -125,18 +169,26 @@ lock_try() {
   return 1
 }
 
-# acquire_lock [giây chờ]: chờ khóa tối đa N giây (mặc định không chờ).
+# acquire_lock [giây chờ]: chờ khóa tối đa N giây (mặc định không chờ), kiểm tra mỗi 0,1 giây.
 acquire_lock() {
-  _wait=${1:-0}
+  tick_init
+  _wait=$((${1:-0} * TPS))
   while ! lock_try; do
     [ "$_wait" -gt 0 ] || return 1
     _wait=$((_wait - 1))
-    sleep 1
+    nap
   done
   return 0
 }
 
 release_lock() {
-  [ "$(cat "$LOCK_DIR/pid" 2>/dev/null)" = "$$" ] && rm -rf "$LOCK_DIR"
+  if [ -r "$LOCK_DIR/pid" ]; then
+    _h=""
+    read -r _h 2>/dev/null <"$LOCK_DIR/pid"
+    if [ "$_h" = "$$" ]; then
+      rm -f "$PHASE_FILE"
+      rm -rf "$LOCK_DIR"
+    fi
+  fi
   return 0
 }

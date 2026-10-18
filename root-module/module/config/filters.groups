@@ -1,0 +1,34 @@
+# Nhóm của từng bộ lọc: "main" = mức chặn chính (chọn 1); mã quốc gia = danh sách theo quốc gia (chọn tối đa 1).
+# Id không có ở đây thuộc nhóm "other" (do người dùng tự thêm).
+1 main
+101 main
+48 main
+51 main
+49 main
+16 VN
+15 KR
+25 KR
+21 CN
+29 CN
+22 ID
+14 PL
+41 PL
+26 TR
+40 TR
+35 HU
+36 LT
+43 IL
+17 SE
+13 NO
+20 MK
+19 IR
+62 UA
+110 DE
+111 FR
+112 ES
+113 PT
+114 IT
+115 NL
+116 RU
+117 ARAB
+118 CZ

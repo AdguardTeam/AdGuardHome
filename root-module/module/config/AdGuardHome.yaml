@@ -59,11 +59,11 @@ statistics:
   interval: 24h
   ignored: []
 filters:
-  - enabled: true
+  - enabled: false
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
     name: AdGuard DNS filter
     id: 1
-  - enabled: true
+  - enabled: false
     url: https://ublockorigin.github.io/uAssets/filters/filters.txt
     name: uBlock filters
     id: 101
@@ -79,18 +79,10 @@ filters:
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_49.txt
     name: HaGeZi Ultimate
     id: 49
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_60.txt
-    name: HaGeZi Xiaomi Tracker
-    id: 60
   - enabled: true
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
-    name: ABPVN (Việt Nam)
+    name: ABPVN
     id: 16
-  - enabled: true
-    url: https://raw.githubusercontent.com/bigdargon/hostsVN/master/hosts
-    name: hostsVN (Việt Nam)
-    id: 2
   - enabled: false
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_15.txt
     name: KOR - YousList

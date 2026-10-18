@@ -3,10 +3,13 @@
 #
 # Cách dùng / Usage: ctl.sh <lệnh/command> [tham số/args]
 #   start | stop | restart | toggle | watchdog
-#   status | version | logs <core|history> [dòng/lines] | debug
-#   get-upstream | set-upstream <url>... | get-filters | set-filters <id:true|false>... | merge-filters
-#   set-port <port> | set-password <bcrypt-hash>
+#   snapshot | status | phase | version | device-country | logs <core|history> [dòng/lines] | debug
+#   get-upstream | set-upstream <url>... | get-filters | set-filter-selection <chính> <quốc gia|0>
+#   set-filters <id:true|false>... | merge-filters | set-port <port> | set-password <bcrypt-hash>
 #   set-setting <key> <value> | reset-config
+#
+# Mỗi lệnh thay đổi trạng thái in dòng cuối "result=<mã>" (và "detail=..." nếu có).
+# Mã thoát: 0 = ok, 1 = lỗi, 3 = AdGuardHome chạy nhưng chuyển hướng DNS chưa bật, 75 = đang bận.
 
 SELF_DIR=$(cd "${0%/*}" 2>/dev/null && pwd)
 [ -n "$SELF_DIR" ] || SELF_DIR=.
@@ -14,8 +17,24 @@ SELF_DIR=$(cd "${0%/*}" 2>/dev/null && pwd)
 . "$SELF_DIR/common.sh"
 
 IPT_SH="$SELF_DIR/iptables.sh"
+IPT_CHECK="iptables -w 3"
+
+RESULT=""
+DETAIL=""
+EX_WARN=3
+EX_BUSY=75
+LOCK_WAIT="${LOCK_WAIT:-45}"
+
+emit_result() {
+  [ -n "$RESULT" ] && echo "result=$RESULT"
+  [ -n "$DETAIL" ] && echo "detail=$DETAIL"
+  return 0
+}
 
 die() {
+  RESULT=invalid
+  DETAIL=$(printf '%s' "$*" | tr -d '\n')
+  emit_result
   echo "$*" >&2
   exit 1
 }
@@ -23,6 +42,7 @@ die() {
 # ---------------------------------------------------------------- YAML helpers
 # AdGuardHome ghi lại AdGuardHome.yaml theo dạng chuẩn (thụt 2 dấu cách, không comment),
 # nên chỉ cần sửa theo từng dòng bằng awk.  Mọi lần sửa đều có bản sao .bak.
+# Lưu ý: awk trên Android từ chối ký tự xuống dòng trong giá trị -v; truyền danh sách bằng "," hoặc "|".
 
 # yaml_get <mục> <khóa>: giá trị vô hướng ở cấp 2 của mục cấp 1.
 yaml_get() {
@@ -94,14 +114,15 @@ cmd_set_setting() {
   *) die "unknown setting: $_k" ;;
   esac
   setting_set "$_k" "$_v"
+  RESULT=applied
 }
 
 # Cổng DNS trong AdGuardHome.yaml là nguồn sự thật; settings.conf luôn đi theo nó.
 sync_port_from_yaml() {
-  _p=$(yaml_get dns port)
-  if is_port "$_p" && [ "$_p" != "$redir_port" ]; then
-    setting_set redir_port "$_p"
-    redir_port=$_p
+  _pp=$(yaml_get dns port)
+  if is_port "$_pp" && [ "$_pp" != "$redir_port" ]; then
+    setting_set redir_port "$_pp"
+    redir_port=$_pp
   fi
 }
 
@@ -142,11 +163,13 @@ launch_agh() {
 }
 
 wait_for_dns_ready() {
+  tick_init
   _w=0
-  while [ "$_w" -lt "$startup_timeout" ]; do
+  _max=$((startup_timeout * TPS))
+  while [ "$_w" -lt "$_max" ]; do
     is_dns_listening && return 0
     pid_alive "$agh_pid" || return 1
-    sleep 1
+    nap
     _w=$((_w + 1))
   done
   return 1
@@ -154,26 +177,33 @@ wait_for_dns_ready() {
 
 # Instance vừa tắt (đa luồng) có thể chưa đóng hết socket; bind lại cổng quá sớm sẽ thất bại.
 wait_port_free() {
+  tick_init
   _t=0
-  while is_dns_listening && [ "$_t" -lt 20 ]; do
-    sleep 0.5 2>/dev/null || sleep 1
+  _max=$((10 * TPS))
+  while is_dns_listening && [ "$_t" -lt "$_max" ]; do
+    nap
     _t=$((_t + 1))
   done
 }
 
+# do_start: RESULT = started | already_running | no_binary | launch_failed | crashed | dns_timeout | iptables_failed
+# Mã trả về: 0 ok, 1 lỗi, 3 = AdGuardHome đã chạy nhưng chưa bật chuyển hướng DNS.
 do_start() {
   prepare_files
   rm -f "$STOP_FLAG"
   _pid=$(running_pid)
   if [ -n "$_pid" ]; then
     log "AdGuardHome đang chạy [PID: $_pid]" "AdGuardHome is already running [PID: $_pid]"
+    RESULT=already_running
     return 0
   fi
   [ -x "$BIN" ] || {
     log "Không tìm thấy $BIN" "Binary not found: $BIN"
     update_description "🔴 Thiếu tệp thực thi AdGuardHome" "🔴 AdGuardHome binary is missing"
+    RESULT=no_binary
     return 1
   }
+  phase preparing
   merge_filters_if_needed
   sync_port_from_yaml
   wait_port_free
@@ -183,63 +213,80 @@ do_start() {
   export SSL_CERT_DIR="/system/etc/security/cacerts/"
   export TZ="$timezone"
   move_to_system_cgroup
-  launch_agh || return 1
+  phase starting
+  launch_agh || {
+    RESULT=launch_failed
+    return 1
+  }
 
   # PID của $! lúc đầu còn là nohup/busybox; chờ nó exec sang AdGuardHome.  Chỉ coi là lỗi khi
   # tiến trình đã chết, không phải khi chưa kịp exec.
+  tick_init
   _ok=0
   _t=0
-  while [ "$_t" -lt 50 ]; do
+  _max=$((5 * TPS))
+  while [ "$_t" -lt "$_max" ]; do
     if is_agh_pid "$agh_pid"; then
       _ok=1
       break
     fi
     pid_alive "$agh_pid" || break
-    sleep 0.1 2>/dev/null || sleep 1
+    nap
     _t=$((_t + 1))
   done
   if [ "$_ok" != 1 ]; then
     log "AdGuardHome không khởi động được, xem nhật ký lõi" "AdGuardHome failed to start, check the core log"
     update_description "🔴 Lỗi khởi động" "🔴 Failed to start"
     sh "$IPT_SH" disable
+    RESULT=crashed
     return 1
   fi
   echo "$agh_pid" >"$PID_FILE"
+  date +%s >"$STARTED_FILE"
 
   if [ "$enable_iptables" != true ]; then
     log "🟢 AdGuardHome đang chạy [PID: $agh_pid] (iptables: tắt)" "🟢 AdGuardHome is running [PID: $agh_pid] (iptables: off)"
     update_description "🟢 Đang chạy [PID: $agh_pid] (iptables: TẮT)" "🟢 Running [PID: $agh_pid] (iptables: OFF)"
+    RESULT=started
     return 0
   fi
 
   # Không bao giờ chiếm cổng 53 trước khi AdGuardHome trả lời được, nếu không máy mất DNS
   # và Android đánh dấu mạng "không có Internet".
+  phase waiting_dns
   if ! wait_for_dns_ready; then
     log "Cổng DNS $redir_port chưa sẵn sàng sau ${startup_timeout}s, bỏ qua iptables để máy vẫn có mạng" \
       "DNS port $redir_port not ready after ${startup_timeout}s, skipping iptables to keep the device online"
     update_description "🟡 Đang chạy [PID: $agh_pid] (iptables: BỎ QUA, DNS chưa sẵn sàng)" \
       "🟡 Running [PID: $agh_pid] (iptables: SKIPPED, DNS not ready)"
-    return 1
+    RESULT=dns_timeout
+    return $EX_WARN
   fi
+  phase applying_rules
   if sh "$IPT_SH" enable; then
     log "🟢 AdGuardHome đang chạy [PID: $agh_pid] (iptables: bật)" "🟢 AdGuardHome is running [PID: $agh_pid] (iptables: on)"
     update_description "🟢 Đang chạy [PID: $agh_pid] (iptables: BẬT)" "🟢 Running [PID: $agh_pid] (iptables: ON)"
+    RESULT=started
     return 0
   fi
   update_description "🟡 Đang chạy [PID: $agh_pid] (iptables: LỖI)" "🟡 Running [PID: $agh_pid] (iptables: ERROR)"
-  return 1
+  RESULT=iptables_failed
+  return $EX_WARN
 }
 
 # do_stop [giữ-cờ]: gỡ iptables trước (để DNS không bị mất), rồi mới tắt AdGuardHome.
 do_stop() {
+  phase stopping
   [ "$1" = keepflag ] || { mkdir -p "$AGH_DIR" && : >"$STOP_FLAG"; }
   sh "$IPT_SH" disable
   _pid=$(running_pid)
   if [ -n "$_pid" ]; then
     kill "$_pid" 2>/dev/null
+    tick_init
     _t=0
-    while [ "$_t" -lt 20 ] && pid_alive "$_pid"; do
-      sleep 0.5 2>/dev/null || sleep 1
+    _max=$((10 * TPS))
+    while [ "$_t" -lt "$_max" ] && pid_alive "$_pid"; do
+      nap
       _t=$((_t + 1))
     done
     if pid_alive "$_pid"; then
@@ -250,18 +297,17 @@ do_stop() {
   elif command -v pkill >/dev/null 2>&1 && pkill -f "$BIN" 2>/dev/null; then
     log "🔴 AdGuardHome bị buộc dừng" "🔴 AdGuardHome force stopped"
   fi
-  rm -f "$PID_FILE"
+  rm -f "$PID_FILE" "$STARTED_FILE"
   update_description "🔴 Đã dừng" "🔴 Stopped"
+  RESULT=stopped
   return 0
 }
-
-# Mã thoát riêng cho "đang bận" (EX_TEMPFAIL), tách biệt với các lỗi khác (kể cả mã 2 của awk/sh).
-EX_BUSY=75
-LOCK_WAIT="${LOCK_WAIT:-45}"
 
 # Chạy một hàm trong khi giữ khóa; chờ tối đa LOCK_WAIT giây nếu có lệnh khác đang chạy.
 locked() {
   acquire_lock "$LOCK_WAIT" || {
+    RESULT=busy
+    emit_result
     echo "busy: another operation is running" >&2
     exit "$EX_BUSY"
   }
@@ -316,15 +362,31 @@ cmd_watchdog() {
 
 # ---------------------------------------------------------------- sửa cấu hình
 # Sửa AdGuardHome.yaml khi nó đang chạy sẽ bị ghi đè; nên dừng -> sửa -> chạy lại nếu trước đó đang chạy.
+# RESULT: applied (kèm restarted=1 nếu phải khởi động lại) | edit_failed | mã lỗi của do_start.
 with_config_edit() {
   prepare_files
   _was=0
   [ -n "$(running_pid)" ] && _was=1
   [ "$_was" = 1 ] && do_stop keepflag
+  phase editing
   "$@"
-  _rc=$?
-  [ "$_was" = 1 ] && do_start
-  return $_rc
+  _erc=$?
+  _eres=applied
+  [ "$_erc" -ne 0 ] && _eres=edit_failed
+  if [ "$_was" = 1 ]; then
+    do_start
+    _srcrc=$?
+    if [ "$_srcrc" -eq 0 ] && [ "$_erc" -eq 0 ]; then
+      RESULT=$_eres
+      DETAIL=""
+      echo "restarted=1"
+      return 0
+    fi
+    [ "$_erc" -ne 0 ] && RESULT=$_eres && return "$_erc"
+    return "$_srcrc"
+  fi
+  RESULT=$_eres
+  return "$_erc"
 }
 
 cmd_get_upstream() {
@@ -364,12 +426,23 @@ cmd_set_upstream() {
 
 # ---------------------------------------------------------------- bộ lọc chặn quảng cáo
 # Mỗi bộ lọc trong mục filters: của AdGuardHome.yaml là một phần tử danh sách (enabled/url/name/id).
+# config/filters.groups gán mỗi id vào một nhóm: "main" (mức chặn chính, chọn 1) hoặc mã quốc gia
+# (danh sách theo quốc gia, chọn tối đa 1); id không có trong tệp thuộc nhóm "other" (tự thêm, bật tắt tự do).
 
-# filters_list <tệp>: in "id|enabled|name|url" cho từng bộ lọc.
+# filters_list <tệp>: in "id|enabled|name|url|nhóm" cho từng bộ lọc.
 filters_list() {
-  awk '
-    BEGIN { q = sprintf("%c", 39) }
-    function flush() { if (url != "") print id "|" en "|" name "|" url; id = en = name = url = "" }
+  awk -v groups="$DEFAULT_DIR/filters.groups" '
+    BEGIN {
+      q = sprintf("%c", 39)
+      while ((getline gl < groups) > 0) {
+        if (gl ~ /^[0-9]+[ \t]+[A-Za-z]+/) { split(gl, ga, /[ \t]+/); grp[ga[1]] = ga[2] }
+      }
+      close(groups)
+    }
+    function flush() {
+      if (url != "") print id "|" en "|" name "|" url "|" ((id in grp) ? grp[id] : "other")
+      id = en = name = url = ""
+    }
     function kv(t,   k, v) {
       if (match(t, /^[a-z_]+:/)) {
         k = substr(t, 1, RLENGTH - 1); v = substr(t, RLENGTH + 1)
@@ -413,50 +486,6 @@ filters_inner() {
     END { if (inf) flush() }'
 }
 
-cmd_set_filters() {
-  [ "$#" -ge 1 ] || die "need at least one id:true|false"
-  for _f in "$@"; do printf '%s' "$_f" | grep -Eq '^[0-9]+:(true|false)$' || die "invalid filter spec: $_f"; done
-  locked with_config_edit filters_inner "$@"
-}
-
-# Bổ sung các bộ lọc mặc định chưa có trong cấu hình của người dùng (nhận diện theo URL),
-# chỉ chạy một lần cho mỗi phiên bản danh sách (config/filters.rev).
-merge_filters_inner() {
-  _new="$CONF.newfilters"
-  : >"$_new"
-  _used=$(filters_list "$CONF" | cut -d'|' -f1)
-  _max=0
-  for _i in $_used; do is_number "$_i" && [ "$_i" -gt "$_max" ] && _max=$_i; done
-  filters_list "$DEFAULT_DIR/AdGuardHome.yaml" | while IFS='|' read -r _id _en _name _url; do
-    grep -qF "url: $_url" "$CONF" && continue
-    case " $_used " in *" $_id "*) _max=$((_max + 1)); _id=$_max ;; esac
-    printf '  - enabled: %s\n    url: %s\n    name: %s\n    id: %s\n' "$_en" "$_url" "$_name" "$_id" >>"$_new"
-    _used="$_used $_id"
-  done
-  if [ -s "$_new" ]; then
-    yaml_rewrite -v ins="$_new" '
-      function dump(   l) { while ((getline l < ins) > 0) print l; done = 1 }
-      /^filters:[ \t]*\[\][ \t]*$/ { print "filters:"; dump(); next }
-      /^filters:[ \t]*$/ { inf = 1; print; next }
-      /^[^ \t#-]/ { if (inf && !done) dump(); inf = 0 }
-      { print }
-      END { if (inf && !done) dump() }'
-  fi
-  rm -f "$_new"
-  # Danh sách đã bị bỏ khỏi bản mới (config/filters.remove) cũng được gỡ khỏi cấu hình cũ
-  _rm=$(grep -E '^[0-9]+$' "$DEFAULT_DIR/filters.remove" 2>/dev/null)
-  # shellcheck disable=SC2086
-  [ -n "$_rm" ] && filters_remove_inner $_rm
-  # Đổi mặc định cần áp dụng cho cấu hình cũ (bật Pro++): chỉ với cấu hình trước filters.rev 3,
-  # để không ghi đè lựa chọn của người đã dùng bản mới hơn
-  _old=$(cat "$FILTERS_REV_FILE" 2>/dev/null)
-  case $_old in '' | *[!0-9]*) _old=0 ;; esac
-  _mig=$(grep -E '^[0-9]+:(true|false)$' "$DEFAULT_DIR/filters.migrate" 2>/dev/null)
-  # shellcheck disable=SC2086
-  [ "$_old" -lt 3 ] && [ -n "$_mig" ] && filters_inner $_mig
-  mark_filters_rev
-}
-
 # filters_remove_inner <id>...: xóa phần tử bộ lọc theo id (dùng khi một bản mới bỏ bớt danh sách).
 filters_remove_inner() {
   _spec=$(printf '%s,' "$@")
@@ -477,8 +506,107 @@ filters_remove_inner() {
     END { if (inf) flush() }'
 }
 
-cmd_merge_filters() {
-  locked with_config_edit merge_filters_inner
+# filters_rename_inner <tệp "url|tên">: đặt lại tên theo bản mặc định (nhận diện theo URL).
+filters_rename_inner() {
+  yaml_rewrite -v map="$1" '
+    BEGIN {
+      q = sprintf("%c", 39)
+      while ((getline ml < map) > 0) { i = index(ml, "|"); if (i > 1) nm[substr(ml, 1, i - 1)] = substr(ml, i + 1) }
+      close(map)
+    }
+    function flush(   i, u, p) {
+      if (cnt == 0) return
+      u = ""
+      for (i = 1; i <= cnt; i++) if (match(buf[i], /(^|[ \t-])url:[ \t]*/)) {
+        u = substr(buf[i], RSTART + RLENGTH); gsub(/[ \t\r]+$/, "", u); gsub("^[\"" q "]|[\"" q "]$", "", u)
+      }
+      if (u in nm) for (i = 1; i <= cnt; i++) if (match(buf[i], /(^|[ \t-])name:/)) {
+        p = RSTART + RLENGTH
+        buf[i] = substr(buf[i], 1, p - 1) " " nm[u]
+      }
+      for (i = 1; i <= cnt; i++) print buf[i]
+      cnt = 0
+    }
+    /^filters:[ \t]*$/ { inf = 1; print; next }
+    /^[^ \t#-]/ { if (inf) flush(); inf = 0 }
+    inf && /^[ \t]*-[ \t]/ { flush(); buf[++cnt] = $0; next }
+    inf && cnt > 0 { buf[++cnt] = $0; next }
+    { print }
+    END { if (inf) flush() }'
+}
+
+# Thêm các bộ lọc mặc định chưa có trong cấu hình của người dùng (nhận diện theo URL).
+merge_missing_filters() {
+  _new="$CONF.newfilters"
+  : >"$_new"
+  _used=$(filters_list "$CONF" | cut -d'|' -f1)
+  _max=0
+  for _i in $_used; do is_number "$_i" && [ "$_i" -gt "$_max" ] && _max=$_i; done
+  filters_list "$DEFAULT_DIR/AdGuardHome.yaml" | while IFS='|' read -r _id _en _name _url _grp; do
+    grep -qF "url: $_url" "$CONF" && continue
+    case " $_used " in *" $_id "*) _max=$((_max + 1)); _id=$_max ;; esac
+    printf '  - enabled: %s\n    url: %s\n    name: %s\n    id: %s\n' "$_en" "$_url" "$_name" "$_id" >>"$_new"
+    _used="$_used $_id"
+  done
+  if [ -s "$_new" ]; then
+    yaml_rewrite -v ins="$_new" '
+      function dump(   l) { while ((getline l < ins) > 0) print l; done = 1 }
+      /^filters:[ \t]*\[\][ \t]*$/ { print "filters:"; dump(); next }
+      /^filters:[ \t]*$/ { inf = 1; print; next }
+      /^[^ \t#-]/ { if (inf && !done) dump(); inf = 0 }
+      { print }
+      END { if (inf && !done) dump() }'
+  fi
+  rm -f "$_new"
+}
+
+# Các bản trước cho bật nhiều danh sách cùng lúc; giờ mỗi nhóm chỉ chọn một: giữ danh sách chính mạnh nhất
+# đang bật và danh sách quốc gia đầu tiên đang bật, tắt phần còn lại.
+normalize_selection_inner() {
+  _specs=$(filters_list "$CONF" | awk -F'|' '
+    BEGIN { n = split("49 51 48 1 101", pri, " ") }
+    { id[NR] = $1; en[NR] = $2; grp[NR] = $5 }
+    END {
+      keep = ""
+      for (i = 1; i <= n && keep == ""; i++)
+        for (j = 1; j <= NR; j++) if (grp[j] == "main" && id[j] == pri[i] && en[j] == "true") { keep = pri[i]; break }
+      ckeep = ""
+      for (j = 1; j <= NR; j++) {
+        if (grp[j] == "main" && en[j] == "true" && id[j] != keep) print id[j] ":false"
+        else if (grp[j] != "main" && grp[j] != "other" && en[j] == "true") { if (ckeep == "") ckeep = id[j]; else print id[j] ":false" }
+      }
+    }')
+  # shellcheck disable=SC2086
+  [ -n "$_specs" ] && filters_inner $_specs
+  return 0
+}
+
+# Di trú cấu hình bộ lọc của bản cũ; chạy một lần cho mỗi phiên bản danh sách (config/filters.rev).
+migrate_filters_inner() {
+  phase preparing
+  _old=$(cat "$FILTERS_REV_FILE" 2>/dev/null)
+  case $_old in '' | *[!0-9]*) _old=0 ;; esac
+  merge_missing_filters
+  # hostsVN (id 2) là tập con của ABPVN (id 16): ai đang dùng hostsVN thì chuyển sang ABPVN
+  if filters_list "$CONF" | grep -q '^2|true|'; then filters_inner 16:true; fi
+  # Danh sách đã bị bỏ khỏi bản mới (config/filters.remove) cũng được gỡ khỏi cấu hình cũ
+  _rm=$(grep -E '^[0-9]+$' "$DEFAULT_DIR/filters.remove" 2>/dev/null)
+  # shellcheck disable=SC2086
+  [ -n "$_rm" ] && filters_remove_inner $_rm
+  # Tên gọn như bản mặc định (bỏ hậu tố cũ như "(rất mạnh tay)")
+  _map="$CONF.names"
+  filters_list "$DEFAULT_DIR/AdGuardHome.yaml" | awk -F'|' '{ print $4 "|" $3 }' >"$_map"
+  [ -s "$_map" ] && filters_rename_inner "$_map"
+  rm -f "$_map"
+  # Đổi mặc định cần áp dụng cho cấu hình cũ (bật Pro++): chỉ với cấu hình trước filters.rev 3,
+  # để không ghi đè lựa chọn của người đã dùng bản mới hơn
+  _mig=$(grep -E '^[0-9]+:(true|false)$' "$DEFAULT_DIR/filters.migrate" 2>/dev/null)
+  # shellcheck disable=SC2086
+  [ "$_old" -lt 3 ] && [ -n "$_mig" ] && filters_inner $_mig
+  # Từ filters.rev 5: mỗi nhóm chỉ chọn một danh sách
+  [ "$_old" -lt 5 ] && normalize_selection_inner
+  mark_filters_rev
+  return 0
 }
 
 mark_filters_rev() {
@@ -490,8 +618,42 @@ mark_filters_rev() {
 merge_filters_if_needed() {
   [ -f "$DEFAULT_DIR/filters.rev" ] && [ -f "$CONF" ] || return 0
   [ "$(cat "$FILTERS_REV_FILE" 2>/dev/null)" = "$(cat "$DEFAULT_DIR/filters.rev")" ] && return 0
-  merge_filters_inner
-  log "Đã bổ sung bộ lọc mặc định mới" "Added new default filter lists"
+  migrate_filters_inner
+  log "Đã cập nhật danh sách bộ lọc theo bản mới" "Updated the filter lists for this version"
+}
+
+cmd_merge_filters() {
+  locked with_config_edit migrate_filters_inner
+}
+
+# filter_selection_inner <id chính> <id quốc gia|0>: bật đúng danh sách đã chọn, tắt các danh sách còn lại của nhóm.
+filter_selection_inner() {
+  merge_missing_filters
+  _specs=""
+  while read -r _id _grp; do
+    case $_id in '' | '#'*) continue ;; esac
+    if [ "$_grp" = main ]; then
+      [ "$_id" = "$1" ] && _v=true || _v=false
+    else
+      [ "$_id" = "$2" ] && _v=true || _v=false
+    fi
+    _specs="$_specs $_id:$_v"
+  done <"$DEFAULT_DIR/filters.groups"
+  # shellcheck disable=SC2086
+  filters_inner $_specs
+}
+
+cmd_set_filter_selection() {
+  is_number "$1" && is_number "$2" || die "invalid selection"
+  [ "$1" = 0 ] || grep -q "^$1[[:space:]][[:space:]]*main\$" "$DEFAULT_DIR/filters.groups" || die "not a main list: $1"
+  [ "$2" = 0 ] || { grep "^$2[[:space:]]" "$DEFAULT_DIR/filters.groups" | grep -vq '[[:space:]]main$'; } || die "not a country list: $2"
+  locked with_config_edit filter_selection_inner "$1" "$2"
+}
+
+cmd_set_filters() {
+  [ "$#" -ge 1 ] || die "need at least one id:true|false"
+  for _f in "$@"; do printf '%s' "$_f" | grep -Eq '^[0-9]+:(true|false)$' || die "invalid filter spec: $_f"; done
+  locked with_config_edit filters_inner "$@"
 }
 
 port_inner() {
@@ -528,30 +690,164 @@ cmd_reset_config() {
 }
 
 # ---------------------------------------------------------------- thông tin
+# yaml_facts <tệp>: panel, cổng DNS, mật khẩu còn là bản khóa mặc định không, các id bộ lọc đang bật (một lần awk).
+yaml_facts() {
+  awk -v def="$DEFAULT_DIR/AdGuardHome.yaml" '
+    BEGIN {
+      q = sprintf("%c", 39); defpw = ""; u = 0
+      while ((getline dl < def) > 0) {
+        if (dl ~ /^users:[ \t]*$/) { u = 1; continue }
+        if (dl ~ /^[^ \t#]/) u = 0
+        if (u && dl ~ /password:/) { sub(".*password:[ \t]*", "", dl); defpw = dl; break }
+      }
+      close(def)
+    }
+    function unq(v) { sub(/^[ \t]+/, "", v); gsub("^[\"" q "]|[\"" q "]$", "", v); return v }
+    function fkv(t,   k, v) {
+      if (match(t, /^[a-z_]+:/)) {
+        k = substr(t, 1, RLENGTH - 1); v = unq(substr(t, RLENGTH + 1))
+        if (k == "id") fid = v; else if (k == "enabled") fen = v
+      }
+    }
+    function flushf() { if (fen == "true" && fid != "") ids = ids (ids == "" ? "" : ",") fid; fid = ""; fen = "" }
+    function enter(s) { if (sec == "filters") flushf(); sec = s }
+    /^http:[ \t]*$/ { enter("http"); next }
+    /^users:[ \t]*$/ { enter("users"); next }
+    /^dns:[ \t]*$/ { enter("dns"); next }
+    /^filters:[ \t]*$/ { enter("filters"); next }
+    /^[^ \t#-]/ { enter(""); next }
+    sec == "http" && /^  address:/ && addr == "" { v = $0; sub(/^  address:/, "", v); addr = unq(v) }
+    sec == "users" && /password:/ && pw == "" { v = $0; sub(/.*password:/, "", v); pw = unq(v) }
+    sec == "dns" && /^  port:/ && port == "" { v = $0; sub(/^  port:/, "", v); port = unq(v) }
+    sec == "filters" && /^[ \t]*-[ \t]/ { flushf(); t = $0; sub(/^[ \t]*-[ \t]+/, "", t); fkv(t); next }
+    sec == "filters" { t = $0; sub(/^[ \t]+/, "", t); fkv(t) }
+    END {
+      if (sec == "filters") flushf()
+      print "panel=" addr
+      print "yaml_port=" port
+      print "password_locked=" ((pw != "" && unq(pw) == unq(defpw)) ? 1 : 0)
+      print "enabled_ids=" ids
+    }' "$1"
+}
+
 cmd_status() {
   _pid=$(running_pid)
-  echo "running=$([ -n "$_pid" ] && echo 1 || echo 0)"
+  _run=0
+  [ -n "$_pid" ] && _run=1
+  _bin=0
+  [ -x "$BIN" ] && _bin=1
+  _ipt=0
+  $IPT_CHECK -t nat -C OUTPUT -j "$CHAIN4" >/dev/null 2>&1 && _ipt=1
+  _dns=0
+  is_dns_listening && _dns=1
+  _stopped=0
+  [ -f "$STOP_FLAG" ] && _stopped=1
+  _dis=0
+  [ -f "$MOD_PATH/disable" ] && _dis=1
+  echo "running=$_run"
   echo "pid=$_pid"
-  echo "binary=$([ -x "$BIN" ] && echo 1 || echo 0)"
-  echo "stopped_by_user=$([ -f "$STOP_FLAG" ] && echo 1 || echo 0)"
-  echo "module_disabled=$([ -f "$MOD_PATH/disable" ] && echo 1 || echo 0)"
-  echo "iptables_active=$(sh "$IPT_SH" status && echo 1 || echo 0)"
-  echo "dns_listening=$(is_dns_listening && echo 1 || echo 0)"
-  _addr=$(yaml_get http address)
-  echo "panel=${_addr:-127.0.0.1:3000}"
+  echo "binary=$_bin"
+  echo "version=$(cmd_version)"
+  echo "stopped_by_user=$_stopped"
+  echo "module_disabled=$_dis"
+  echo "iptables_active=$_ipt"
+  echo "dns_listening=$_dns"
   _cfg=$CONF
   [ -f "$_cfg" ] || _cfg="$DEFAULT_DIR/AdGuardHome.yaml" # chưa chạy lần đầu: sẽ dùng cấu hình mặc định
-  _cur=$(awk '/^users:/ { u = 1; next } /^[^ \t#]/ { u = 0 } u && /password:/ { sub(".*password:[ \t]*", ""); print; exit }' "$_cfg" 2>/dev/null)
-  _def=$(awk '/^users:/ { u = 1; next } /^[^ \t#]/ { u = 0 } u && /password:/ { sub(".*password:[ \t]*", ""); print; exit }' "$DEFAULT_DIR/AdGuardHome.yaml" 2>/dev/null)
-  echo "password_locked=$([ -n "$_cur" ] && [ "$_cur" = "$_def" ] && echo 1 || echo 0)"
+  _ids=""
+  _facts=$(yaml_facts "$_cfg")
+  _oifs=$IFS
+  IFS='
+'
+  set -f
+  for _fl in $_facts; do
+    case $_fl in
+    enabled_ids=*) _ids=${_fl#enabled_ids=} ;;
+    *) echo "$_fl" ;;
+    esac
+  done
+  set +f
+  # Tiến độ tải bộ lọc: AdGuardHome lưu mỗi danh sách đã tải ở work/data/filters/<id>.txt
+  _total=0
+  _pending=0
+  IFS=,
+  for _fi in $_ids; do
+    _total=$((_total + 1))
+    [ -s "$WORK_DIR/data/filters/$_fi.txt" ] || _pending=$((_pending + 1))
+  done
+  IFS=$_oifs
+  [ "$_run" = 1 ] || _pending=0
+  echo "filters_enabled=$_total"
+  echo "filters_pending=$_pending"
+  _up=0
+  if [ "$_run" = 1 ] && [ -r "$STARTED_FILE" ]; then
+    _st=""
+    read -r _st 2>/dev/null <"$STARTED_FILE"
+    is_number "$_st" && _up=$(($(date +%s) - _st))
+  fi
+  echo "uptime=$_up"
+  cmd_phase
   for _k in language enable_iptables block_ipv6_dns redir_port watchdog startup_timeout adg_user adg_group \
     ignore_dest_list ignore_src_list timezone; do
     eval "echo \"cfg_$_k=\$$_k\""
   done
 }
 
+# phase: thao tác đang giữ khóa đang ở giai đoạn nào (rỗng nếu không có thao tác nào đang chạy).
+cmd_phase() {
+  _ph=""
+  _since=""
+  if [ -d "$LOCK_DIR" ] && [ -r "$PHASE_FILE" ]; then
+    _h=""
+    read -r _h 2>/dev/null <"$LOCK_DIR/pid"
+    if pid_alive "$_h"; then read -r _ph _since 2>/dev/null <"$PHASE_FILE"; fi
+  fi
+  echo "phase=$_ph"
+  echo "phase_since=$_since"
+}
+
+# Phiên bản AdGuardHome, lưu đệm theo tệp binary (chạy --version tốn vài chục mili giây).
 cmd_version() {
-  [ -x "$BIN" ] && "$BIN" --version 2>/dev/null | head -n 1 | sed 's/.*version //'
+  [ -x "$BIN" ] || return 0
+  if [ ! -s "$VERSION_FILE" ] || [ "$BIN" -nt "$VERSION_FILE" ]; then
+    mkdir -p "$AGH_DIR" 2>/dev/null
+    # timeout: một binary hỏng/treo không được làm status (WebUI gọi liên tục) bị kẹt
+    if command -v timeout >/dev/null 2>&1; then _tm="timeout 5"; else _tm=""; fi
+    $_tm "$BIN" --version 2>/dev/null | head -n 1 | sed 's/.*version //' >"$VERSION_FILE.tmp" &&
+      [ -s "$VERSION_FILE.tmp" ] && mv -f "$VERSION_FILE.tmp" "$VERSION_FILE"
+    rm -f "$VERSION_FILE.tmp"
+  fi
+  _v=""
+  read -r _v 2>/dev/null <"$VERSION_FILE"
+  echo "$_v"
+}
+
+# Tín hiệu quốc gia từ chính chiếc máy (chính xác hơn tra IP: IP di động hay bị định vị sai hoặc là IP của VPN).
+cmd_device_country() {
+  if ! command -v getprop >/dev/null 2>&1; then
+    echo "net="
+    echo "sim="
+    echo "region="
+    return 0
+  fi
+  echo "net=$(getprop gsm.operator.iso-country 2>/dev/null | tr -cd 'A-Za-z,')"
+  echo "sim=$(getprop gsm.sim.operator.iso-country 2>/dev/null | tr -cd 'A-Za-z,')"
+  _r=$(getprop ro.miui.region 2>/dev/null | tr -cd 'A-Za-z')
+  [ -n "$_r" ] || _r=$(getprop ro.csc.countryiso_code 2>/dev/null | tr -cd 'A-Za-z')
+  [ -n "$_r" ] || _r=$(getprop persist.sys.country 2>/dev/null | tr -cd 'A-Za-z')
+  echo "region=$_r"
+}
+
+# snapshot: mọi thứ WebUI cần khi mở trong một lần gọi (mỗi lần exec qua trình quản lý root đều tốn thời gian).
+cmd_snapshot() {
+  echo "##status"
+  cmd_status
+  echo "##upstream"
+  cmd_get_upstream
+  echo "##filters"
+  cmd_get_filters
+  echo "##device"
+  cmd_device_country
 }
 
 cmd_logs() {
@@ -580,6 +876,8 @@ cmd_debug() {
     echo "-- adguardhome --"
     cmd_version
     cmd_status
+    echo "-- device country signals --"
+    cmd_device_country
     echo "-- settings --"
     cat "$SETTINGS" 2>/dev/null
     echo "-- core log (last 40) --"
@@ -595,27 +893,39 @@ cmd_debug() {
   cat "$_out"
 }
 
+# Chạy một lệnh, rồi in "result=..." và trả về đúng mã thoát của lệnh.
+run_cmd() {
+  "$@"
+  _mrc=$?
+  emit_result
+  exit "$_mrc"
+}
+
 case "$1" in
-start) cmd_start ;;
-stop) cmd_stop ;;
-restart) cmd_restart ;;
-toggle) cmd_toggle ;;
+start) run_cmd cmd_start ;;
+stop) run_cmd cmd_stop ;;
+restart) run_cmd cmd_restart ;;
+toggle) run_cmd cmd_toggle ;;
 watchdog) cmd_watchdog ;;
+snapshot) cmd_snapshot ;;
 status) cmd_status ;;
+phase) cmd_phase ;;
 version) cmd_version ;;
+device-country) cmd_device_country ;;
 logs) shift; cmd_logs "$@" ;;
 debug) cmd_debug ;;
 get-upstream) cmd_get_upstream ;;
 get-filters) cmd_get_filters ;;
-set-filters) shift; cmd_set_filters "$@" ;;
-merge-filters) cmd_merge_filters ;;
-set-upstream) shift; cmd_set_upstream "$@" ;;
-set-port) cmd_set_port "$2" ;;
-set-password) cmd_set_password "$2" ;;
-set-setting) cmd_set_setting "$2" "$3" ;;
-reset-config) cmd_reset_config ;;
+set-filter-selection) run_cmd cmd_set_filter_selection "$2" "$3" ;;
+set-filters) shift; run_cmd cmd_set_filters "$@" ;;
+merge-filters) run_cmd cmd_merge_filters ;;
+set-upstream) shift; run_cmd cmd_set_upstream "$@" ;;
+set-port) run_cmd cmd_set_port "$2" ;;
+set-password) run_cmd cmd_set_password "$2" ;;
+set-setting) run_cmd cmd_set_setting "$2" "$3" ;;
+reset-config) run_cmd cmd_reset_config ;;
 *)
-  sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
   exit 1
   ;;
 esac

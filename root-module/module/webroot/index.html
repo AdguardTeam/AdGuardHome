@@ -8,7 +8,9 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="assets/style.css">
 </head>
-<body>
+<body class="stale">
+  <div id="progress" class="progress" aria-hidden="true"></div>
+
   <header class="top">
     <div class="brand">
       <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
@@ -34,17 +36,21 @@
   <main>
     <!-- Tổng quan -->
     <section id="tab-overview" class="tab active">
-      <div class="card status-card">
+      <div class="card status-card" id="status-card" aria-busy="false">
         <div class="status-row">
           <span id="status-dot" class="dot"></span>
-          <strong id="status-text" class="status-text"></strong>
+          <div class="status-main">
+            <strong id="status-text" class="status-text"></strong>
+            <small id="status-sub" class="status-sub"></small>
+          </div>
         </div>
         <dl class="facts">
-          <div><dt data-i18n="fact.pid"></dt><dd id="fact-pid">–</dd></div>
-          <div><dt data-i18n="fact.version"></dt><dd id="fact-version">–</dd></div>
-          <div><dt data-i18n="fact.redirect"></dt><dd id="fact-redirect">–</dd></div>
-          <div><dt data-i18n="fact.dnsPort"></dt><dd id="fact-port">–</dd></div>
-          <div class="wide"><dt data-i18n="fact.panel"></dt><dd id="fact-panel">–</dd></div>
+          <div><dt data-i18n="fact.pid"></dt><dd id="fact-pid" class="skel">0000</dd></div>
+          <div><dt data-i18n="fact.version"></dt><dd id="fact-version" class="skel">v0.000.00</dd></div>
+          <div><dt data-i18n="fact.redirect"></dt><dd id="fact-redirect" class="skel">Đang bật</dd></div>
+          <div><dt data-i18n="fact.dnsPort"></dt><dd id="fact-port" class="skel">0000</dd></div>
+          <div class="wide"><dt data-i18n="fact.filters"></dt><dd id="fact-filters" class="skel">Sẵn sàng sẵn sàng</dd></div>
+          <div class="wide"><dt data-i18n="fact.panel"></dt><dd id="fact-panel" class="skel">127.0.0.1:3000</dd></div>
         </dl>
         <div class="actions">
           <button id="btn-start" class="btn primary" data-i18n="btn.start"></button>
@@ -55,7 +61,7 @@
       </div>
     </section>
 
-    <!-- DNS upstream -->
+    <!-- DNS upstream và bộ lọc -->
     <section id="tab-dns" class="tab">
       <div class="card">
         <h2 data-i18n="dns.title"></h2>
@@ -68,15 +74,16 @@
         <p class="muted small" data-i18n="dns.hint"></p>
       </div>
 
-      <div class="card">
+      <div class="card" id="filters-card">
         <div class="head-row">
           <h2 data-i18n="filters.title"></h2>
-          <span id="filters-count" class="pill"></span>
+          <span id="filters-unsaved" class="pill warn" hidden data-i18n="filters.unsaved"></span>
         </div>
         <p class="muted" data-i18n="filters.desc"></p>
+        <p id="filters-current" class="current-line"></p>
         <input id="filters-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" data-i18n-placeholder="filters.search">
         <div id="filters-list"></div>
-        <button id="btn-filters-save" class="btn primary block" data-i18n="filters.save"></button>
+        <button id="btn-filters-save" class="btn primary block" data-i18n="filters.save" disabled></button>
         <p class="muted small" data-i18n="filters.hint"></p>
       </div>
     </section>
@@ -150,7 +157,7 @@
     </section>
   </main>
 
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-action" class="toast-action" hidden></button></div>
   <div id="modal" class="modal" hidden>
     <div class="modal-box" role="dialog" aria-modal="true">
       <p id="modal-text"></p>
@@ -161,7 +168,7 @@
     </div>
   </div>
 
-  <script src="assets/bcrypt.min.js"></script>
+  <script src="assets/geo.js"></script>
   <script src="assets/i18n.js"></script>
   <script src="assets/app.js"></script>
 </body>

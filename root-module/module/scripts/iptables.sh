@@ -9,7 +9,6 @@ SELF_DIR=$(cd "${0%/*}" 2>/dev/null && pwd)
 
 IPT4="iptables -w 64"
 IPT6="ip6tables -w 64"
-CHAIN4="ADGUARD_REDIRECT_DNS"
 CHAIN6="ADGUARD_REDIRECT_DNS6"
 BLOCK6="ADGUARD_BLOCK_DNS"
 
