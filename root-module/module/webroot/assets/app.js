@@ -2,11 +2,11 @@
 (() => {
   'use strict';
 
-  const GEO = window.AGH_GEO;
   const MODDIR = '/data/adb/modules/adguardhome_superuser';
   const CTL = `sh ${MODDIR}/scripts/ctl.sh`;
 
   const PRESETS = {
+    mix: ['https://1.1.1.1/dns-query', 'https://8.8.8.8/dns-query', 'https://9.9.9.9/dns-query'],
     cloudflare: ['https://1.1.1.1/dns-query', 'https://1.0.0.1/dns-query'],
     google: ['https://8.8.8.8/dns-query', 'https://8.8.4.4/dns-query'],
     quad9: ['https://9.9.9.9/dns-query', 'https://149.112.112.112/dns-query'],
@@ -17,9 +17,9 @@
   const ADDR_LIST_RE = /^[0-9A-Fa-f:./ ]*$/;
 
   // Tên hiển thị gọn của các mức chặn chính (tên trong cấu hình của bản cũ có thể còn hậu tố).
-  const CANON = { 1: 'AdGuard DNS filter', 101: 'uBlock filters', 48: 'HaGeZi Pro', 51: 'HaGeZi Pro++', 49: 'HaGeZi Ultimate' };
+  const CANON = { 1: 'AdGuard DNS filter', 48: 'HaGeZi Pro', 51: 'HaGeZi Pro++', 49: 'HaGeZi Ultimate' };
   // Khi cấu hình cũ có nhiều mức chặn cùng bật, hiển thị mức mạnh nhất (khớp normalize_selection_inner trong ctl.sh).
-  const MAIN_PRIORITY = ['49', '51', '48', '1', '101'];
+  const MAIN_PRIORITY = ['49', '51', '48', '1'];
   const CACHE_KEY = 'cache2';
   const OPT_PHASE = { start: 'starting_op', stop: 'stopping_op', restart: 'restarting_op', apply: 'working' };
 
@@ -47,12 +47,9 @@
     upstreamDirty: false,
     filters: [],
     filtersLoaded: false,
-    sel: { main: '', country: '0' }, // lựa chọn đang hiển thị
-    selOrig: { main: '', country: '0' }, // lựa chọn đã áp dụng
+    sel: { main: '' }, // mức chặn đang chọn
+    selOrig: { main: '' }, // mức chặn đã áp dụng
     open: {}, // nhóm bộ lọc nào đang mở
-    device: null,
-    country: null, // null = đang nhận diện | { cc, group, source }
-    showAllCountries: false,
     formLoaded: false,
     logKind: 'core',
     debugText: '',
@@ -156,7 +153,6 @@
       status: parseKV((sec.status || []).join('\n')),
       upstream: lines('upstream'),
       filters: lines('filters').filter((l) => l.split('|').length >= 5).map(parseFilterLine),
-      device: parseKV((sec.device || []).join('\n')),
     };
   }
 
@@ -167,7 +163,6 @@
       status: state.status,
       upstream: state.upstream,
       filters: state.filters.map((f) => ({ id: f.id, enabled: f.enabled, name: f.name, url: f.url, group: f.group })),
-      device: state.device,
     }));
   }
 
@@ -178,7 +173,6 @@
       state.status = c.status;
       if (Array.isArray(c.upstream) && c.upstream.length) { state.upstream = c.upstream; state.upstreamLoaded = true; $('#upstream-list').value = c.upstream.join('\n'); }
       if (Array.isArray(c.filters) && c.filters.length) { applyFilters(c.filters, true); }
-      state.device = c.device || null;
     } catch (e) { /* cache hỏng: bỏ qua */ }
   }
 
@@ -358,6 +352,21 @@
     renderButtons();
     renderAccount();
     renderPresets();
+    renderMode();
+  }
+
+  function renderMode() {
+    const st = state.status;
+    const sw = $('#set-parallel');
+    if (!st || !st.upstream_mode) { sw.disabled = true; return; }
+    sw.disabled = !bridge() || !!state.busy;
+    const want = st.upstream_mode === 'parallel';
+    if (!state.busy && sw.checked !== want) sw.checked = want; // đang áp dụng thì giữ giá trị người dùng vừa chọn
+  }
+
+  async function toggleParallel() {
+    const want = $('#set-parallel').checked ? 'parallel' : 'load_balance';
+    await operate('apply', '', async () => { report(await ctl(['set-upstream-mode', want]), t('dns.saved')); });
   }
 
   const sameList = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
@@ -420,10 +429,8 @@
       state.upstreamDirty = false;
     }
     applyFilters(snap.filters, !!force);
-    state.device = snap.device;
     saveCache();
     renderAll();
-    resolveCountry().then(renderFilters);
     return true;
   }
 
@@ -455,51 +462,9 @@
     }
   }
 
-  // ------------------------------------------------------------ nhận diện quốc gia
-  const tzName = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) { return ''; } };
-  const regionName = (cc) => {
-    try { return new Intl.DisplayNames([state.lang], { type: 'region' }).of(cc) || cc; } catch (e) { return cc; }
-  };
-
-  // Tra IP chỉ khi cần; kết quả nhớ 6 giờ để không gọi dịch vụ lặp lại.
-  async function ipLookupCached() {
-    try {
-      const c = JSON.parse(store.get('ip_country') || 'null');
-      if (c && c.cc && Date.now() - c.ts < 6 * 3600 * 1000) return { cc: c.cc };
-    } catch (e) { /* bỏ qua */ }
-    const r = await GEO.lookupIp();
-    if (r && r.cc) store.set('ip_country', JSON.stringify({ cc: r.cc, ts: Date.now() }));
-    return r;
-  }
-
-  let resolving = null;
-  function resolveCountry() {
-    if (resolving) return resolving;
-    const run = (async () => {
-      try {
-        const manual = store.get('country_manual');
-        if (manual && GEO.GROUPS.includes(manual)) {
-          state.country = { cc: manual, group: manual, source: 'manual' };
-          return;
-        }
-        const dev = state.device || {};
-        const res = await GEO.decide({ net: dev.net, sim: dev.sim, region: dev.region, tz: tzName() }, ipLookupCached);
-        // Người dùng vừa chọn thủ công trong lúc đang tra: giữ lựa chọn của họ
-        if (!store.get('country_manual')) state.country = { cc: res.cc, group: GEO.groupOf(res.cc), source: res.source };
-      } catch (e) {
-        state.country = { cc: '', group: '', source: '' };
-      }
-    })();
-    // Đặt lại sau khi xong (không đặt trong finally của chính hàm async: nhánh chạy đồng bộ sẽ xóa trước khi gán)
-    resolving = run;
-    run.then(() => { if (resolving === run) resolving = null; });
-    return run;
-  }
-
-  // ------------------------------------------------------------ bộ lọc: mỗi nhóm chỉ chọn một
+  // ------------------------------------------------------------ bộ lọc: một mức chặn + danh sách bổ sung
   const byId = (id) => state.filters.find((f) => f.id === id);
   const hostOf = (url) => { const m = /^[a-z]+:\/\/([^/]+)/i.exec(url); return m ? m[1] : url; };
-  const isCountryList = (f) => f.group !== 'main' && f.group !== 'other';
 
   function displayName(f) {
     if (CANON[f.id]) return CANON[f.id];
@@ -509,19 +474,16 @@
   const noteOf = (f) => { const k = `filters.note.${f.id}`; return hasKey(k) ? t(k) : ''; };
 
   function deriveSelection() {
-    const on = (f) => f.enabled;
     let main = '';
-    for (const id of MAIN_PRIORITY) { const f = byId(id); if (f && f.group === 'main' && on(f)) { main = id; break; } }
-    if (!main) { const f = state.filters.find((x) => x.group === 'main' && on(x)); if (f) main = f.id; }
-    const cf = state.filters.find((f) => isCountryList(f) && on(f));
-    state.selOrig = { main, country: cf ? cf.id : '0' };
-    state.sel = { ...state.selOrig };
+    for (const id of MAIN_PRIORITY) { const f = byId(id); if (f && f.group === 'main' && f.enabled) { main = id; break; } }
+    if (!main) { const f = state.filters.find((x) => x.group === 'main' && x.enabled); if (f) main = f.id; }
+    state.selOrig = { main };
+    state.sel = { main };
     state.filters.forEach((f) => { f.orig = f.enabled; });
   }
 
   function filterDirty() {
-    return state.sel.main !== state.selOrig.main || state.sel.country !== state.selOrig.country
-      || state.filters.some((f) => f.group === 'other' && f.enabled !== f.orig);
+    return state.sel.main !== state.selOrig.main || state.filters.some((f) => f.group === 'other' && f.enabled !== f.orig);
   }
 
   // Không ghi đè lựa chọn chưa lưu của người dùng, trừ khi force
@@ -537,8 +499,6 @@
     const names = [];
     const m = byId(state.selOrig.main);
     if (m) names.push(displayName(m));
-    const c = byId(state.selOrig.country);
-    if (c) names.push(displayName(c));
     state.filters.filter((f) => f.group === 'other' && f.orig).forEach((f) => names.push(displayName(f)));
     const line = state.filtersLoaded
       ? (names.length ? t('filters.current', { names: names.join(' + ') }) : t('filters.current.none')) : '';
@@ -551,10 +511,7 @@
   }
 
   function refreshSelectedRows() {
-    $$('#filters-list .switch-row[data-kind]').forEach((row) => {
-      const kind = row.dataset.kind;
-      row.classList.toggle('selected', kind !== 'other' && state.sel[kind] === row.dataset.id);
-    });
+    $$('#filters-list .switch-row[data-kind=main]').forEach((row) => row.classList.toggle('selected', state.sel.main === row.dataset.id));
   }
 
   function filterRow(f, kind) {
@@ -574,90 +531,24 @@
     } else {
       input.type = 'radio';
       input.className = 'radio';
-      input.name = kind === 'main' ? 'fmain' : 'fcountry';
+      input.name = 'fmain';
       input.value = f.id;
-      input.checked = state.sel[kind] === f.id;
-      input.addEventListener('change', () => { state.sel[kind] = f.id; refreshSelectedRows(); updateFilterMeta(); });
+      input.checked = state.sel.main === f.id;
+      input.addEventListener('change', () => { state.sel.main = f.id; refreshSelectedRows(); updateFilterMeta(); });
     }
     row.append(span, input);
     return row;
   }
 
-  function noneRow() {
-    const row = el('label', 'switch-row none-row');
-    row.dataset.kind = 'country';
-    row.dataset.id = '0';
-    const span = el('span');
-    span.append(el('strong', '', t('filters.pick.none')));
-    const input = el('input');
-    input.type = 'radio';
-    input.className = 'radio';
-    input.name = 'fcountry';
-    input.value = '0';
-    input.checked = state.sel.country === '0';
-    input.addEventListener('change', () => { state.sel.country = '0'; refreshSelectedRows(); updateFilterMeta(); });
-    row.append(span, input);
-    return row;
-  }
-
-  function filterGroup(key, title, hint, rows, openDefault) {
+  function filterGroup(key, title, hint, rows) {
     const d = el('details', 'fgroup');
     d.dataset.group = key;
-    d.open = key in state.open ? state.open[key] : openDefault;
+    d.open = true;
     const sum = el('summary');
     sum.append(el('span', '', title));
     if (hint) sum.append(el('span', 'ghint', `(${hint})`));
     d.append(sum, ...rows);
-    sum.addEventListener('click', () => { state.open[key] = !d.open; });
     return d;
-  }
-
-  // Tên không kèm cờ, dùng để sắp xếp theo thứ tự chữ cái; Việt Nam luôn đứng đầu.
-  const plainCountry = (g) => t(`country.${g}`).replace(/^\S+\s+/, '');
-  const byCountryName = (x, y) => (x === 'VN' ? -1 : y === 'VN' ? 1 : plainCountry(x).localeCompare(plainCountry(y), state.lang));
-
-  const countryLabel = (cc, group) => {
-    if (group && cc === group && hasKey(`country.${group}`)) return t(`country.${group}`);
-    const name = regionName(cc);
-    return group && hasKey(`country.${group}`) ? `${name} · ${t(`country.${group}`)}` : name;
-  };
-
-  function countryBar() {
-    const bar = el('div', 'cbar');
-    const c = state.country;
-    const info = el('p', 'muted small');
-    if (c === null) {
-      info.textContent = t('filters.country.detecting');
-    } else if (!c.cc) {
-      info.textContent = t('filters.country.unknown');
-    } else {
-      const via = t('filters.country.via', { s: t(`geo.source.${c.source}`) });
-      const label = countryLabel(c.cc, c.group);
-      info.textContent = `${t('filters.country.detected', { c: label })} (${c.source === 'manual' ? t('geo.source.manual') : via})`;
-      if (!c.group) info.textContent += ` ${t('filters.country.none', { c: regionName(c.cc) })}`;
-    }
-    const row = el('div', 'cbar-row');
-    const select = el('select', 'chip');
-    select.setAttribute('aria-label', t('filters.country.label'));
-    select.id = 'country-select';
-    const auto = el('option', '', t('filters.country.auto'));
-    auto.value = 'auto';
-    select.append(auto);
-    GEO.GROUPS.slice().sort(byCountryName).forEach((g) => { const o = el('option', '', t(`country.${g}`)); o.value = g; select.append(o); });
-    select.value = store.get('country_manual') && GEO.GROUPS.includes(store.get('country_manual')) ? store.get('country_manual') : 'auto';
-    select.addEventListener('change', () => {
-      if (select.value === 'auto') { store.del('country_manual'); state.country = null; renderFilters(); resolveCountry().then(renderFilters); } else {
-        store.set('country_manual', select.value);
-        state.country = { cc: select.value, group: select.value, source: 'manual' };
-        renderFilters();
-      }
-    });
-    const all = el('button', 'chip', t(state.showAllCountries ? 'filters.country.mine' : 'filters.country.all'));
-    all.id = 'btn-all-countries';
-    all.addEventListener('click', () => { state.showAllCountries = !state.showAllCountries; renderFilters(); });
-    row.append(select, all);
-    bar.append(info, row);
-    return bar;
   }
 
   function renderFilters() {
@@ -670,41 +561,10 @@
       updateFilterMeta();
       return;
     }
-    const query = ($('#filters-search').value || '').trim().toLowerCase();
-    const match = (f) => {
-      if (!query) return true;
-      const g = isCountryList(f) ? `${t(`country.${f.group}`)} ${f.group}` : '';
-      return `${displayName(f)} ${f.name} ${f.url} ${noteOf(f)} ${g}`.toLowerCase().includes(query);
-    };
-    const shown = state.filters.filter(match);
-    if (!shown.length) frag.append(el('p', 'muted', t(state.filters.length ? 'filters.noMatch' : 'filters.none')));
-
-    const mains = shown.filter((f) => f.group === 'main');
-    if (mains.length) frag.append(filterGroup('main', t('filters.main.title'), t('filters.main.hint'), mains.map((f) => filterRow(f, 'main')), true));
-
-    const byCountry = {};
-    shown.filter(isCountryList).forEach((f) => { (byCountry[f.group] = byCountry[f.group] || []).push(f); });
-    const countryKeys = Object.keys(byCountry);
-    if (countryKeys.length || !query) {
-      const h = el('p', 'fsection');
-      h.append(el('span', '', t('filters.country.title')), el('span', 'ghint', `(${t('filters.country.hint')})`));
-      frag.append(h);
-    }
-    if (!query) frag.append(countryBar());
-    if (!query) frag.append(noneRow());
-    const mine = state.country && state.country.group;
-    const selected = byId(state.sel.country);
-    const selectedGroup = selected && isCountryList(selected) ? selected.group : '';
-    let visible;
-    if (query || state.showAllCountries) visible = countryKeys;
-    else visible = countryKeys.filter((g) => g === mine || g === selectedGroup);
-    visible.sort(byCountryName);
-    visible.forEach((g) => frag.append(filterGroup(g, t(`country.${g}`), '', byCountry[g].map((f) => filterRow(f, 'country')),
-      !!query || g === mine || g === selectedGroup)));
-
-    const others = shown.filter((f) => f.group === 'other');
-    if (others.length) frag.append(filterGroup('other', t('filters.other.title'), '', others.map((f) => filterRow(f, 'other')), true));
-
+    const mains = state.filters.filter((f) => f.group === 'main');
+    if (mains.length) frag.append(filterGroup('main', t('filters.main.title'), t('filters.main.hint'), mains.map((f) => filterRow(f, 'main'))));
+    const others = state.filters.filter((f) => f.group === 'other');
+    if (others.length) frag.append(filterGroup('other', t('filters.other.title'), '', others.map((f) => filterRow(f, 'other'))));
     box.textContent = '';
     box.append(frag);
     refreshSelectedRows();
@@ -715,15 +575,11 @@
     if (!filterDirty()) { toast(t('filters.unchanged'), 'ok'); return; }
     await operate('apply', 'btn-filters-save', async () => {
       let ok = true;
-      if (state.sel.main !== state.selOrig.main || state.sel.country !== state.selOrig.country) {
-        const r = await ctl(['set-filter-selection', state.sel.main || '0', state.sel.country || '0']);
-        ok = report(r, t('filters.saved'));
+      if (state.sel.main && state.sel.main !== state.selOrig.main) {
+        ok = report(await ctl(['set-filter-selection', state.sel.main]), t('filters.saved'));
       }
       const specs = state.filters.filter((f) => f.group === 'other' && f.enabled !== f.orig).map((f) => `${f.id}:${f.enabled}`);
-      if (ok && specs.length) {
-        const r = await ctl(['set-filters', ...specs]);
-        ok = report(r, t('filters.saved'));
-      }
+      if (ok && specs.length) ok = report(await ctl(['set-filters', ...specs]), t('filters.saved'));
       await loadSnapshot(true);
     });
   }
@@ -939,9 +795,8 @@
     $('#btn-restart').addEventListener('click', actions.restart);
     $('#btn-panel').addEventListener('click', openPanel);
     $('#btn-dns-save').addEventListener('click', saveUpstream);
+    $('#set-parallel').addEventListener('change', toggleParallel);
     $('#btn-filters-save').addEventListener('click', saveFilters);
-    let searchTimer = 0;
-    $('#filters-search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(renderFilters, 120); });
     $('#btn-set-save').addEventListener('click', saveSettings);
     $('#btn-acc-set').addEventListener('click', setPassword);
     $('#acc-pass').addEventListener('focus', () => { getBcrypt().catch(() => {}); }, { once: true });
@@ -953,7 +808,6 @@
 
     // Hiện ngay dữ liệu lần trước (nếu có), rồi cập nhật ngầm
     hydrateFromCache();
-    if (state.device) resolveCountry().then(renderFilters); // tín hiệu của máy đã có trong bộ nhớ đệm: hiện quốc gia ngay
     const savedTab = store.get('tab');
     if (['overview', 'dns', 'settings', 'logs'].includes(savedTab)) showTab(savedTab, true);
     renderAll();

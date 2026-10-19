@@ -25,7 +25,8 @@ dns:
   refuse_any: true
   upstream_dns:
     - https://1.1.1.1/dns-query
-    - https://1.0.0.1/dns-query
+    - https://8.8.8.8/dns-query
+    - https://9.9.9.9/dns-query
   upstream_dns_file: ""
   bootstrap_dns:
     - 1.1.1.1
@@ -33,16 +34,20 @@ dns:
     - 9.9.9.9
   fallback_dns:
     - https://8.8.8.8/dns-query
-  upstream_mode: load_balance
+  upstream_mode: parallel
   fastest_timeout: 1s
-  upstream_timeout: 10s
+  upstream_timeout: 5s
   blocked_hosts:
     - version.bind
     - id.server
     - hostname.bind
   cache_enabled: true
-  cache_size: 16777216
+  cache_size: 67108864
+  cache_ttl_min: 300
   cache_optimistic: true
+  edns_cs_enabled: false
+  use_http3_upstreams: true
+  use_private_ptr_resolvers: false
   enable_dnssec: false
   serve_plain_dns: true
   hostsfile_enabled: true
@@ -64,10 +69,6 @@ filters:
     name: AdGuard DNS filter
     id: 1
   - enabled: false
-    url: https://ublockorigin.github.io/uAssets/filters/filters.txt
-    name: uBlock filters
-    id: 101
-  - enabled: false
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_48.txt
     name: HaGeZi Pro
     id: 48
@@ -83,112 +84,12 @@ filters:
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
     name: ABPVN
     id: 16
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_15.txt
-    name: KOR - YousList
-    id: 15
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_25.txt
-    name: KOR - filterslists-KO
-    id: 25
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_21.txt
-    name: CHN - anti-AD
-    id: 21
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_29.txt
-    name: CHN - AdRules DNS List
-    id: 29
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_22.txt
-    name: IDN - ABPindo
-    id: 22
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_14.txt
-    name: POL - Polish filters for Pi-hole
-    id: 14
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_41.txt
-    name: POL - CERT Polska malicious domains
-    id: 41
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_26.txt
-    name: TUR - turk-adlist
-    id: 26
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_40.txt
-    name: TUR - Turkish Ad Hosts
-    id: 40
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_35.txt
-    name: HUN - Hufilter
-    id: 35
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_36.txt
-    name: LIT - EasyList Lithuania
-    id: 36
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_43.txt
-    name: ISR - EasyList Hebrew
-    id: 43
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_17.txt
-    name: SWE - Frellwit's Swedish Hosts
-    id: 17
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_13.txt
-    name: NOR - Dandelion Sprout nordiske filtre
-    id: 13
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_20.txt
-    name: MKD - Macedonian Pi-hole Blocklist
-    id: 20
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_19.txt
-    name: IRN - PersianBlocker
-    id: 19
-  - enabled: false
-    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_62.txt
-    name: UKR - Ukrainian Security Filter
-    id: 62
-  - enabled: false
-    url: https://easylist.to/easylistgermany/easylistgermany.txt
-    name: DEU - EasyList Germany
-    id: 110
-  - enabled: false
-    url: https://easylist-downloads.adblockplus.org/liste_fr.txt
-    name: FRA - Liste FR
-    id: 111
-  - enabled: false
-    url: https://easylist-downloads.adblockplus.org/easylistspanish.txt
-    name: ESP - EasyList Spanish
-    id: 112
-  - enabled: false
-    url: https://easylist-downloads.adblockplus.org/easylistportuguese.txt
-    name: PRT - EasyList Portuguese
-    id: 113
-  - enabled: false
-    url: https://easylist-downloads.adblockplus.org/easylistitaly.txt
-    name: ITA - EasyList Italy
-    id: 114
-  - enabled: false
-    url: https://easylist-downloads.adblockplus.org/easylistdutch.txt
-    name: NLD - EasyList Dutch
-    id: 115
-  - enabled: false
-    url: https://easylist-downloads.adblockplus.org/advblock.txt
-    name: RUS - RU AdList
-    id: 116
-  - enabled: false
-    url: https://easylist-downloads.adblockplus.org/Liste_AR.txt
-    name: ARA - Liste AR
-    id: 117
-  - enabled: false
-    url: https://raw.githubusercontent.com/tomasko126/easylistczechandslovak/master/filters.txt
-    name: CZE - EasyList Czech and Slovak
-    id: 118
 whitelist_filters: []
-user_rules: []
+user_rules:
+  - '@@||connectivitycheck.gstatic.com^$important'
+  - '@@||connectivitycheck.android.com^$important'
+  - '@@||clients3.google.com^$important'
+  - '@@||time.android.com^$important'
 dhcp:
   enabled: false
 filtering:

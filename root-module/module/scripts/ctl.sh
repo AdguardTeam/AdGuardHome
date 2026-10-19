@@ -3,7 +3,7 @@
 #
 # Cách dùng / Usage: ctl.sh <lệnh/command> [tham số/args]
 #   start | stop | restart | toggle | watchdog
-#   snapshot | status | phase | version | device-country | logs <core|history> [dòng/lines] | debug
+#   snapshot | status | phase | version | logs <core|history> [dòng/lines] | debug
 #   get-upstream | set-upstream <url>... | get-filters | set-filter-selection <chính> <quốc gia|0>
 #   set-filters <id:true|false>... | merge-filters | set-port <port> | set-password <bcrypt-hash>
 #   set-setting <key> <value> | reset-config
@@ -74,6 +74,16 @@ yaml_set() {
     { print }'
 }
 
+# yaml_put <mục> <khóa> <giá trị>: đổi giá trị nếu khóa đã có, chưa có thì thêm vào cuối mục.
+yaml_put() {
+  yaml_rewrite -v sec="$1" -v key="$2" -v val="$3" '
+    $0 ~ "^" sec ":[ \t]*$" { in_s = 1; print; next }
+    /^[^ \t#]/ { if (in_s && !done) { print "  " key ": " val; done = 1 } in_s = 0 }
+    in_s && !done && $0 ~ "^  " key ":" { print "  " key ": " val; done = 1; next }
+    { print }
+    END { if (in_s && !done) print "  " key ": " val }'
+}
+
 # ---------------------------------------------------------------- kiểm tra tham số
 is_number() { case $1 in '' | *[!0-9]*) return 1 ;; esac; }
 
@@ -132,6 +142,7 @@ prepare_files() {
   if [ ! -f "$CONF" ]; then
     cp "$DEFAULT_DIR/AdGuardHome.yaml" "$CONF"
     mark_filters_rev
+    cp -f "$DEFAULT_DIR/dns.rev" "$DNS_REV_FILE" 2>/dev/null
   fi
   load_settings
 }
@@ -205,6 +216,7 @@ do_start() {
   }
   phase preparing
   merge_filters_if_needed
+  tune_dns_if_needed
   sync_port_from_yaml
   wait_port_free
 
@@ -392,13 +404,17 @@ with_config_edit() {
 cmd_get_upstream() {
   _src=$CONF
   [ -f "$_src" ] || _src="$DEFAULT_DIR/AdGuardHome.yaml"
+  upstream_list "$_src"
+}
+
+upstream_list() {
   awk '
     BEGIN { q = sprintf("%c", 39) }
     /^dns:[ \t]*$/ { in_dns = 1; next }
     /^[^ \t#]/ { in_dns = 0; in_up = 0 }
     in_dns && /^  upstream_dns:/ { in_up = 1; next }
     in_up && /^[ \t]*-/ { sub("^[ \t]*-[ \t]*", ""); gsub("^[\"" q "]|[\"" q "]$", ""); print; next }
-    in_up && /^  [A-Za-z_]+:/ { in_up = 0 }' "$_src"
+    in_up && /^  [A-Za-z_]+:/ { in_up = 0 }' "$1"
 }
 
 upstream_inner() {
@@ -424,10 +440,40 @@ cmd_set_upstream() {
   locked with_config_edit upstream_inner "$@"
 }
 
+# parallel: hỏi mọi máy chủ cùng lúc, lấy câu trả lời nhanh nhất (độ trễ thấp nhất); load_balance: luân phiên.
+cmd_set_upstream_mode() {
+  case $1 in parallel | load_balance) ;; *) die "invalid upstream mode" ;; esac
+  locked with_config_edit yaml_put dns upstream_mode "$1"
+}
+
+# Tinh chỉnh độ trễ DNS (config/dns.tune) áp dụng một lần cho cấu hình đã có, mỗi khi config/dns.rev đổi.
+tune_dns_inner() {
+  phase preparing
+  while read -r _s _k _v; do
+    case $_s in '' | '#'*) continue ;; esac
+    yaml_put "$_s" "$_k" "$_v"
+  done <"$DEFAULT_DIR/dns.tune"
+  # Danh sách upstream mặc định của bản cũ (Cloudflare x2) được thay bằng bộ mặc định mới; danh sách tự chỉnh giữ nguyên
+  _cur=$(upstream_list "$CONF" | tr '\n' ' ')
+  if [ "$_cur" = "https://1.1.1.1/dns-query https://1.0.0.1/dns-query " ]; then
+    # shellcheck disable=SC2046
+    upstream_inner $(upstream_list "$DEFAULT_DIR/AdGuardHome.yaml")
+  fi
+  cp -f "$DEFAULT_DIR/dns.rev" "$DNS_REV_FILE" 2>/dev/null
+  return 0
+}
+
+tune_dns_if_needed() {
+  [ -f "$DEFAULT_DIR/dns.rev" ] && [ -f "$DEFAULT_DIR/dns.tune" ] && [ -f "$CONF" ] || return 0
+  [ "$(cat "$DNS_REV_FILE" 2>/dev/null)" = "$(cat "$DEFAULT_DIR/dns.rev")" ] && return 0
+  tune_dns_inner
+  log "Đã tinh chỉnh DNS (song song, bộ nhớ đệm, cập nhật bộ lọc mỗi 24 giờ)" "DNS tuned (parallel, cache, filter updates every 24 h)"
+}
+
 # ---------------------------------------------------------------- bộ lọc chặn quảng cáo
 # Mỗi bộ lọc trong mục filters: của AdGuardHome.yaml là một phần tử danh sách (enabled/url/name/id).
-# config/filters.groups gán mỗi id vào một nhóm: "main" (mức chặn chính, chọn 1) hoặc mã quốc gia
-# (danh sách theo quốc gia, chọn tối đa 1); id không có trong tệp thuộc nhóm "other" (tự thêm, bật tắt tự do).
+# config/filters.groups gán mỗi id vào nhóm "main" (mức chặn chính, chọn 1); id không có trong tệp
+# thuộc nhóm "other" (bổ sung như ABPVN, hoặc do người dùng tự thêm; bật tắt tự do).
 
 # filters_list <tệp>: in "id|enabled|name|url|nhóm" cho từng bộ lọc.
 filters_list() {
@@ -560,21 +606,18 @@ merge_missing_filters() {
   rm -f "$_new"
 }
 
-# Các bản trước cho bật nhiều danh sách cùng lúc; giờ mỗi nhóm chỉ chọn một: giữ danh sách chính mạnh nhất
-# đang bật và danh sách quốc gia đầu tiên đang bật, tắt phần còn lại.
+# Các bản trước cho bật nhiều mức chặn cùng lúc; giờ chỉ chọn một: giữ mức mạnh nhất đang bật, tắt phần còn lại.
+# Không có mức nào đang bật (ví dụ đang dùng uBlock đã bị bỏ) thì bật mức mặc định (HaGeZi Pro++).
 normalize_selection_inner() {
   _specs=$(filters_list "$CONF" | awk -F'|' '
-    BEGIN { n = split("49 51 48 1 101", pri, " ") }
+    BEGIN { n = split("49 51 48 1", pri, " ") }
     { id[NR] = $1; en[NR] = $2; grp[NR] = $5 }
     END {
       keep = ""
       for (i = 1; i <= n && keep == ""; i++)
         for (j = 1; j <= NR; j++) if (grp[j] == "main" && id[j] == pri[i] && en[j] == "true") { keep = pri[i]; break }
-      ckeep = ""
-      for (j = 1; j <= NR; j++) {
-        if (grp[j] == "main" && en[j] == "true" && id[j] != keep) print id[j] ":false"
-        else if (grp[j] != "main" && grp[j] != "other" && en[j] == "true") { if (ckeep == "") ckeep = id[j]; else print id[j] ":false" }
-      }
+      if (keep == "") print "51:true"
+      for (j = 1; j <= NR; j++) if (grp[j] == "main" && en[j] == "true" && id[j] != keep) print id[j] ":false"
     }')
   # shellcheck disable=SC2086
   [ -n "$_specs" ] && filters_inner $_specs
@@ -603,8 +646,8 @@ migrate_filters_inner() {
   _mig=$(grep -E '^[0-9]+:(true|false)$' "$DEFAULT_DIR/filters.migrate" 2>/dev/null)
   # shellcheck disable=SC2086
   [ "$_old" -lt 3 ] && [ -n "$_mig" ] && filters_inner $_mig
-  # Từ filters.rev 5: mỗi nhóm chỉ chọn một danh sách
-  [ "$_old" -lt 5 ] && normalize_selection_inner
+  # Từ filters.rev 5 chỉ chọn một mức chặn; từ rev 6 không còn danh sách theo quốc gia và uBlock
+  [ "$_old" -lt 6 ] && normalize_selection_inner
   mark_filters_rev
   return 0
 }
@@ -626,17 +669,14 @@ cmd_merge_filters() {
   locked with_config_edit migrate_filters_inner
 }
 
-# filter_selection_inner <id chính> <id quốc gia|0>: bật đúng danh sách đã chọn, tắt các danh sách còn lại của nhóm.
+# filter_selection_inner <id mức chặn>: bật đúng mức đã chọn, tắt các mức còn lại (danh sách bổ sung không đổi).
 filter_selection_inner() {
   merge_missing_filters
   _specs=""
   while read -r _id _grp; do
     case $_id in '' | '#'*) continue ;; esac
-    if [ "$_grp" = main ]; then
-      [ "$_id" = "$1" ] && _v=true || _v=false
-    else
-      [ "$_id" = "$2" ] && _v=true || _v=false
-    fi
+    [ "$_grp" = main ] || continue
+    [ "$_id" = "$1" ] && _v=true || _v=false
     _specs="$_specs $_id:$_v"
   done <"$DEFAULT_DIR/filters.groups"
   # shellcheck disable=SC2086
@@ -644,10 +684,9 @@ filter_selection_inner() {
 }
 
 cmd_set_filter_selection() {
-  is_number "$1" && is_number "$2" || die "invalid selection"
-  [ "$1" = 0 ] || grep -q "^$1[[:space:]][[:space:]]*main\$" "$DEFAULT_DIR/filters.groups" || die "not a main list: $1"
-  [ "$2" = 0 ] || { grep "^$2[[:space:]]" "$DEFAULT_DIR/filters.groups" | grep -vq '[[:space:]]main$'; } || die "not a country list: $2"
-  locked with_config_edit filter_selection_inner "$1" "$2"
+  [ "$#" -eq 1 ] && is_number "$1" || die "invalid selection"
+  grep -q "^$1[[:space:]][[:space:]]*main\$" "$DEFAULT_DIR/filters.groups" || die "not a main list: $1"
+  locked with_config_edit filter_selection_inner "$1"
 }
 
 cmd_set_filters() {
@@ -682,6 +721,7 @@ reset_inner() {
   [ -f "$CONF" ] && cp -f "$CONF" "$CONF.bak"
   cp -f "$DEFAULT_DIR/AdGuardHome.yaml" "$CONF"
   mark_filters_rev
+  cp -f "$DEFAULT_DIR/dns.rev" "$DNS_REV_FILE" 2>/dev/null
   setting_set redir_port "$(yaml_get dns port)"
 }
 
@@ -719,12 +759,14 @@ yaml_facts() {
     sec == "http" && /^  address:/ && addr == "" { v = $0; sub(/^  address:/, "", v); addr = unq(v) }
     sec == "users" && /password:/ && pw == "" { v = $0; sub(/.*password:/, "", v); pw = unq(v) }
     sec == "dns" && /^  port:/ && port == "" { v = $0; sub(/^  port:/, "", v); port = unq(v) }
+    sec == "dns" && /^  upstream_mode:/ && umode == "" { v = $0; sub(/^  upstream_mode:/, "", v); umode = unq(v) }
     sec == "filters" && /^[ \t]*-[ \t]/ { flushf(); t = $0; sub(/^[ \t]*-[ \t]+/, "", t); fkv(t); next }
     sec == "filters" { t = $0; sub(/^[ \t]+/, "", t); fkv(t) }
     END {
       if (sec == "filters") flushf()
       print "panel=" addr
       print "yaml_port=" port
+      print "upstream_mode=" umode
       print "password_locked=" ((pw != "" && unq(pw) == unq(defpw)) ? 1 : 0)
       print "enabled_ids=" ids
     }' "$1"
@@ -822,22 +864,6 @@ cmd_version() {
   echo "$_v"
 }
 
-# Tín hiệu quốc gia từ chính chiếc máy (chính xác hơn tra IP: IP di động hay bị định vị sai hoặc là IP của VPN).
-cmd_device_country() {
-  if ! command -v getprop >/dev/null 2>&1; then
-    echo "net="
-    echo "sim="
-    echo "region="
-    return 0
-  fi
-  echo "net=$(getprop gsm.operator.iso-country 2>/dev/null | tr -cd 'A-Za-z,')"
-  echo "sim=$(getprop gsm.sim.operator.iso-country 2>/dev/null | tr -cd 'A-Za-z,')"
-  _r=$(getprop ro.miui.region 2>/dev/null | tr -cd 'A-Za-z')
-  [ -n "$_r" ] || _r=$(getprop ro.csc.countryiso_code 2>/dev/null | tr -cd 'A-Za-z')
-  [ -n "$_r" ] || _r=$(getprop persist.sys.country 2>/dev/null | tr -cd 'A-Za-z')
-  echo "region=$_r"
-}
-
 # snapshot: mọi thứ WebUI cần khi mở trong một lần gọi (mỗi lần exec qua trình quản lý root đều tốn thời gian).
 cmd_snapshot() {
   echo "##status"
@@ -846,8 +872,6 @@ cmd_snapshot() {
   cmd_get_upstream
   echo "##filters"
   cmd_get_filters
-  echo "##device"
-  cmd_device_country
 }
 
 cmd_logs() {
@@ -876,8 +900,6 @@ cmd_debug() {
     echo "-- adguardhome --"
     cmd_version
     cmd_status
-    echo "-- device country signals --"
-    cmd_device_country
     echo "-- settings --"
     cat "$SETTINGS" 2>/dev/null
     echo "-- core log (last 40) --"
@@ -911,12 +933,12 @@ snapshot) cmd_snapshot ;;
 status) cmd_status ;;
 phase) cmd_phase ;;
 version) cmd_version ;;
-device-country) cmd_device_country ;;
 logs) shift; cmd_logs "$@" ;;
 debug) cmd_debug ;;
 get-upstream) cmd_get_upstream ;;
 get-filters) cmd_get_filters ;;
-set-filter-selection) run_cmd cmd_set_filter_selection "$2" "$3" ;;
+set-filter-selection) shift; run_cmd cmd_set_filter_selection "$@" ;;
+set-upstream-mode) run_cmd cmd_set_upstream_mode "$2" ;;
 set-filters) shift; run_cmd cmd_set_filters "$@" ;;
 merge-filters) run_cmd cmd_merge_filters ;;
 set-upstream) shift; run_cmd cmd_set_upstream "$@" ;;

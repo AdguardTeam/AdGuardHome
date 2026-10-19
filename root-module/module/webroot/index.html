@@ -72,6 +72,10 @@
         <textarea id="upstream-list" rows="5" spellcheck="false" autocapitalize="off" autocomplete="off" data-i18n-placeholder="dns.placeholder"></textarea>
         <button id="btn-dns-save" class="btn primary block" data-i18n="dns.save"></button>
         <p class="muted small" data-i18n="dns.hint"></p>
+        <label class="switch-row">
+          <span><strong data-i18n="dns.parallel"></strong><small data-i18n="dns.parallel.hint"></small></span>
+          <input type="checkbox" id="set-parallel" class="switch">
+        </label>
       </div>
 
       <div class="card" id="filters-card">
@@ -81,7 +85,6 @@
         </div>
         <p class="muted" data-i18n="filters.desc"></p>
         <p id="filters-current" class="current-line"></p>
-        <input id="filters-search" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" data-i18n-placeholder="filters.search">
         <div id="filters-list"></div>
         <button id="btn-filters-save" class="btn primary block" data-i18n="filters.save" disabled></button>
         <p class="muted small" data-i18n="filters.hint"></p>
@@ -168,7 +171,6 @@
     </div>
   </div>
 
-  <script src="assets/geo.js"></script>
   <script src="assets/i18n.js"></script>
   <script src="assets/app.js"></script>
 </body>
