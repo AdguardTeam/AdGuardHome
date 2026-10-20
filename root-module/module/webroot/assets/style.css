@@ -245,6 +245,8 @@ pre {
 .head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .head-row h2 { margin: 0; }
 .current-line { margin: 8px 0 0; font-weight: 600; }
+#filter-presets { margin-top: 12px; }
+#filter-presets:empty { display: none; }
 #filters-list { margin-top: 6px; }
 #filters-list .switch-row small { overflow-wrap: anywhere; }
 #filters-search { margin-top: 10px; }

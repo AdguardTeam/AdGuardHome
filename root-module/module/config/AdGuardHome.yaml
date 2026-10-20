@@ -84,6 +84,50 @@ filters:
     url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
     name: ABPVN
     id: 16
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/filters.txt
+    name: uBlock filters - Ads
+    id: 101
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/badware.txt
+    name: uBlock filters - Badware risks
+    id: 201
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/privacy.txt
+    name: uBlock filters - Privacy
+    id: 202
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/quick-fixes.txt
+    name: uBlock filters - Quick fixes
+    id: 203
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/unbreak.txt
+    name: uBlock filters - Unbreak
+    id: 204
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/thirdparties/easylist.txt
+    name: EasyList
+    id: 205
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/thirdparties/easyprivacy.txt
+    name: EasyPrivacy
+    id: 206
+  - enabled: false
+    url: https://malware-filter.gitlab.io/urlhaus-filter/urlhaus-filter-agh-online.txt
+    name: URLhaus malicious URLs
+    id: 207
+  - enabled: false
+    url: https://malware-filter.gitlab.io/phishing-filter/phishing-filter-agh.txt
+    name: Phishing URL blocklist
+    id: 208
+  - enabled: false
+    url: https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0&mimetype=plaintext
+    name: Peter Lowe's ad and tracking servers
+    id: 209
+  - enabled: false
+    url: https://filters.adtidy.org/extension/ublock/filters/11.txt
+    name: AdGuard Mobile Ads
+    id: 210
 whitelist_filters: []
 user_rules:
   - '@@||connectivitycheck.gstatic.com^$important'

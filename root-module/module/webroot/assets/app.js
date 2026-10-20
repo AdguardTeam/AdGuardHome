@@ -6,7 +6,6 @@
   const CTL = `sh ${MODDIR}/scripts/ctl.sh`;
 
   const PRESETS = {
-    mix: ['https://1.1.1.1/dns-query', 'https://8.8.8.8/dns-query', 'https://9.9.9.9/dns-query'],
     cloudflare: ['https://1.1.1.1/dns-query', 'https://1.0.0.1/dns-query'],
     google: ['https://8.8.8.8/dns-query', 'https://8.8.4.4/dns-query'],
     quad9: ['https://9.9.9.9/dns-query', 'https://149.112.112.112/dns-query'],
@@ -527,14 +526,14 @@
       input.type = 'checkbox';
       input.className = 'switch';
       input.checked = f.enabled;
-      input.addEventListener('change', () => { f.enabled = input.checked; updateFilterMeta(); });
+      input.addEventListener('change', () => { f.enabled = input.checked; updateFilterMeta(); renderPresets2(); });
     } else {
       input.type = 'radio';
       input.className = 'radio';
       input.name = 'fmain';
       input.value = f.id;
       input.checked = state.sel.main === f.id;
-      input.addEventListener('change', () => { state.sel.main = f.id; refreshSelectedRows(); updateFilterMeta(); });
+      input.addEventListener('change', () => { state.sel.main = f.id; refreshSelectedRows(); updateFilterMeta(); renderPresets2(); });
     }
     row.append(span, input);
     return row;
@@ -551,8 +550,36 @@
     return d;
   }
 
+  // Hai mức đặt sẵn: cân bằng (mặc định) và nghiêm ngặt nhất (HaGeZi Ultimate + mọi danh sách bổ sung).
+  const presetMatches = (kind) => {
+    const extras = state.filters.filter((f) => f.group === 'other');
+    if (kind === 'strict') return state.sel.main === '49' && extras.every((f) => f.enabled);
+    return state.sel.main === '51' && extras.every((f) => f.enabled === (f.id === '16'));
+  };
+
+  function applyPreset(kind) {
+    const strict = kind === 'strict';
+    if (byId(strict ? '49' : '51')) state.sel.main = strict ? '49' : '51';
+    state.filters.filter((f) => f.group === 'other').forEach((f) => { f.enabled = strict || f.id === '16'; });
+    renderFilters();
+  }
+
+  function renderPresets2() {
+    const box = $('#filter-presets');
+    box.textContent = '';
+    if (!state.filtersLoaded) return;
+    ['balanced', 'strict'].forEach((kind) => {
+      const b = el('button', 'chip', t(`filters.preset.${kind}`));
+      b.dataset.preset = kind;
+      b.classList.toggle('active', presetMatches(kind));
+      b.addEventListener('click', () => applyPreset(kind));
+      box.append(b);
+    });
+  }
+
   function renderFilters() {
     const box = $('#filters-list');
+    renderPresets2();
     const frag = document.createDocumentFragment();
     if (!state.filtersLoaded) {
       for (let i = 0; i < 3; i += 1) frag.append(el('span', 'skel skel-row'));
