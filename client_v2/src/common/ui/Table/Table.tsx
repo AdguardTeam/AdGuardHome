@@ -1,4 +1,4 @@
-import { type JSX, createMemo, For, Show, untrack } from 'solid-js';
+import { type JSX, createEffect, createMemo, For, Show, untrack } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import cn from 'clsx';
 
@@ -136,6 +136,18 @@ export const Table = <T extends Record<string, any>>(props: TableProps<T>) => {
     });
 
     const totalPages = () => Math.ceil(sortedData().length / state.pageSize);
+
+    // Keep the current page in range when rows are deleted from the last page.
+    createEffect(() => {
+        if (props.loading) {
+            return;
+        }
+
+        const lastPage = Math.max(0, totalPages() - 1);
+        if (state.currentPage > lastPage) {
+            setState('currentPage', lastPage);
+        }
+    });
 
     const tableGridTemplate = createMemo(() =>
         props.columns
