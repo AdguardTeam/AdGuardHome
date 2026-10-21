@@ -25,7 +25,7 @@ func TestAuth_UsersList(t *testing.T) {
 	user := webUser{
 		Name:         userName,
 		PasswordHash: string(passwordHash),
-		UserID:       aghuser.MustNewUserID(),
+		UserID:       aghuser.NewUserID(),
 	}
 
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{

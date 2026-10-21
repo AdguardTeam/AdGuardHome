@@ -510,7 +510,6 @@
   "password_requirements_characters": "Najmanj 8 znakov",
   "password_requirements_lowercase": "Vsaj 1 mala črka",
   "password_requirements_match": "Gesli se ujemata",
-  "password_requirements_special": "Angleške črke, številke in posebni znaki",
   "password_requirements_uppercase": "Vsaj 1 velika črka",
   "pause_for_hour": "Začasno ustavi za %count% uro",
   "pause_for_minutes": "| Začasno ustavi za %count% minuto | Začasno ustavi za %count% minuti | Začasno ustavi za %count% minute | Začasno ustavi za %count% minut",

@@ -510,7 +510,6 @@
   "password_requirements_characters": "Minimálně 8 znaků",
   "password_requirements_lowercase": "Alespoň 1 malé písmeno",
   "password_requirements_match": "Hesla se shodují",
-  "password_requirements_special": "Anglická písmena, číslice a speciální znaky",
   "password_requirements_uppercase": "Alespoň 1 velké písmeno",
   "pause_for_hour": "Pozastavit na %count% hodinu",
   "pause_for_minutes": "| Pozastavit na %count% minutu | Pozastavit na %count% minuty | Pozastavit na %count% minuty",

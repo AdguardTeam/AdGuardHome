@@ -30,6 +30,7 @@ import {
     setDhcpConfig,
     toggleDhcp,
 } from 'panel/stores/dhcp';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 describe('findActiveDhcp', () => {
     beforeEach(() => vi.clearAllMocks());
@@ -119,7 +120,7 @@ describe('toggleDhcp', () => {
 describe('getDhcpStatus — statusInitialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        dhcpState.statusInitialized = false;
+        resetStore(dhcpState, { statusInitialized: false });
     });
 
     it('marks statusInitialized when DHCP is available', async () => {
@@ -152,7 +153,7 @@ describe('getDhcpStatus — statusInitialized flag', () => {
 describe('getDhcpInterfaces — interfacesInitialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        dhcpState.interfacesInitialized = false;
+        resetStore(dhcpState, { interfacesInitialized: false });
     });
 
     it('marks interfacesInitialized after a successful request', async () => {

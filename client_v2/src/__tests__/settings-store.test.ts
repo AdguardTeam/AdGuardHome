@@ -57,6 +57,7 @@ import {
     initSettings,
     settingsState,
 } from 'panel/stores/settings';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 const triggerUndo = async () => {
     if (!capturedUndo.current) {
@@ -201,7 +202,7 @@ describe('disableSafeSearch', () => {
 
 describe('initSettings — initialized flag', () => {
     it('marks initialized after a successful request', async () => {
-        settingsState.initialized = false;
+        resetStore(settingsState, { initialized: false });
 
         await initSettings();
 
@@ -209,7 +210,7 @@ describe('initSettings — initialized flag', () => {
     });
 
     it('marks initialized after a failed request so the loader cannot get stuck', async () => {
-        settingsState.initialized = false;
+        resetStore(settingsState, { initialized: false });
         mocks.safebrowsingStatus.mockRejectedValue(new Error('Network error'));
 
         await initSettings();

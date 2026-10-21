@@ -328,10 +328,7 @@ export const validateClientsPerLine = (value: string): string | undefined =>
     validatePerLine(
         value,
         (line) =>
-            R_IPV4.test(line) ||
-            isValidIpv6(line) ||
-            isValidCidr(line) ||
-            R_CLIENT_ID.test(line),
+            R_IPV4.test(line) || isValidIpv6(line) || isValidCidr(line) || R_CLIENT_ID.test(line),
     );
 
 /**
@@ -779,8 +776,22 @@ export const validateHostnameNotDuplicate =
         return undefined;
     };
 
-export const validateBetween = (value: number, min: number, max: number): string | undefined => {
-    if (value < min || value > max) {
+/**
+ * Validates that a value is within the inclusive range.  When `integer` is
+ * true, non-integer values are rejected as well.
+ */
+export const validateBetween = (
+    value: number,
+    min: number,
+    max: number,
+    options?: { integer?: boolean },
+): string | undefined => {
+    if (
+        !Number.isFinite(value) ||
+        value < min ||
+        value > max ||
+        (options?.integer && !Number.isInteger(value))
+    ) {
         return intl.getMessage('form_value_value_from_error', {
             min_value: min.toLocaleString(),
             max_value: max.toLocaleString(),
@@ -826,18 +837,19 @@ export const validateMinValue = (value: number, min: number): string | undefined
 };
 
 /**
- * Validates the client DNS cache size.
- * Callers should gate on `upstreams_cache_enabled` before invoking.
- * Returns undefined if valid, or an i18n error message string if invalid.
+ * Validates a DNS cache size.  The value is only checked when `enabled` is
+ * true: it must be greater than zero and within the uint32 range.
+ *
+ * Used for both the per-client upstream cache and the global DNS cache.
  *
  * @param size - The cache size in bytes
- * @param enabled - Whether per-client upstream caching is enabled
+ * @param enabled - Whether the cache the size belongs to is enabled
  *
- * @example validateCacheSize(0, true)         // error ("must be greater than zero")
- * @example validateCacheSize('', true)        // error ("must be greater than zero")
- * @example validateCacheSize(1000, true)      // undefined (valid)
+ * @example validateCacheSize(0, true)          // error ("must be greater than zero")
+ * @example validateCacheSize('', true)         // error ("must be greater than zero")
+ * @example validateCacheSize(1000, true)       // undefined (valid)
  * @example validateCacheSize(4294967296, true) // error (exceeds UINT32_MAX)
- * @example validateCacheSize(0, false)        // undefined (no validation when disabled)
+ * @example validateCacheSize(0, false)         // undefined (no validation when disabled)
  */
 export const validateCacheSize = (size: number | string, enabled: boolean): ValidationResult => {
     if (!enabled) {
@@ -847,5 +859,5 @@ export const validateCacheSize = (size: number | string, enabled: boolean): Vali
     if (Number.isNaN(num) || num === 0) {
         return intl.getMessage('cache_config_size_validation');
     }
-    return validateBetween(num, 1, UINT32_RANGE.MAX);
+    return validateBetween(num, 1, UINT32_RANGE.MAX, { integer: true });
 };

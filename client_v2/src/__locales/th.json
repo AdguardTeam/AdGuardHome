@@ -510,7 +510,6 @@
   "password_requirements_characters": "อย่างน้อย 8 อักขระ",
   "password_requirements_lowercase": "อักษรตัวพิมพ์เล็กอย่างน้อย 1 ตัว",
   "password_requirements_match": "รหัสผ่านตรงกัน",
-  "password_requirements_special": "ตัวอักษรภาษาอังกฤษ ตัวเลข และอักขระพิเศษ",
   "password_requirements_uppercase": "อักษรตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว",
   "pause_for_hour": "พักเป็นเวลา %count% ชั่วโมง",
   "pause_for_minutes": "หยุดชั่วคราวเป็นเวลา %count% นาที | หยุดชั่วคราวเป็นเวลา %count% นาที",

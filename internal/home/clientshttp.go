@@ -166,10 +166,7 @@ func initPrev(cj clientJSON, prev *client.Persistent) (c *client.Persistent, err
 	}
 
 	if (uid == client.UID{}) {
-		uid, err = client.NewUID()
-		if err != nil {
-			return nil, fmt.Errorf("generating uid: %w", err)
-		}
+		uid = client.NewUID()
 	}
 
 	return &client.Persistent{

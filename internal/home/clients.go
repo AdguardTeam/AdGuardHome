@@ -226,10 +226,7 @@ func (o *clientObject) toPersistent(
 	}
 
 	if (cli.UID == client.UID{}) {
-		cli.UID, err = client.NewUID()
-		if err != nil {
-			return nil, fmt.Errorf("generating uid: %w", err)
-		}
+		cli.UID = client.NewUID()
 	}
 
 	if o.SafeSearchConf.Enabled {

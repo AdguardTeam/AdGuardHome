@@ -25,7 +25,7 @@ func addSession(
 	tb.Helper()
 
 	s, err := ds.New(ctx, &aghuser.User{
-		ID:    aghuser.MustNewUserID(),
+		ID:    aghuser.NewUserID(),
 		Login: login,
 	})
 	require.NoError(tb, err)
@@ -76,13 +76,13 @@ func TestDefaultSessionStorage(t *testing.T) {
 
 	err = userDB.Create(ctx, &aghuser.User{
 		Login: userLoginFirst,
-		ID:    aghuser.MustNewUserID(),
+		ID:    aghuser.NewUserID(),
 	})
 	require.NoError(t, err)
 
 	err = userDB.Create(ctx, &aghuser.User{
 		Login: userLoginSecond,
-		ID:    aghuser.MustNewUserID(),
+		ID:    aghuser.NewUserID(),
 	})
 	require.NoError(t, err)
 

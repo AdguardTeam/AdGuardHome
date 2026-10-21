@@ -20,9 +20,11 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Security
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.1][go-1.27.1].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.2][go-1.27.2].
 
 ### Fixed
+
+- Incorrect behaviour on the first launch with the `--check-config` flag.
 
 - Reading partially received TCP prefix.
 
@@ -50,9 +52,17 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Encrypted DNS server addresses not appearing in the Setup Guide until the page was reloaded after enabling encryption.
 
+- Passwords containing emoji being rejected by the first-run setup wizard in the new web interface.
+
+- Cache size and TTL override rows being locked while the DNS cache was disabled in the new web interface ([#8644]).
+
+- Tables staying on an empty page after the last row of that page was deleted in the new web interface ([#8644]).
+
+- The *Log out* button opening the login page in a new tab in the new web interface ([#8661]).
+
 ### Removed
 
-- The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27.1-notes].
+- The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
 
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
@@ -62,8 +72,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
 [#8636]:           https://github.com/AdguardTeam/AdGuardHome/issues/8636
 [#8637]:           https://github.com/AdguardTeam/AdGuardHome/issues/8637
-[go-1.27.1]:       https://groups.google.com/g/golang-announce/c/QiTRm-HGGtI
-[go-1.27.1-notes]: https://go.dev/doc/go1.27#darwin
+[#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
+[go-1.27.2]:       https://groups.google.com/g/golang-announce/c/U2fTuyDJznI
+[go-1.27-notes]:   https://go.dev/doc/go1.27#darwin
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

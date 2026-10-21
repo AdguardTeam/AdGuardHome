@@ -10,13 +10,13 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"uuid"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
-	"github.com/google/uuid"
 	"howett.net/plist"
 )
 

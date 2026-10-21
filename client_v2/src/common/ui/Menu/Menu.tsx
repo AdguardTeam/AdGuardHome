@@ -145,8 +145,7 @@ export const Menu = (props: Props) => {
                 <div class={cn(s.menuLinkWrapper)}>
                     <a
                         href={getLogoutUrl()}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        rel="external"
                         class={s.menuLink}
                         id="sign_out"
                     >

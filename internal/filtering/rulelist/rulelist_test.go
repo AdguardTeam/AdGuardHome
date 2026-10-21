@@ -60,7 +60,7 @@ func newFilter(tb testing.TB, u *url.URL, name string) (f *rulelist.Filter) {
 	f, err := rulelist.NewFilter(&rulelist.FilterConfig{
 		URL:         u,
 		Name:        name,
-		UID:         rulelist.MustNewUID(),
+		UID:         rulelist.NewUID(),
 		URLFilterID: newURLFilterID(),
 		Enabled:     true,
 	})
