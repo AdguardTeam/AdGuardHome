@@ -189,7 +189,6 @@ func TestConfig_Validate(t *testing.T) {
 		Logger:               testLogger,
 		LocalDomainName:      testLocalTLD,
 		Database:             dhcpsvc.EmptyDatabase{},
-		ICMPTimeout:          1 * time.Second,
 		Enabled:              true,
 	}
 
@@ -210,19 +209,6 @@ func TestConfig_Validate(t *testing.T) {
 		conf:       valid,
 		wantErrMsg: "",
 	}, {
-		name: "bad_icmp_timeout",
-		conf: &dhcpsvc.Config{
-			AddressChecker:       valid.AddressChecker,
-			Interfaces:           valid.Interfaces,
-			NetworkDeviceManager: valid.NetworkDeviceManager,
-			Logger:               valid.Logger,
-			LocalDomainName:      valid.LocalDomainName,
-			Database:             valid.Database,
-			ICMPTimeout:          -1 * time.Second,
-			Enabled:              valid.Enabled,
-		},
-		wantErrMsg: "conf.ICMPTimeout: negative value: -1s",
-	}, {
 		name: "bad_db_filepath",
 		conf: &dhcpsvc.Config{
 			AddressChecker:       valid.AddressChecker,
@@ -231,7 +217,6 @@ func TestConfig_Validate(t *testing.T) {
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
 			Database:             nil,
-			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
 		wantErrMsg: "conf.Database: no value",
@@ -244,7 +229,6 @@ func TestConfig_Validate(t *testing.T) {
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
 			Database:             valid.Database,
-			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
 		wantErrMsg: "conf.Interfaces: empty value",
@@ -257,7 +241,6 @@ func TestConfig_Validate(t *testing.T) {
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
 			Database:             valid.Database,
-			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
 		wantErrMsg: "conf.NetworkDeviceManager: no value",
@@ -270,7 +253,6 @@ func TestConfig_Validate(t *testing.T) {
 			Logger:               nil,
 			LocalDomainName:      valid.LocalDomainName,
 			Database:             valid.Database,
-			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
 		wantErrMsg: "conf.Logger: no value",
@@ -283,7 +265,6 @@ func TestConfig_Validate(t *testing.T) {
 			Logger:               valid.Logger,
 			LocalDomainName:      valid.LocalDomainName,
 			Database:             valid.Database,
-			ICMPTimeout:          valid.ICMPTimeout,
 			Enabled:              valid.Enabled,
 		},
 		wantErrMsg: "conf.AddressChecker: no value",

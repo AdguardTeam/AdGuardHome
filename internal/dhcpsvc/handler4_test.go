@@ -101,6 +101,92 @@ func TestDHCPServer_ServeEther4_discoverExpired(t *testing.T) {
 	assertValidResponse4(t, req, outCh, newWantRespOpts4(t, layers.DHCPMsgTypeOffer, ""))
 }
 
+// TODO(e.burkov):  Assert the received addresses.
+func TestDHCPServer_ServeEther4_discoverUnavailable(t *testing.T) {
+	t.Parallel()
+
+	var (
+		busyAddr = testIPv4Conf.RangeStart
+
+		wantAddr        = testLease4Renewing.IP.Next()
+		wantAddrAnother = wantAddr.Next()
+
+		blockedLease = &dhcpsvc.Lease{
+			IP:       busyAddr,
+			Expiry:   testExpiryDynamicLease,
+			Hostname: "",
+			HWAddr:   dhcpsvc.BlockedHardwareAddr,
+			IsStatic: false,
+		}
+
+		pt = testutil.NewPanicT(t)
+
+		checkedCh = make(chan netip.Addr)
+		storedCh  = make(chan []*dhcpsvc.Lease)
+	)
+
+	chk := &testAddressChecker{
+		onIsAvailable: func(_ context.Context, ip netip.Addr) (ok bool, err error) {
+			testutil.RequireSend(pt, checkedCh, ip, testTimeout)
+
+			return ip != busyAddr, nil
+		},
+	}
+
+	db := newTestDatabase(t)
+	db.onStore = func(_ context.Context, leases []*dhcpsvc.Lease) (err error) {
+		testutil.RequireSend(pt, storedCh, leases, testTimeout)
+
+		return nil
+	}
+
+	ndMgr, inCh, outCh := newTestNetworkDeviceManager(t, testIfaceAddrV4)
+	startTestDHCPServer(t, &dhcpsvc.Config{
+		AddressChecker:       chk,
+		Database:             db,
+		Interfaces:           testIPv4InterfacesConf,
+		NetworkDeviceManager: ndMgr,
+		Enabled:              true,
+	})
+
+	go func() {
+		wantChecked := []netip.Addr{busyAddr, wantAddr, wantAddrAnother}
+
+		for _, wantIP := range wantChecked {
+			checkedIP, ok := testutil.RequireReceive(pt, checkedCh, testTimeout)
+			require.True(pt, ok)
+
+			assert.Equal(pt, wantIP, checkedIP)
+		}
+	}()
+
+	require.True(t, t.Run("unavailable_client", func(t *testing.T) {
+		pkt := newDHCPDISCOVER(t, testHWUnknown)
+		req := testutil.RequireTypeAssert[*layers.DHCPv4](t, pkt.Layer(layers.LayerTypeDHCPv4))
+
+		testutil.RequireSend(t, inCh, pkt, testTimeout)
+
+		stored, ok := testutil.RequireReceive(t, storedCh, testTimeout)
+		require.True(t, ok)
+
+		assert.Contains(t, stored, blockedLease)
+
+		assertValidResponse4(t, req, outCh, newWantRespOpts4(t, layers.DHCPMsgTypeOffer, ""))
+	}))
+
+	require.True(t, t.Run("another_client", func(t *testing.T) {
+		// Make the db.onStore panic.
+		close(storedCh)
+
+		pkt := newDHCPDISCOVER(t, testHWAnother)
+		req := testutil.RequireTypeAssert[*layers.DHCPv4](t, pkt.Layer(layers.LayerTypeDHCPv4))
+
+		testutil.RequireSend(t, inCh, pkt, testTimeout)
+
+		assertValidResponse4(t, req, outCh, newWantRespOpts4(t, layers.DHCPMsgTypeOffer, ""))
+	}))
+}
+
 // TODO(e.burkov):  Test static case.
 func TestDHCPServer_ServeEther4_release(t *testing.T) {
 	t.Parallel()

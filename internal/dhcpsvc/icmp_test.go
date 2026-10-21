@@ -54,6 +54,9 @@ func TestICMPAddressChecker_IsAvailable(t *testing.T) {
 	echo4 := newEchoMsg(t, ipv4.ICMPTypeEchoReply, testEchoID, dhcpsvc.EchoSequenceNumber)
 	echo6 := newEchoMsg(t, ipv6.ICMPTypeEchoReply, testEchoID, dhcpsvc.EchoSequenceNumber)
 
+	zonelessLLAddr := netip.MustParseAddr("fe80::100")
+	llAddr := zonelessLLAddr.WithZone("iface0")
+
 	testCases := []struct {
 		peer net.Addr
 		ip   netip.Addr
@@ -74,21 +77,45 @@ func TestICMPAddressChecker_IsAvailable(t *testing.T) {
 		ip:   testIPv6Dynamic,
 		peer: ipToUDPAddr(t, testIPv6Dynamic),
 		data: echo6,
+	}, {
+		// The zone of ip is implied by the connection, and the kernel doesn't
+		// fill it in the peer address read from a raw socket, so the reply is
+		// still matching here.
+		name: "v6_zone_ipaddr",
+		ip:   llAddr,
+		peer: &net.IPAddr{IP: zonelessLLAddr.AsSlice()},
+		data: echo6,
+	}, {
+		// A datagram socket reports the peer's zone when it's known.
+		name: "v6_zone_udp",
+		ip:   llAddr,
+		peer: ipToUDPAddr(t, llAddr),
+		data: echo6,
 	}}
 
 	for _, tc := range testCases {
 		pc := newTestPacketConn(t)
-		pc.OnWriteTo = func(p []byte, addr net.Addr) (n int, err error) { return len(p), nil }
+		pc.OnWriteTo = func(p []byte, _ net.Addr) (n int, err error) {
+			return len(p), nil
+		}
+
+		responded := false
 		pc.OnReadFrom = func(p []byte) (n int, addr net.Addr, err error) {
+			if responded {
+				panic(testutil.UnexpectedCall(p))
+			}
+
+			responded = true
+
 			return copy(p, tc.data), tc.peer, nil
 		}
 
-		chk := newTestICMPAddressChecker(t, &dhcpsvc.ICMPAddressCheckerConfig{
-			Dialer: newTestICMPDialer(t, pc, ipToUDPAddr(t, tc.ip), nil),
-		})
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+
+			chk := newTestICMPAddressChecker(t, &dhcpsvc.ICMPAddressCheckerConfig{
+				Dialer: newTestICMPDialer(t, pc, ipToUDPAddr(t, tc.ip), nil),
+			})
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 
@@ -135,10 +162,14 @@ func TestICMPAddressChecker_IsAvailable_unrelated(t *testing.T) {
 			t.Parallel()
 
 			pc := newTestPacketConn(t)
-			pc.OnWriteTo = func(p []byte, _ net.Addr) (n int, err error) { return len(p), nil }
+			pc.OnWriteTo = func(p []byte, _ net.Addr) (n int, err error) {
+				return len(p), nil
+			}
+
 			pc.OnReadFrom = func(p []byte) (n int, addr net.Addr, err error) {
-				resp, ok := testutil.RequireReceive(t, readCh, testTimeout)
-				require.True(t, ok)
+				pt := testutil.NewPanicT(t)
+				resp, ok := testutil.RequireReceive(pt, readCh, testTimeout)
+				require.True(pt, ok)
 
 				return copy(p, resp), peer, nil
 			}
@@ -147,8 +178,8 @@ func TestICMPAddressChecker_IsAvailable_unrelated(t *testing.T) {
 				Dialer: newTestICMPDialer(t, pc, peer, nil),
 			})
 
-			readCh <- tc.response
-			readCh <- echo
+			testutil.RequireSend(t, readCh, tc.response, testTimeout)
+			testutil.RequireSend(t, readCh, echo, testTimeout)
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 
@@ -179,17 +210,19 @@ func TestICMPAddressChecker_IsAvailable_otherPeer(t *testing.T) {
 
 	for _, tc := range testCases {
 		pc := newTestPacketConn(t)
-		pc.OnWriteTo = func(p []byte, _ net.Addr) (n int, err error) { return len(p), nil }
+		pc.OnWriteTo = func(p []byte, _ net.Addr) (n int, err error) {
+			return len(p), nil
+		}
 
-		repliedYet := false
+		replied := false
 		pc.OnReadFrom = func(p []byte) (n int, addr net.Addr, err error) {
-			if !repliedYet {
-				repliedYet = true
-
-				return copy(p, echo), tc.peer, nil
+			if replied {
+				return 0, nil, os.ErrDeadlineExceeded
 			}
 
-			return 0, nil, os.ErrDeadlineExceeded
+			replied = true
+
+			return copy(p, echo), tc.peer, nil
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -292,6 +325,10 @@ func TestICMPAddressCheckerConfig_Validate(t *testing.T) {
 		name       string
 		wantErrMsg string
 	}{{
+		name:       "nil_conf",
+		conf:       nil,
+		wantErrMsg: "no value",
+	}, {
 		name: "valid",
 		conf: &dhcpsvc.ICMPAddressCheckerConfig{
 			Clock:   testClock,
@@ -336,6 +373,40 @@ func TestICMPAddressCheckerConfig_Validate(t *testing.T) {
 			Timeout: testTimeout,
 		},
 		wantErrMsg: "c.Logger: no value",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			testutil.AssertErrorMsg(t, tc.wantErrMsg, tc.conf.Validate())
+		})
+	}
+}
+
+func TestDefaultICMPDialerConfig_Validate(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		conf       *dhcpsvc.DefaultICMPDialerConfig
+		name       string
+		wantErrMsg string
+	}{{
+		name:       "nil_conf",
+		conf:       nil,
+		wantErrMsg: "no value",
+	}, {
+		name: "valid",
+		conf: &dhcpsvc.DefaultICMPDialerConfig{
+			Logger: testLogger,
+		},
+		wantErrMsg: "",
+	}, {
+		name: "nil_logger",
+		conf: &dhcpsvc.DefaultICMPDialerConfig{
+			Logger: nil,
+		},
+		wantErrMsg: "conf.Logger: no value",
 	}}
 
 	for _, tc := range testCases {

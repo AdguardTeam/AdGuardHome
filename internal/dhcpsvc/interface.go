@@ -127,22 +127,35 @@ func (iface *netInterface) removeLease(l *Lease) (err error) {
 }
 
 // blockLease marks l as blocked for a configured TTL, as reported by
-// [Lease.IsBlocked].  It also removes the lease from iface, but leaves it in
-// the index.  iface.indexMu must be locked, l and clock must not be nil.
+// [Lease.IsBlocked].  It removes the lease from iface, freeing the client's
+// mapping, but keeps the address occupied so that it's not handed out to any
+// client before the restart.  It also stores the index, ensuring that the
+// blocked lease is in it even if it hasn't been committed yet.  iface.indexMu
+// must be locked, l must not be nil.
+//
+// TODO(e.burkov):  Unblock the addresses when their blocking expires without a
+// restart.
 func (iface *netInterface) blockLease(
 	ctx context.Context,
 	l *Lease,
 	now time.Time,
 ) (err error) {
-	err = iface.removeLease(l)
-	if err != nil {
-		return fmt.Errorf("removing lease: %w", err)
-	}
+	// Do not use [netInterface.removeLease] here, as it clears the
+	// leasedOffsets bit, while the blocked address must stay excluded from
+	// allocation.
+	delete(iface.leases, macToKey(l.HWAddr))
 
 	l.HWAddr = blockedHardwareAddr
 	l.Hostname = ""
 	l.Expiry = now.Add(iface.leaseTTL)
 	l.IsStatic = false
+
+	// Make sure the address is marked occupied even if the lease hasn't been
+	// committed yet, e.g. when it has been refused during allocation.  Blocked
+	// leases also has no hostname.
+	off, _ := iface.addrSpace.offset(l.IP)
+	iface.leasedOffsets.set(off, true)
+	iface.index.byAddr[l.IP] = l
 
 	err = iface.index.dbStore(ctx)
 	if err != nil {
@@ -200,6 +213,10 @@ func (iface *netInterface) allocateLease(
 		}
 
 		var ok bool
+
+		// TODO(e.burkov):  Consider performing the check outside of the
+		// iface.indexMu critical section:  It's a blocking network I/O that
+		// stalls the other interfaces and the lease readers for its duration.
 		ok, err = iface.addressChecker.IsAvailable(ctx, lease.IP)
 		if err != nil {
 			return nil, fmt.Errorf("checking address availability: %w", err)
@@ -216,6 +233,8 @@ func (iface *netInterface) allocateLease(
 
 		iface.logger.DebugContext(ctx, "address not available", "ip", lease.IP)
 
+		// blockLease marks the address as occupied, so the next reserveLease
+		// call returns another one.
 		err = iface.blockLease(ctx, lease, now)
 		if err != nil {
 			return nil, fmt.Errorf("blocking unavailable address: %w", err)

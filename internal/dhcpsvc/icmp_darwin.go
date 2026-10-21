@@ -16,6 +16,10 @@ import (
 // dialICMP4 establishes an IPv4 connection to ip.  It prefers the unprivileged
 // datagram socket and falls back to the raw one.  The raw socket requires root
 // privileges, which is the same expectation the DHCP server itself has.
+//
+// It's a darwin-specific version of the function since [icmp] enables the
+// IP_STRIPHDR socket option there, so packets read from a raw IPv4 socket don't
+// include the IP header and there's no need for a stripping wrapper.
 func dialICMP4(
 	ctx context.Context,
 	l *slog.Logger,

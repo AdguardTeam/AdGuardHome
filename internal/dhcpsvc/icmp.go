@@ -29,9 +29,22 @@ type ICMPDialer interface {
 	Dial(ctx context.Context, ip netip.Addr) (conn net.PacketConn, raddr net.Addr, err error)
 }
 
-// DefaultICMPDialerConfig is the default configuration for [icmpDialer].
+// DefaultICMPDialerConfig is the configuration for [DefaultICMPDialer].
 type DefaultICMPDialerConfig struct {
+	// Logger is used for logging the dialer events.  It must not be nil.
 	Logger *slog.Logger
+}
+
+// type check
+var _ validate.Interface = (*DefaultICMPDialerConfig)(nil)
+
+// Validate implements [validate.Interface] for *DefaultICMPDialerConfig.
+func (conf *DefaultICMPDialerConfig) Validate() (err error) {
+	if conf == nil {
+		return errors.ErrNoValue
+	}
+
+	return validate.NotNil("conf.Logger", conf.Logger)
 }
 
 // DefaultICMPDialer is the [ICMPDialer] implementation based on
@@ -44,7 +57,7 @@ type DefaultICMPDialer struct {
 var _ ICMPDialer = (*DefaultICMPDialer)(nil)
 
 // NewICMPDialer returns the production [ICMPDialer].  Use it in
-// [ICMPAddressCheckerConfig] outside of tests.
+// [ICMPAddressCheckerConfig] outside of tests.  conf must be valid.
 func NewICMPDialer(conf *DefaultICMPDialerConfig) (d ICMPDialer) {
 	return &DefaultICMPDialer{
 		logger: conf.Logger,
@@ -91,7 +104,7 @@ type ICMPAddressCheckerConfig struct {
 	// Clock is used to get the current time.  It must not be nil.
 	Clock timeutil.Clock
 
-	// Dialer establishes echo connections.  It must not be nil
+	// Dialer establishes echo connections.  It must not be nil.
 	Dialer ICMPDialer
 
 	// Logger is used for logging ICMP-related events.  It must not be nil.
@@ -106,6 +119,10 @@ var _ validate.Interface = (*ICMPAddressCheckerConfig)(nil)
 
 // Validate implements [validate.Interface] for *ICMPAddressCheckerConfig.
 func (c *ICMPAddressCheckerConfig) Validate() (err error) {
+	if c == nil {
+		return errors.ErrNoValue
+	}
+
 	return errors.Join(
 		validate.NotNilInterface("c.Clock", c.Clock),
 		validate.NotNilInterface("c.Dialer", c.Dialer),
@@ -156,7 +173,8 @@ const icmpReadBufSize = 1500 * datasize.B
 // type check
 var _ AddressChecker = (*ICMPAddressChecker)(nil)
 
-// IsAvailable implements [AddressChecker] for *ICMPAddressChecker.
+// IsAvailable implements the [AddressChecker] interface for
+// *ICMPAddressChecker.
 func (c *ICMPAddressChecker) IsAvailable(ctx context.Context, ip netip.Addr) (ok bool, err error) {
 	// TODO(e.burkov):  Consider adding dial timeout.
 	conn, raddr, err := c.dialer.Dial(ctx, ip)
@@ -239,6 +257,7 @@ func waitEchoResponse(
 
 	// TODO(e.burkov):  Consider using pools.
 	buf := make([]byte, icmpReadBufSize.Bytes())
+
 	for {
 		n, peer, readErr := conn.ReadFrom(buf)
 		if readErr != nil {
@@ -251,18 +270,32 @@ func waitEchoResponse(
 			return false, fmt.Errorf("reading echo reply: %w", readErr)
 		}
 
-		var msg *icmp.Message
-		msg, err = icmp.ParseMessage(proto, buf[:n])
-		if err != nil {
-			l.DebugContext(ctx, "parsing icmp message", slogutil.KeyError, err)
-
-			continue
-		}
-
-		if isMatchingEchoReply(msg, respType, peer, ip) {
+		if echoReplyFrom(ctx, l, buf[:n], proto, respType, peer, ip) {
 			return true, nil
 		}
 	}
+}
+
+// echoReplyFrom parses the ICMP message in data, received from peer, and
+// reports whether it is an echo reply of type respType sent by ip, where proto
+// is the ICMP protocol number.  It logs and ignores malformed messages.
+func echoReplyFrom(
+	ctx context.Context,
+	l *slog.Logger,
+	data []byte,
+	proto int,
+	respType icmp.Type,
+	peer net.Addr,
+	ip netip.Addr,
+) (ok bool) {
+	msg, err := icmp.ParseMessage(proto, data)
+	if err != nil {
+		l.DebugContext(ctx, "parsing icmp message", slogutil.KeyError, err)
+
+		return false
+	}
+
+	return isMatchingEchoReply(msg, respType, peer, ip)
 }
 
 // icmpTypes returns the ICMP echo request and echo reply message types for the
@@ -277,7 +310,7 @@ func icmpTypes(ip netip.Addr) (reqType, replyType icmp.Type) {
 
 // isMatchingEchoReply reports whether msg is an echo reply of type replyType to
 // the request with the [echoSequenceNumber] received from ip.  It doesn't check
-// for a matching ID.
+// for a matching ID.  ip must have no zone.
 func isMatchingEchoReply(
 	msg *icmp.Message,
 	replyType icmp.Type,
@@ -293,14 +326,20 @@ func isMatchingEchoReply(
 		return false
 	}
 
+	// The zone of ip is implied by the connection itself, so skip the
+	// redundant comparison.
+	ip = ip.WithZone("")
+
 	switch a := peer.(type) {
 	case *net.UDPAddr:
-		return a.AddrPort().Addr().Unmap() == ip
+		return a.AddrPort().Addr().Unmap().WithZone("") == ip
+
 	case *net.IPAddr:
 		var peerIP netip.Addr
 		peerIP, ok = netip.AddrFromSlice(a.IP)
 
-		return ok && peerIP.Unmap() == ip
+		return ok && peerIP.Unmap().WithZone("") == ip
+
 	default:
 		return false
 	}

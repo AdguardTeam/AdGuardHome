@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"maps"
 	"slices"
-	"time"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -15,7 +14,7 @@ import (
 // Config is the configuration for the DHCP service.
 type Config struct {
 	// AddressChecker is used to check the availability of IP addresses.  It
-	// should not be nil.
+	// must not be nil.
 	AddressChecker AddressChecker
 
 	// Database is the storage for DHCP leases.  It must not be nil.
@@ -39,10 +38,6 @@ type Config struct {
 	// clients' hostnames.  It must be a valid domain name.
 	LocalDomainName string
 
-	// ICMPTimeout is the timeout for checking another DHCP server's presence.
-	// It must be non-negative.  If it is zero, the check will be skipped.
-	ICMPTimeout time.Duration
-
 	// Enabled is the state of the service, whether it is enabled or not.
 	Enabled bool
 }
@@ -60,7 +55,6 @@ func (conf *Config) Validate() (err error) {
 	}
 
 	errs := []error{
-		validate.NotNegative("conf.ICMPTimeout", conf.ICMPTimeout),
 		validate.NotNilInterface("conf.Database", conf.Database),
 		validate.NotNilInterface("conf.AddressChecker", conf.AddressChecker),
 		validate.NotNil("conf.Logger", conf.Logger),

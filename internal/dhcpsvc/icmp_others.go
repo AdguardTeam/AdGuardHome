@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
+	"slices"
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -48,6 +49,8 @@ func dialICMP4(
 
 // stripIPHeaderConn is a [net.PacketConn] wrapper stripping the IPv4 header
 // from the packets read from a raw socket.
+//
+// TODO(e.burkov):  Consider adding trace logging for the dropped packets.
 type stripIPHeaderConn struct {
 	// PacketConn is the underlying raw socket.
 	net.PacketConn
@@ -76,7 +79,6 @@ func (c *stripIPHeaderConn) ReadFrom(b []byte) (n int, addr net.Addr, err error)
 		return 0, addr, nil
 	}
 
-	copy(b, b[hdrLen:n])
-
-	return n - hdrLen, addr, nil
+	// Move the payload to the beginning of the buffer, zeroing the rest.
+	return len(slices.Delete(b[:n], 0, hdrLen)), addr, nil
 }
