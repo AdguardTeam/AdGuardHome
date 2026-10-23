@@ -551,6 +551,26 @@ export const formatNumber = (num: number): string => {
 };
 
 /**
+ * Formats a size in bytes using binary units (e.g., 512 B, 1.5 KB, 4 MB)
+ * @param bytes {number} The size in bytes
+ * @param decimals {number} Number of decimal places (default: 1)
+ * @returns {string} Formatted string like "512 B", "1.5 KB", "4 MB"
+ */
+export const formatBytes = (bytes: number, decimals: number = 1): string => {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+    if (!Number.isFinite(bytes) || bytes < 1024) {
+        return `${Math.max(Math.trunc(bytes) || 0, 0)} ${units[0]}`;
+    }
+
+    const tier = Math.min(Math.floor(Math.log2(bytes) / 10), units.length - 1);
+    const scaled = bytes / 1024 ** tier;
+    const formatted = scaled.toFixed(decimals).replace(/\.0+$/, '');
+
+    return `${formatted} ${units[tier]}`;
+};
+
+/**
  * Formats a number in compact notation (e.g., 10.2K, 1.5M)
  * @param num {number} The number to format
  * @param decimals {number} Number of decimal places (default: 1)

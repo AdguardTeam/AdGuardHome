@@ -4,7 +4,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 
 import { GeneralStatistics } from 'panel/components/Dashboard/blocks/GeneralStatistics';
 import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
-import { formatNumber } from 'panel/helpers/helpers';
+import { formatBytes, formatNumber } from 'panel/helpers/helpers';
 import { copy } from 'panel/__tests__/helpers/copy';
 import { mockMatchMedia } from 'panel/__tests__/helpers/matchMedia';
 
@@ -18,6 +18,14 @@ const STATS = {
     numReplacedSafebrowsing: 100,
     numReplacedParental: 40,
     numReplacedSafesearch: 8,
+    numCacheHits: 900,
+    numCacheMisses: 300,
+    cacheInfo: {
+        enabled: true,
+        entries: 1500,
+        size_bytes: 1536 * 1024,
+        max_size_bytes: 4 * 1024 * 1024,
+    },
     avgProcessingTime: 152,
 };
 
@@ -28,16 +36,19 @@ const ROWS = [
     { label: copy('threats_blocked'), description: copy('threats_blocked_tooltip') },
     { label: copy('adult_websites_blocked'), description: copy('adult_websites_blocked_tooltip') },
     { label: copy('safe_search_used'), description: copy('safe_search_used_tooltip') },
+    { label: copy('cache_hits'), description: copy('cache_hits_tooltip') },
     {
         label: copy('average_time_processing'),
         description: copy('average_time_processing_tooltip'),
     },
+    { label: copy('cache_entries'), description: copy('cache_entries_tooltip') },
+    { label: copy('cache_memory'), description: copy('cache_memory_tooltip') },
 ];
 
-const renderCard = () =>
+const renderCard = (props: Partial<typeof STATS> = {}) =>
     render(() => (
         <HashRouter>
-            <Route path="/" component={() => <GeneralStatistics {...STATS} />} />
+            <Route path="/" component={() => <GeneralStatistics {...STATS} {...props} />} />
         </HashRouter>
     ));
 
@@ -136,6 +147,40 @@ describe('Dashboard general statistics row tooltips', () => {
                 copy('processing_time_ms', { value: '152' }),
             ),
         ).toBeInTheDocument();
+    });
+
+    it('shows the cache hit ratio relative to the cache lookups', () => {
+        renderCard();
+
+        const row = rowTrigger(copy('cache_hits'));
+        expect(within(row).getByText('(75.0%)')).toBeInTheDocument();
+        expect(row.closest('a')).toBeNull();
+    });
+
+    it('shows the number of cache entries and the cache memory usage', () => {
+        renderCard();
+
+        expect(
+            within(rowTrigger(copy('cache_entries'))).getByText(formatNumber(1500)),
+        ).toBeInTheDocument();
+        expect(
+            within(rowTrigger(copy('cache_memory'))).getByText(
+                copy('cache_memory_value', {
+                    size: formatBytes(1536 * 1024),
+                    max: formatBytes(4 * 1024 * 1024),
+                }),
+            ),
+        ).toBeInTheDocument();
+    });
+
+    it('hides the cache entries and memory rows when the cache is disabled', () => {
+        renderCard({
+            cacheInfo: { enabled: false, entries: 0, size_bytes: 0, max_size_bytes: 0 },
+        });
+
+        expect(screen.queryByText(copy('cache_entries'))).toBeNull();
+        expect(screen.queryByText(copy('cache_memory'))).toBeNull();
+        expect(screen.getByText(copy('cache_hits'))).toBeInTheDocument();
     });
 
     describe('touch device', () => {

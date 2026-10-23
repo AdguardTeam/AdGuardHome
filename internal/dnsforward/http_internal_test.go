@@ -489,3 +489,67 @@ func TestServer_HandleTestUpstreamDNS(t *testing.T) {
 		assert.True(t, strings.HasSuffix(sleepyRes, "i/o timeout"))
 	})
 }
+
+func TestDNSForwardHTTP_handleCacheInfo(t *testing.T) {
+	const cacheSize = 4096
+
+	testCases := []struct {
+		name    string
+		want    cacheInfoJSON
+		cacheOn bool
+		ecsOn   bool
+	}{{
+		name:    "disabled",
+		want:    cacheInfoJSON{},
+		cacheOn: false,
+		ecsOn:   false,
+	}, {
+		name: "enabled",
+		want: cacheInfoJSON{
+			MaxSizeBytes: cacheSize,
+			Enabled:      true,
+		},
+		cacheOn: true,
+		ecsOn:   false,
+	}, {
+		name: "enabled_ecs",
+		want: cacheInfoJSON{
+			MaxSizeBytes: 2 * cacheSize,
+			Enabled:      true,
+		},
+		cacheOn: true,
+		ecsOn:   true,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			forwardConf := ServerConfig{
+				UDPListenAddrs: []*net.UDPAddr{},
+				TCPListenAddrs: []*net.TCPAddr{},
+				TLSConf:        &TLSConfig{},
+				UpstreamDNS:    []string{"8.8.8.8:53"},
+				UpstreamMode:   proxy.UpstreamModeLoadBalance,
+				CacheEnabled:   tc.cacheOn,
+				CacheSize:      cacheSize,
+				EDNSClientSubnet: &EDNSClientSubnet{
+					Enabled: tc.ecsOn,
+				},
+				ClientsContainer: EmptyClientsContainer{},
+				ServePlainDNS:    true,
+			}
+			filterConf := &filtering.Config{BlockingMode: filtering.BlockingModeDefault}
+			s := createTestServer(t, filterConf, forwardConf, testTLSManager)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest(http.MethodGet, "/control/cache_info", nil)
+			s.handleCacheInfo(w, r)
+			require.Equal(t, http.StatusOK, w.Code)
+
+			got := cacheInfoJSON{}
+			err := json.NewDecoder(w.Body).Decode(&got)
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

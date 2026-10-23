@@ -121,6 +121,19 @@
       'responses':
         '200':
           'description': 'OK'
+  '/cache_info':
+    'get':
+      'tags':
+      - 'global'
+      'operationId': 'cacheInfo'
+      'summary': 'Get the current state of the DNS cache'
+      'responses':
+        '200':
+          'description': 'OK'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/CacheInfo'
   '/test_upstream_dns':
     'post':
       'tags':
@@ -1945,6 +1958,16 @@
           'type': 'integer'
           'description': 'Number of blocked adult websites'
           'example': 15
+        'num_cache_hits':
+          'type': 'integer'
+          'description': 'Number of requests answered from the DNS cache'
+          'example': 40
+        'num_cache_misses':
+          'type': 'integer'
+          'description': >
+            Number of requests sent to the upstream servers since they were not
+            found in the DNS cache
+          'example': 20
         'avg_processing_time':
           'type': 'number'
           'format': 'float'
@@ -1991,6 +2014,35 @@
           'type': 'array'
           'items':
             'type': 'integer'
+    'CacheInfo':
+      'type': 'object'
+      'description': 'Current state of the DNS cache'
+      'required':
+      - 'enabled'
+      - 'entries'
+      - 'size_bytes'
+      - 'max_size_bytes'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+          'description': 'Is the DNS cache enabled'
+          'example': true
+        'entries':
+          'type': 'integer'
+          'description': 'Number of entries currently stored in the DNS cache'
+          'example': 1500
+        'size_bytes':
+          'type': 'integer'
+          'description': >
+            Size of the data currently stored in the DNS cache, in bytes
+          'example': 262144
+        'max_size_bytes':
+          'type': 'integer'
+          'description': >
+            Maximum size of the data that can be stored in the DNS cache, in
+            bytes.  It is doubled when EDNS Client Subnet is enabled, since the
+            responses for subnets are stored separately.
+          'example': 4194304
     'TopArrayEntry':
       'type': 'object'
       'description': >
