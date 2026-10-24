@@ -18,7 +18,7 @@ import (
 func (s *Server) clientRequestFilteringSettings(dctx *dnsContext) (setts *filtering.Settings) {
 	setts = s.dnsFilter.Settings()
 	setts.ProtectionEnabled = dctx.protectionEnabled
-	s.dnsFilter.ApplyAdditionalFiltering(dctx.proxyCtx.Addr.Addr(), dctx.clientID, setts)
+	s.dnsFilter.ApplyAdditionalFiltering(dctx.clientAddr(), dctx.clientID, setts)
 
 	return setts
 }
