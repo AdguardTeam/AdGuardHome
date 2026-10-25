@@ -165,8 +165,8 @@ func encodeMobileConfig(d *dnsSettings, clientID string) ([]byte, error) {
 	return plist.MarshalIndent(data, plist.XMLFormat, "\t")
 }
 
-// respondJSONError writes an internal server error to the header and responds
-// to the client with an error.  l and w must not be nil.
+// respondJSONError writes status to the header and responds to the client with
+// an error.  l and w must not be nil.
 func respondJSONError(
 	ctx context.Context,
 	l *slog.Logger,
@@ -174,7 +174,7 @@ func respondJSONError(
 	status int,
 	msg string,
 ) {
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(status)
 	err := json.NewEncoder(w).Encode(&jsonError{
 		Message: msg,
 	})
