@@ -2768,6 +2768,8 @@
           'type': 'boolean'
         'bing':
           'type': 'boolean'
+        'brave':
+          'type': 'boolean'
         'duckduckgo':
           'type': 'boolean'
         'ecosia':
