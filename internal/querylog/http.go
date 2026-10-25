@@ -481,9 +481,14 @@ func (l *queryLog) parseSearchCriterions(
 	for _, v := range []struct {
 		urlField string
 		ct       criterionType
+		negative bool
 	}{{
 		urlField: "search",
 		ct:       ctTerm,
+	}, {
+		urlField: "exclude",
+		ct:       ctTerm,
+		negative: true,
 	}, {
 		urlField: "response_status",
 		ct:       ctFilteringStatus,
@@ -500,6 +505,7 @@ func (l *queryLog) parseSearchCriterions(
 		}
 
 		if ok {
+			c.negative = v.negative
 			p.searchCriteria = append(p.searchCriteria, c)
 		}
 	}
