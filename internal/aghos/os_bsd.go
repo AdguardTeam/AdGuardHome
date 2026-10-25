@@ -1,4 +1,4 @@
-//go:build darwin || openbsd
+//go:build darwin || netbsd || openbsd
 
 package aghos
 
