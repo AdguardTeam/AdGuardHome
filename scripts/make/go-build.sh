@@ -14,7 +14,7 @@
 # Exit the script if any part of a pipeline fails (-e, -o 'pipefail'), prevent
 # accidental filename expansion (-f), and consider undefined variables as errors
 # (-u).
-set -e -f -o 'pipefail' -u
+set -e -f -u
 
 # The default verbosity level is 0.  Show every command that is run and every
 # package that is processed if the caller requested verbosity level greater than
