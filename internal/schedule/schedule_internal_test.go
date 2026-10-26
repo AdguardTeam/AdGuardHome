@@ -20,6 +20,20 @@ func TestWeekly_Contains(t *testing.T) {
 	// is actually UTC+03:00.
 	otherTZ := time.FixedZone("Etc/GMT-3", 3*60*60)
 
+	romeTZ, err := time.LoadLocation("Europe/Rome")
+	require.NoError(t, err)
+
+	// Rome local is explicitly used there to reproduce the schedule shift bug
+	// on DST transition cases.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/8670.
+	romeSchedule := &Weekly{
+		days: [7]dayRange{
+			time.Sunday: {start: 9*time.Hour + 15*time.Minute, end: 20*time.Hour + 30*time.Minute},
+		},
+		location: romeTZ,
+	}
+
 	// baseSchedule, 12:00 to 14:00.
 	baseSchedule := &Weekly{
 		days: [7]dayRange{
@@ -114,6 +128,26 @@ func TestWeekly_Contains(t *testing.T) {
 		assert:   assert.False,
 		t:        baseTime.Add(1 * time.Minute),
 		name:     "one_minute_past_end",
+	}, {
+		schedule: romeSchedule,
+		assert:   assert.False,
+		t:        time.Date(2026, time.October, 25, 9, 14, 0, 0, romeTZ),
+		name:     "dst_transition_before",
+	}, {
+		schedule: romeSchedule,
+		assert:   assert.True,
+		t:        time.Date(2026, time.October, 25, 9, 15, 0, 0, romeTZ),
+		name:     "dst_transition_left_border",
+	}, {
+		schedule: romeSchedule,
+		assert:   assert.True,
+		t:        time.Date(2026, time.October, 25, 19, 30, 0, 0, romeTZ),
+		name:     "dst_transition_inside",
+	}, {
+		schedule: romeSchedule,
+		assert:   assert.False,
+		t:        time.Date(2026, time.October, 25, 20, 30, 0, 0, romeTZ),
+		name:     "dst_transition_right_border",
 	}}
 
 	for _, tc := range testCases {
