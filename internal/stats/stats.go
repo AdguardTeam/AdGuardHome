@@ -25,12 +25,6 @@ import (
 	bbolterrors "go.etcd.io/bbolt/errors"
 )
 
-// checkInterval returns true if days is valid to be used as statistics
-// retention interval.  The valid values are 0, 1, 7, 30 and 90.
-func checkInterval(days uint32) (ok bool) {
-	return days == 0 || days == 1 || days == 7 || days == 30 || days == 90
-}
-
 // validateIvl returns an error if ivl is less than an hour or more than a
 // year.
 func validateIvl(ivl time.Duration) (err error) {
@@ -502,26 +496,6 @@ func (s *StatsCtx) periodicFlush() {
 	}
 
 	s.logger.Debug("periodic flushing finished")
-}
-
-// setLimit sets the limit.  s.lock is expected to be locked.
-//
-// TODO(s.chzhen):  Remove it when migration to the new API is over.
-func (s *StatsCtx) setLimit(limit time.Duration) {
-	if limit != 0 {
-		s.enabled = true
-		s.limit = limit
-		s.logger.Debug("setting limit in days", "num", limit/timeutil.Day)
-
-		return
-	}
-
-	s.enabled = false
-	s.logger.Debug("disabled")
-
-	if err := s.clear(); err != nil {
-		s.logger.Error("clearing", slogutil.KeyError, err)
-	}
 }
 
 // Reset counters and clear database

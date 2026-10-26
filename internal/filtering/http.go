@@ -344,10 +344,6 @@ type filteringRulesReq struct {
 func (d *DNSFilter) handleFilteringSetRules(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	if aghhttp.WriteTextPlainDeprecated(ctx, d.logger, w, r) {
-		return
-	}
-
 	req := &filteringRulesReq{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
@@ -496,11 +492,6 @@ type checkHostRespRule struct {
 type checkHostResp struct {
 	Reason string `json:"reason"`
 
-	// Rule is the text of the matched rule.
-	//
-	// Deprecated: Use Rules[*].Text.
-	Rule string `json:"rule"`
-
 	Rules []*checkHostRespRule `json:"rules"`
 
 	// for FilteredBlockedService:
@@ -509,11 +500,6 @@ type checkHostResp struct {
 	// for Rewrite:
 	CanonName string       `json:"cname"`    // CNAME value
 	IPList    []netip.Addr `json:"ip_addrs"` // list of IP addresses
-
-	// FilterID is the ID of the rule's filter list.
-	//
-	// Deprecated: Use Rules[*].FilterListID.
-	FilterID rulelist.APIID `json:"filter_id"`
 }
 
 // handleCheckHost is the handler for the GET /control/filtering/check_host HTTP
@@ -589,18 +575,12 @@ func (d *DNSFilter) handleCheckHost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rulesLen := len(result.Rules)
 	resp := checkHostResp{
 		Reason:    result.Reason.String(),
 		SvcName:   result.ServiceName,
 		CanonName: result.CanonName,
 		IPList:    result.IPList,
 		Rules:     make([]*checkHostRespRule, len(result.Rules)),
-	}
-
-	if rulesLen > 0 {
-		resp.FilterID = result.Rules[0].FilterListID
-		resp.Rule = result.Rules[0].Text
 	}
 
 	for i, r := range result.Rules {
@@ -726,8 +706,6 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP(http.MethodPost, "/control/parental/disable", d.handleParentalDisable)
 	registerHTTP(http.MethodGet, "/control/parental/status", d.handleParentalStatus)
 
-	registerHTTP(http.MethodPost, "/control/safesearch/enable", d.handleSafeSearchEnable)
-	registerHTTP(http.MethodPost, "/control/safesearch/disable", d.handleSafeSearchDisable)
 	registerHTTP(http.MethodGet, "/control/safesearch/status", d.handleSafeSearchStatus)
 	registerHTTP(http.MethodPut, "/control/safesearch/settings", d.handleSafeSearchSettings)
 
@@ -738,13 +716,7 @@ func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP(http.MethodPut, "/control/rewrite/settings/update", d.handleRewriteSettingsUpdate)
 	registerHTTP(http.MethodPut, "/control/rewrite/update", d.handleRewriteUpdate)
 
-	registerHTTP(http.MethodGet, "/control/blocked_services/services", d.handleBlockedServicesIDs)
 	registerHTTP(http.MethodGet, "/control/blocked_services/all", d.handleBlockedServicesAll)
-
-	// Deprecated handlers.
-	registerHTTP(http.MethodGet, "/control/blocked_services/list", d.handleBlockedServicesList)
-	registerHTTP(http.MethodPost, "/control/blocked_services/set", d.handleBlockedServicesSet)
-
 	registerHTTP(http.MethodGet, "/control/blocked_services/get", d.handleBlockedServicesGet)
 	registerHTTP(http.MethodPut, "/control/blocked_services/update", d.handleBlockedServicesUpdate)
 

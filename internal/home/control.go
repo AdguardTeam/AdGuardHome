@@ -189,16 +189,6 @@ func (web *webAPI) registerControlHandlers() {
 	web.httpReg.Register(http.MethodPost, "/control/update", web.handleUpdate)
 
 	web.httpReg.Register(http.MethodGet, "/control/status", web.handleStatus)
-	web.httpReg.Register(
-		http.MethodPost,
-		"/control/i18n/change_language",
-		web.handleI18nChangeLanguage,
-	)
-	web.httpReg.Register(
-		http.MethodGet,
-		"/control/i18n/current_language",
-		web.handleI18nCurrentLanguage,
-	)
 	web.httpReg.Register(http.MethodGet, "/control/profile", web.handleGetProfile)
 	web.httpReg.Register(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
@@ -292,6 +282,8 @@ func modifiesData(m string) (ok bool) {
 // ensureContentType makes sure that the content type of a data-modifying
 // request is set correctly.  If it is not, ensureContentType writes a response
 // to w, and ok is false.
+//
+// TODO(a.garipov):  !!  Retest all behavior relating to this.
 func (web *webAPI) ensureContentType(w http.ResponseWriter, r *http.Request) (ok bool) {
 	const statusUnsup = http.StatusUnsupportedMediaType
 

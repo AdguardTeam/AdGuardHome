@@ -46,7 +46,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
-	"github.com/AdguardTeam/golibs/service"
 )
 
 // Global context
@@ -122,22 +121,11 @@ func Main(clientBuildFS fs.FS) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
-	var (
-		hc        *aghnet.HostsContainer
-		hcWatcher service.Interface = service.Empty{}
-	)
-	if !opts.noEtcHosts {
-		hc, hcWatcher, err = newHostsContainer(ctx, baseLogger)
-		fatalOnError(ctx, baseLogger, err)
-	}
-
 	pidFilePath := setPIDFilePath(ctx, baseLogger, opts)
 	sigHdlrLogger := baseLogger.With(slogutil.KeyPrefix, "signalhdlr")
 	sigHdlrCleanup := &signalHandlerCleanup{
 		logger:          sigHdlrLogger,
-		hostsContainer:  hc,
 		glTokenFileRoot: glTokenFileRoot,
-		hcWatcher:       hcWatcher,
 		done:            done,
 		pidFilePath:     pidFilePath,
 		glinetMode:      opts.glinetMode,
@@ -162,7 +150,6 @@ func Main(clientBuildFS fs.FS) {
 			workDir,
 			confPath,
 			pidFilePath,
-			hc,
 		)
 		if err != nil {
 			svcLogger.ErrorContext(ctx, "action failed", slogutil.KeyError, err)
@@ -184,7 +171,6 @@ func Main(clientBuildFS fs.FS) {
 		workDir,
 		confPath,
 		pidFilePath,
-		hc,
 	)
 }
 
@@ -296,7 +282,12 @@ func configureOS(ctx context.Context, l *slog.Logger, conf *configuration) (err 
 func newHostsContainer(
 	ctx context.Context,
 	baseLogger *slog.Logger,
+	enabled bool,
 ) (etcHosts *aghnet.HostsContainer, watcher aghos.FSWatcher, err error) {
+	if !enabled {
+		return nil, aghos.EmptyFSWatcher{}, nil
+	}
+
 	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
 
 	watcher, err = aghos.NewOSWatcher(&aghos.OSWatcherConfig{
@@ -358,12 +349,9 @@ func dhcpConfigToInternal(
 		Logger:             baseLogger.With(slogutil.KeyPrefix, "dhcpd"),
 		InterfaceName:      c.InterfaceName,
 		LocalDomainName:    c.LocalDomainName,
-		//lint:ignore SA1019 Remove it when migration of DHCP leases will be not
-		// needed.
-		WorkDir: workDir,
-		DataDir: filepath.Join(workDir, dataDir),
-		Conf4:   dhcpV4ConfigToInternal(c.Conf4),
-		Enabled: c.Enabled,
+		DataDir:            filepath.Join(workDir, dataDir),
+		Conf4:              dhcpV4ConfigToInternal(c.Conf4),
+		Enabled:            c.Enabled,
 	}
 }
 
@@ -420,7 +408,7 @@ func initContextClients(
 
 	var arpDB arpdb.Interface
 	if config.Clients.Sources.ARP {
-		arpDB = arpdb.New(logger.With(slogutil.KeyError, "arpdb"))
+		arpDB = arpdb.New(logger.With(slogutil.KeyPrefix, "arpdb"))
 	}
 
 	return globalContext.clients.Init(
@@ -456,41 +444,20 @@ func pidFileRequired(opts options) (ok bool) {
 			opts.serviceControlAction == "run")
 }
 
-// setupBindOpts overrides bind host/port from the opts.
+// setupBindOpts overrides the bind address from opts, if any.
 func setupBindOpts(opts options) (err error) {
 	bindAddr := opts.bindAddr
-	if bindAddr != (netip.AddrPort{}) {
-		config.HTTPConfig.Address = bindAddr
-
-		if config.HTTPConfig.Address.Port() != 0 {
-			err = validateConfigPorts(config)
-			if err != nil {
-				// Don't wrap the error, because it's informative enough as is.
-				return err
-			}
-		}
-
+	if bindAddr == (netip.AddrPort{}) {
 		return nil
 	}
 
-	if opts.bindPort != 0 {
-		config.HTTPConfig.Address = netip.AddrPortFrom(
-			config.HTTPConfig.Address.Addr(),
-			opts.bindPort,
-		)
-
+	config.HTTPConfig.Address = bindAddr
+	if config.HTTPConfig.Address.Port() != 0 {
 		err = validateConfigPorts(config)
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
 		}
-	}
-
-	if opts.bindHost.IsValid() {
-		config.HTTPConfig.Address = netip.AddrPortFrom(
-			opts.bindHost,
-			config.HTTPConfig.Address.Port(),
-		)
 	}
 
 	return nil
@@ -827,7 +794,6 @@ func run(
 	workDir string,
 	confPath string,
 	pidFilePath string,
-	hc *aghnet.HostsContainer,
 ) {
 	aghtls.Init(ctx, baseLogger.With(slogutil.KeyPrefix, "aghtls"))
 
@@ -839,7 +805,13 @@ func run(
 
 	setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun)
 
-	err := configureOS(ctx, baseLogger, config)
+	hcEnabled := config.DNS.HostsFileEnabled || config.Clients.Sources.HostsFile
+	hc, hcWatcher, err := newHostsContainer(ctx, baseLogger, hcEnabled)
+	fatalOnError(ctx, baseLogger, err)
+
+	sigHdlr.addHostsContainer(hc, hcWatcher)
+
+	err = configureOS(ctx, baseLogger, config)
 	fatalOnError(ctx, baseLogger, err)
 
 	// Clients package uses filtering package's static data

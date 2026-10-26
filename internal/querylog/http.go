@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -18,25 +17,11 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/AdguardTeam/golibs/timeutil"
 	"golang.org/x/net/idna"
 )
 
-// configJSON is the JSON structure for the querylog configuration.
-type configJSON struct {
-	// Interval is the querylog rotation interval.  Use float64 here to support
-	// fractional numbers and not mess the API users by changing the units.
-	Interval float64 `json:"interval"`
-
-	// Enabled shows if the querylog is enabled.  It is an aghalg.NullBool to
-	// be able to tell when it's set without using pointers.
-	Enabled aghalg.NullBool `json:"enabled"`
-
-	// AnonymizeClientIP shows if the clients' IP addresses must be anonymized.
-	// It is an [aghalg.NullBool] to be able to tell when it's set without using
-	// pointers.
-	AnonymizeClientIP aghalg.NullBool `json:"anonymize_client_ip"`
-}
+// TODO(a.garipov):  !!  Either redo current frontend's query parameters or
+// temporarily return the old query-parameter API.
 
 // getConfigResp is the JSON structure for the querylog configuration.
 type getConfigResp struct {
@@ -70,10 +55,6 @@ func (l *queryLog) initWeb() {
 		"/control/querylog/config/update",
 		l.handlePutQueryLogConfig,
 	)
-
-	// Deprecated handlers.
-	l.conf.HTTPReg.Register(http.MethodGet, "/control/querylog_info", l.handleQueryLogInfo)
-	l.conf.HTTPReg.Register(http.MethodPost, "/control/querylog_config", l.handleQueryLogConfig)
 }
 
 // handleQueryLog is the handler for the GET /control/querylog HTTP API.
@@ -104,29 +85,6 @@ func (l *queryLog) handleQueryLog(w http.ResponseWriter, r *http.Request) {
 // API.
 func (l *queryLog) handleQueryLogClear(_ http.ResponseWriter, r *http.Request) {
 	l.clear(r.Context())
-}
-
-// handleQueryLogInfo is the handler for the GET /control/querylog_info HTTP
-// API.
-//
-// Deprecated:  Remove it when migration to the new API is over.
-func (l *queryLog) handleQueryLogInfo(w http.ResponseWriter, r *http.Request) {
-	l.confMu.RLock()
-	defer l.confMu.RUnlock()
-
-	ivl := l.conf.RotationIvl
-
-	if !checkInterval(ivl) {
-		// NOTE: If interval is custom we set it to 90 days for compatibility
-		// with old API.
-		ivl = timeutil.Day * 90
-	}
-
-	aghhttp.WriteJSONResponseOK(r.Context(), l.logger, w, r, configJSON{
-		Enabled:           aghalg.BoolToNullBool(l.conf.Enabled),
-		Interval:          ivl.Hours() / 24,
-		AnonymizeClientIP: aghalg.BoolToNullBool(l.conf.AnonymizeClientIP),
-	})
 }
 
 // handleGetQueryLogConfig is the handler for the GET /control/querylog/config
@@ -161,61 +119,6 @@ func AnonymizeIP(ip net.IP) {
 	} else if len(ip) == net.IPv6len {
 		copy(ip[net.IPv6len-10:net.IPv6len], zeroes)
 	}
-}
-
-// handleQueryLogConfig is the handler for the POST /control/querylog_config
-// HTTP API.
-//
-// Deprecated:  Remove it when migration to the new API is over.
-func (l *queryLog) handleQueryLogConfig(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	// Set NaN as initial value to be able to know if it changed later by
-	// comparing it to NaN.
-	newConf := &configJSON{
-		Interval: math.NaN(),
-	}
-
-	err := json.NewDecoder(r.Body).Decode(newConf)
-	if err != nil {
-		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "%s", err)
-
-		return
-	}
-
-	ivl := time.Duration(float64(timeutil.Day) * newConf.Interval)
-
-	hasIvl := !math.IsNaN(newConf.Interval)
-	if hasIvl && !checkInterval(ivl) {
-		aghhttp.ErrorAndLog(ctx, l.logger, r, w, http.StatusBadRequest, "unsupported interval")
-
-		return
-	}
-
-	defer l.conf.ConfigModifier.Apply(ctx)
-
-	l.confMu.Lock()
-	defer l.confMu.Unlock()
-
-	conf := *l.conf
-	if newConf.Enabled != aghalg.NBNull {
-		conf.Enabled = newConf.Enabled == aghalg.NBTrue
-	}
-
-	if hasIvl {
-		conf.RotationIvl = ivl
-	}
-
-	if newConf.AnonymizeClientIP != aghalg.NBNull {
-		conf.AnonymizeClientIP = newConf.AnonymizeClientIP == aghalg.NBTrue
-		if conf.AnonymizeClientIP {
-			l.anonymizer.Store(AnonymizeIP)
-		} else {
-			l.anonymizer.Store(nil)
-		}
-	}
-
-	l.conf = &conf
 }
 
 // handlePutQueryLogConfig is the handler for the PUT
@@ -376,10 +279,6 @@ func (l *queryLog) parseSearchCriterion(
 			// twice.
 			asciiVal = ""
 		}
-	case ctFilteringStatus:
-		if !filteringStatusValues.Has(val) {
-			return false, sc, fmt.Errorf("invalid value %s", val)
-		}
 	case ctReason:
 		values, err = parseReason(q, name)
 		if err != nil {
@@ -390,7 +289,7 @@ func (l *queryLog) parseSearchCriterion(
 		return false, sc, fmt.Errorf(
 			"invalid criterion type %v: should be one of %v",
 			ct,
-			[]criterionType{ctTerm, ctFilteringStatus, ctReason},
+			[]criterionType{ctTerm, ctReason},
 		)
 	}
 
@@ -435,10 +334,6 @@ func (l *queryLog) parseSearchParams(
 	p = newSearchParams()
 
 	q := r.URL.Query()
-	if q.Has("reason") && q.Has("response_status") {
-		return nil,
-			errors.Error(`"reason" and "response_status" criteria cannot be used together`)
-	}
 
 	olderThan := q.Get("older_than")
 	if len(olderThan) != 0 {
@@ -484,9 +379,6 @@ func (l *queryLog) parseSearchCriterions(
 	}{{
 		urlField: "search",
 		ct:       ctTerm,
-	}, {
-		urlField: "response_status",
-		ct:       ctFilteringStatus,
 	}, {
 		urlField: "reason",
 		ct:       ctReason,

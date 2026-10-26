@@ -3,11 +3,9 @@ package home
 import (
 	"fmt"
 	"iter"
-	"log"
 	"net/netip"
 	"os"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/configmigrate"
@@ -15,6 +13,9 @@ import (
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 )
+
+// TODO(a.garipov):  !!  Add a migration for deleted options retained in the
+// service files.
 
 // TODO(a.garipov): Replace with package flag.
 
@@ -39,16 +40,6 @@ type options struct {
 	//
 	// TODO(e.burkov):  Use [ossvc.ActionName].
 	serviceControlAction string
-
-	// bindHost is the address on which to serve the HTTP UI.
-	//
-	// Deprecated: Use bindAddr.
-	bindHost netip.Addr
-
-	// bindPort is the port on which to serve the HTTP UI.
-	//
-	// Deprecated: Use bindAddr.
-	bindPort uint16
 
 	// bindAddr is the address to serve the web UI on.
 	bindAddr netip.AddrPort
@@ -78,10 +69,6 @@ type options struct {
 	// glinetMode shows if the GL-Inet compatibility mode is enabled.
 	glinetMode bool
 
-	// noEtcHosts flag should be provided when /etc/hosts file shouldn't be
-	// used.
-	noEtcHosts bool
-
 	// localFrontend forces AdGuard Home to use the frontend files from disk
 	// rather than the ones that have been compiled into the binary.
 	localFrontend bool
@@ -105,7 +92,7 @@ func initCmdLineOpts() {
 		serialize:   func(o options) (val string, ok bool) { return "", false },
 		description: "Print this help.",
 		longName:    "help",
-		shortName:   "",
+		shortName:   "h",
 	})
 }
 
@@ -151,48 +138,6 @@ var cmdLineOpts = []cmdLineOpt{{
 	description:     "Path to the working directory.",
 	longName:        "work-dir",
 	shortName:       "w",
-}, {
-	updateWithValue: func(o options, v string) (oo options, err error) {
-		o.bindHost, err = netip.ParseAddr(v)
-
-		return o, err
-	},
-	updateNoValue: nil,
-	effect:        nil,
-	serialize: func(o options) (val string, ok bool) {
-		if !o.bindHost.IsValid() {
-			return "", false
-		}
-
-		return o.bindHost.String(), true
-	},
-	description: "Deprecated. Host address to bind HTTP server on. Use --web-addr. " +
-		"The short -h will work as --help in the future.",
-	longName:  "host",
-	shortName: "h",
-}, {
-	updateWithValue: func(o options, v string) (options, error) {
-		p, err := strconv.ParseUint(v, 10, 16)
-		if err != nil {
-			err = fmt.Errorf("parsing port: %w", err)
-		} else {
-			o.bindPort = uint16(p)
-		}
-
-		return o, err
-	},
-	updateNoValue: nil,
-	effect:        nil,
-	serialize: func(o options) (val string, ok bool) {
-		if o.bindPort == 0 {
-			return "", false
-		}
-
-		return strconv.Itoa(int(o.bindPort)), true
-	},
-	description: "Deprecated. Port to serve HTTP pages on. Use --web-addr.",
-	longName:    "port",
-	shortName:   "p",
 }, {
 	updateWithValue: func(o options, v string) (oo options, err error) {
 		o.bindAddr, err = netip.ParseAddrPort(v)
@@ -262,36 +207,6 @@ var cmdLineOpts = []cmdLineOpt{{
 	description:     "Update the current binary and restart the service in case it's installed.",
 	longName:        "update",
 	shortName:       "",
-}, {
-	updateWithValue: nil,
-	updateNoValue:   nil,
-	effect: func(_ options, _ string) (f effect, err error) {
-		log.Println("warning: using --no-mem-optimization flag has no effect and is deprecated")
-
-		return nil, nil
-	},
-	serialize:   func(o options) (val string, ok bool) { return "", false },
-	description: "Deprecated.  Disable memory optimization.",
-	longName:    "no-mem-optimization",
-	shortName:   "",
-}, {
-	updateWithValue: nil,
-	updateNoValue:   func(o options) (options, error) { o.noEtcHosts = true; return o, nil },
-	effect: func(_ options, _ string) (f effect, err error) {
-		log.Println(
-			"warning: --no-etc-hosts flag is deprecated " +
-				"and will be removed in the future versions; " +
-				"set clients.runtime_sources.hosts and dns.hostsfile_enabled " +
-				"in the configuration file to false instead",
-		)
-
-		return nil, nil
-	},
-	serialize: func(o options) (val string, ok bool) { return "", o.noEtcHosts },
-	description: "Deprecated: use clients.runtime_sources.hosts and dns.hostsfile_enabled " +
-		"instead.  Do not use the OS-provided hosts.",
-	longName:  "no-etc-hosts",
-	shortName: "",
 }, {
 	updateWithValue: nil,
 	updateNoValue:   func(o options) (options, error) { o.localFrontend = true; return o, nil },

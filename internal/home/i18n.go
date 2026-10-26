@@ -1,11 +1,8 @@
 package home
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/golibs/container"
 )
 
@@ -61,65 +58,4 @@ func validateLang(lang string, allowEmpty bool) (err error) {
 	}
 
 	return nil
-}
-
-// languageJSON is the JSON structure for language requests and responses.
-type languageJSON struct {
-	Language string `json:"language"`
-}
-
-// handleI18nCurrentLanguage is the handler for the GET
-// /control/i18n/current_language HTTP API.
-//
-// TODO(d.kolyshev): Deprecated, remove it later.
-func (web *webAPI) handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	l := web.logger
-
-	l.InfoContext(ctx, "current language", "lang", config.Language)
-
-	aghhttp.WriteJSONResponseOK(ctx, l, w, r, &languageJSON{
-		Language: config.Language,
-	})
-}
-
-// handleI18nChangeLanguage is the handler for the POST
-// /control/i18n/change_language HTTP API.
-//
-// TODO(d.kolyshev): Deprecated, remove it later.
-func (web *webAPI) handleI18nChangeLanguage(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	l := web.logger
-
-	if aghhttp.WriteTextPlainDeprecated(ctx, l, w, r) {
-		return
-	}
-
-	langReq := &languageJSON{}
-	err := json.NewDecoder(r.Body).Decode(langReq)
-	if err != nil {
-		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusInternalServerError, "reading req: %s", err)
-
-		return
-	}
-
-	lang := langReq.Language
-	err = validateLang(lang, false)
-	if err != nil {
-		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
-
-		return
-	}
-
-	func() {
-		config.Lock()
-		defer config.Unlock()
-
-		config.Language = lang
-		l.InfoContext(ctx, "language is updated", "lang", lang)
-	}()
-
-	web.confModifier.Apply(ctx)
-
-	aghhttp.OK(ctx, l, w)
 }

@@ -242,4 +242,4 @@ echo "$platforms" | while read -r os arch arm mips; do
 	build "$dir" "$os" "$arch" "$arm" "$mips"
 done
 
-log 'finished'
+log "finished"

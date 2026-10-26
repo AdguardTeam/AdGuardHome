@@ -4,7 +4,7 @@
   'description': >
     AdGuard Home REST-ish API.  Our admin web interface is built on top of this
     REST-ish API.
-  'version': '0.107'
+  'version': '1.0.0'
   'contact':
     'name': 'AdGuard Home'
     'url': 'https://github.com/AdguardTeam/AdGuardHome'
@@ -26,8 +26,6 @@
   'description': 'Rule-based filtering'
 - 'name': 'global'
   'description': 'AdGuard Home server general settings and controls'
-- 'name': 'i18n'
-  'description': 'Application localization'
 - 'name': 'install'
   'description': 'First-time install configuration handlers'
 - 'name': 'log'
@@ -220,33 +218,11 @@
         'description': 'Filter by domain name or client IP'
         'schema':
           'type': 'string'
-      - 'name': 'response_status'
-        'deprecated': true
-        'in': 'query'
-        'description': >
-          Deprecated: Use 'reason' parameter instead
-          Filter by response status
-
-          NOTE: This parameter cannot be used with 'reason' parameter.
-        'schema':
-          'type': 'string'
-          'enum':
-          - 'all'
-          - 'filtered'
-          - 'blocked'
-          - 'blocked_safebrowsing'
-          - 'blocked_parental'
-          - 'whitelisted'
-          - 'rewritten'
-          - 'safe_search'
-          - 'processed'
       - 'name': 'reason'
         'in': 'query'
         'description': >
           Filter by response filtering reason.  Multiple reasons can be
           provided.
-
-          NOTE: This parameter cannot be used with 'response_status' parameter.
         'schema':
           'type': 'array'
           'items':
@@ -258,44 +234,6 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/QueryLog'
-  '/querylog_info':
-    'get':
-      'deprecated': true
-      'description': |
-        Deprecated: Use `GET /querylog/config` instead.
-
-        NOTE: If `interval` was configured by editing configuration file or new
-        HTTP API call `PUT /querylog/config/update` and it's not equal to
-        previous allowed enum values then it will be equal to `90` days for
-        compatibility reasons.
-      'tags':
-      - 'log'
-      'operationId': 'queryLogInfo'
-      'summary': 'Get query log parameters'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/QueryLogConfig'
-  '/querylog_config':
-    'post':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `PUT /querylog/config/update` instead.
-      'tags':
-      - 'log'
-      'operationId': 'queryLogConfig'
-      'summary': 'Set query log parameters'
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/QueryLogConfig'
-      'responses':
-        '200':
-          'description': 'OK.'
   '/querylog_clear':
     'post':
       'tags':
@@ -365,44 +303,6 @@
       - 'stats'
       'operationId': 'statsReset'
       'summary': 'Reset all statistics to zeroes'
-      'responses':
-        '200':
-          'description': 'OK.'
-  '/stats_info':
-    'get':
-      'deprecated': true
-      'description': |
-        Deprecated: Use `GET /stats/config` instead.
-
-        NOTE: If `interval` was configured by editing configuration file or new
-        HTTP API call `PUT /stats/config/update` and it's not equal to
-        previous allowed enum values then it will be equal to `90` days for
-        compatibility reasons.
-      'tags':
-      - 'stats'
-      'operationId': 'statsInfo'
-      'summary': 'Get statistics parameters'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/StatsConfig'
-  '/stats_config':
-    'post':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `PUT /stats/config/update` instead.
-      'tags':
-      - 'stats'
-      'operationId': 'statsConfig'
-      'summary': 'Set statistics parameters'
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/StatsConfig'
       'responses':
         '200':
           'description': 'OK.'
@@ -874,26 +774,6 @@
                   'value':
                     'enabled': true
                     'sensitivity': 13
-  '/safesearch/enable':
-    'post':
-      'deprecated': true
-      'tags':
-      - 'safesearch'
-      'operationId': 'safesearchEnable'
-      'summary': 'Enable safesearch'
-      'responses':
-        '200':
-          'description': 'OK.'
-  '/safesearch/disable':
-    'post':
-      'deprecated': true
-      'tags':
-      - 'safesearch'
-      'operationId': 'safesearchDisable'
-      'summary': 'Disable safesearch'
-      'responses':
-        '200':
-          'description': 'OK.'
   '/safesearch/settings':
     'put':
       'tags':
@@ -979,34 +859,6 @@
       'responses':
         '200':
           'description': 'OK.'
-  '/clients/find':
-    'get':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `POST /clients/search` instead.
-      'tags':
-      - 'clients'
-      'operationId': 'clientsFind'
-      'summary': >
-        Get information about clients by their IP addresses or ClientIDs.
-      'parameters':
-      - 'name': 'ip0'
-        'in': 'query'
-        'description': >
-          Filter by IP address or ClientIDs.  Parameters with names `ip1`,
-          `ip2`, and so on are also accepted and interpreted as "ip0 OR ip1 OR
-          ip2".
-
-          TODO(a.garipov): Replace with a better query API.
-        'schema':
-          'type': 'string'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/ClientsFindResponse'
   '/clients/search':
     'post':
       'tags':
@@ -1061,22 +913,6 @@
       'summary': 'Set (dis)allowed clients, blocked hosts, etc.'
       'tags':
       - 'clients'
-  '/blocked_services/services':
-    'get':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `GET /blocked_services/all` instead.
-      'tags':
-      - 'blocked_services'
-      'operationId': 'blockedServicesAvailableServices'
-      'summary': 'Get available services to use for blocking'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/BlockedServicesArray'
   '/blocked_services/all':
     'get':
       'tags':
@@ -1090,39 +926,6 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/BlockedServicesAll'
-  '/blocked_services/list':
-    'get':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `GET /blocked_services/get` instead.
-      'tags':
-      - 'blocked_services'
-      'operationId': 'blockedServicesList'
-      'summary': 'Get blocked services list'
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/BlockedServicesArray'
-  '/blocked_services/set':
-    'post':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `PUT /blocked_services/update` instead.
-      'tags':
-      - 'blocked_services'
-      'operationId': 'blockedServicesSet'
-      'summary': 'Set blocked services list'
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/BlockedServicesArray'
-      'responses':
-        '200':
-          'description': 'OK.'
   '/blocked_services/get':
     'get':
       'tags':
@@ -1221,45 +1024,6 @@
       'responses':
         '200':
           'description': 'OK.'
-  '/i18n/change_language':
-    'post':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `PUT /control/profile` instead.
-      'tags':
-      - 'i18n'
-      'operationId': 'changeLanguage'
-      'summary': >
-        Change current language.  Argument must be an ISO 639-1 two-letter code.
-      'requestBody':
-        'content':
-          'application/json':
-            'schema':
-              '$ref': '#/components/schemas/LanguageSettings'
-        'description': >
-          New language.  It must be known to the server and must be an ISO 639-1
-          two-letter code.
-      'responses':
-        '200':
-          'description': 'OK.'
-  '/i18n/current_language':
-    'get':
-      'deprecated': true
-      'description': >
-        Deprecated: Use `GET /control/profile` instead.
-      'tags':
-      - 'i18n'
-      'operationId': 'currentLanguage'
-      'summary': >
-        Get currently set language.  Result is ISO 639-1 two-letter code.  Empty
-        result means default language.
-      'responses':
-        '200':
-          'description': 'OK.'
-          'content':
-            'application/json':
-              'schema':
-                '$ref': '#/components/schemas/LanguageSettings'
   '/install/get_addresses':
     'get':
       'tags':
@@ -1658,14 +1422,10 @@
         'upstream_mode':
           'type': 'string'
           'enum':
-          - ''
           - 'fastest_addr'
           - 'load_balance'
           - 'parallel'
-          'description': >-
-            Upstream modes enumeration.
-            The empty string value is deprecated; use `load_balance`
-            instead.
+          'description': Upstream modes enumeration.
         'use_private_ptr_resolvers':
           'type': 'boolean'
         'resolve_clients':
@@ -1831,22 +1591,6 @@
       'properties':
         'reason':
           '$ref': '#/components/schemas/FilteringReason'
-        'filter_id':
-          'deprecated': true
-          'description': >
-            In case if there's a rule applied to this DNS request, this is ID of
-            the filter list that the rule belongs to.
-
-            Deprecated: use `rules[*].filter_list_id` instead.
-          'type': 'integer'
-        'rule':
-          'deprecated': true
-          'type': 'string'
-          'example': '||example.org^'
-          'description': >
-            Filtering rule applied to the request (if any).
-
-            Deprecated: use `rules[*].text` instead.
         'rules':
           'description': 'Applied rules.'
           'type': 'array'
@@ -2001,21 +1745,6 @@
           'type': 'number'
       'additionalProperties':
           'type': 'number'
-    'StatsConfig':
-      'type': 'object'
-      'description': 'Statistics configuration'
-      'properties':
-        'interval':
-          'description': >
-            Time period to keep the data.  `0` means that the statistics is
-            disabled.
-          'enum':
-          - 0
-          - 1
-          - 7
-          - 30
-          - 90
-          'type': 'integer'
     'GetStatsConfigResponse':
       'type': 'object'
       'description': 'Statistics configuration'
@@ -2340,23 +2069,6 @@
           'example': '54.023928'
         'question':
           '$ref': '#/components/schemas/DnsQuestion'
-        'filterId':
-          'deprecated': true
-          'type': 'integer'
-          'example': 123123
-          'description': >
-            In case if there's a rule applied to this DNS request, this is ID of
-            the filter list that the rule belongs to.
-
-            Deprecated: use `rules[*].filter_list_id` instead.
-        'rule':
-          'deprecated': true
-          'type': 'string'
-          'example': '||example.org^'
-          'description': >
-            Filtering rule applied to the request (if any).
-
-            Deprecated: use `rules[*].text` instead.
         'rules':
           'description': 'Applied rules.'
           'type': 'array'
@@ -2428,26 +2140,6 @@
           'type': 'array'
           'items':
             '$ref': '#/components/schemas/QueryLogItem'
-    'QueryLogConfig':
-      'type': 'object'
-      'description': 'Query log configuration'
-      'properties':
-        'enabled':
-          'type': 'boolean'
-          'description': 'Is query log enabled'
-        'interval':
-          'description': >
-            Time period for query log rotation.
-          'type': 'number'
-          'enum':
-          - 0.25
-          - 1
-          - 7
-          - 30
-          - 90
-        'anonymize_client_ip':
-          'type': 'boolean'
-          'description': "Anonymize clients' IP addresses"
     'GetQueryLogConfigResponse':
       'type': 'object'
       'description': 'Query log configuration'
@@ -2849,9 +2541,6 @@
           'type': 'boolean'
         'safebrowsing_enabled':
           'type': 'boolean'
-        'safesearch_enabled':
-          'deprecated': true
-          'type': 'boolean'
         'safe_search':
           '$ref': '#/components/schemas/SafeSearchConfig'
         'use_global_blocked_services':
@@ -2967,7 +2656,6 @@
           'filtering_enabled': true
           'parental_enabled': true
           'safebrowsing_enabled': true
-          'safesearch_enabled': true
           'safe_search': {}
           'use_global_blocked_services': true
           'blocked_services': []
@@ -2984,7 +2672,6 @@
           'filtering_enabled': true
           'parental_enabled': true
           'safebrowsing_enabled': true
-          'safesearch_enabled': true
           'safe_search': {}
           'use_global_blocked_services': true
           'blocked_services': []
@@ -3047,9 +2734,6 @@
         'parental_enabled':
           'type': 'boolean'
         'safebrowsing_enabled':
-          'type': 'boolean'
-        'safesearch_enabled':
-          'deprecated': true
           'type': 'boolean'
         'safe_search':
           '$ref': '#/components/schemas/SafeSearchConfig'
@@ -3148,10 +2832,6 @@
           'type': 'boolean'
           'description': 'indicates whether rewrites are applied'
           'example': true
-    'BlockedServicesArray':
-      'type': 'array'
-      'items':
-        'type': 'string'
     'BlockedServicesAll':
       'properties':
         'blocked_services':
@@ -3332,14 +3012,6 @@
         'message':
           'description': 'The error message, an opaque string.'
           'type': 'string'
-      'type': 'object'
-    'LanguageSettings':
-      'description': 'Language settings object.'
-      'properties':
-        'language':
-          '$ref': '#/components/schemas/Lang'
-      'required':
-      - 'language'
       'type': 'object'
     'Lang':
       'description': >

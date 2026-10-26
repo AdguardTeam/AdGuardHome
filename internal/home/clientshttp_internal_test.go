@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
-	"net/url"
 	"slices"
 	"testing"
 
@@ -104,7 +103,7 @@ func assertPersistentClients(tb testing.TB, clients *clientsContainer, want []*c
 	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	for _, cj := range clientList.Clients {
 		var c *client.Persistent
-		c, err = clients.jsonToClient(ctx, *cj, nil)
+		c, err = clients.jsonToClient(ctx, *cj)
 		require.NoError(tb, err)
 
 		got = append(got, c)
@@ -128,7 +127,7 @@ func assertPersistentClientsData(
 	for _, cm := range data {
 		for _, cj := range cm {
 			var c *client.Persistent
-			c, err := clients.jsonToClient(ctx, *cj, nil)
+			c, err := clients.jsonToClient(ctx, *cj)
 			require.NoError(tb, err)
 
 			got = append(got, c)
@@ -331,73 +330,6 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 			require.Equal(t, tc.wantCode, rw.Code)
 
 			assertPersistentClients(t, clients, tc.wantClient)
-		})
-	}
-}
-
-func TestClientsContainer_HandleFindClient(t *testing.T) {
-	clients := newClientsContainer(t)
-	clients.clientChecker = &testBlockedClientChecker{
-		onIsBlockedClient: func(ip netip.Addr, clientID string) (ok bool, rule string) {
-			return false, ""
-		},
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
-	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(ctx, clientOne)
-	require.NoError(t, err)
-
-	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.storage.Add(ctx, clientTwo)
-	require.NoError(t, err)
-
-	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})
-
-	testCases := []struct {
-		name       string
-		query      url.Values
-		wantCode   int
-		wantClient []*client.Persistent
-	}{{
-		name: "single",
-		query: url.Values{
-			"ip0": []string{testClientIP1},
-		},
-		wantCode:   http.StatusOK,
-		wantClient: []*client.Persistent{clientOne},
-	}, {
-		name: "multiple",
-		query: url.Values{
-			"ip0": []string{testClientIP1},
-			"ip1": []string{testClientIP2},
-		},
-		wantCode:   http.StatusOK,
-		wantClient: []*client.Persistent{clientOne, clientTwo},
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var r *http.Request
-			r, err = http.NewRequest(http.MethodGet, "", nil)
-			require.NoError(t, err)
-
-			r.URL.RawQuery = tc.query.Encode()
-			rw := httptest.NewRecorder()
-			clients.handleFindClient(rw, r)
-			require.NoError(t, err)
-			require.Equal(t, tc.wantCode, rw.Code)
-
-			var body []byte
-			body, err = io.ReadAll(rw.Body)
-			require.NoError(t, err)
-
-			clientData := []map[string]*clientJSON{}
-			err = json.Unmarshal(body, &clientData)
-			require.NoError(t, err)
-
-			assertPersistentClientsData(t, clients, clientData, tc.wantClient)
 		})
 	}
 }

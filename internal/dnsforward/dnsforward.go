@@ -207,7 +207,10 @@ type DNSCreateParams struct {
 	PrivateNets netutil.SubnetSet
 
 	Anonymizer *aghnet.IPMut
-	EtcHosts   *aghnet.HostsContainer
+
+	// EtcHosts, if not nil, is used along with the bootstrap addresses to
+	// initialize upstream configuration.
+	EtcHosts *aghnet.HostsContainer
 
 	// TLSManager provides a TLS configuration for the server.  It must
 	// not be nil.

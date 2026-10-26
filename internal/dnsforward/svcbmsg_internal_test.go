@@ -102,10 +102,6 @@ func TestGenAnswerHTTPS_andSVCB(t *testing.T) {
 		want: wantsvcb(&dns.SVCBECHConfig{ECH: []byte{0, 0, 0}}),
 		name: "ech",
 	}, {
-		svcb: dnssvcb("echconfig", "AAAA"),
-		want: wantsvcb(&dns.SVCBECHConfig{ECH: []byte{0, 0, 0}}),
-		name: "ech_deprecated",
-	}, {
 		svcb: dnssvcb("echconfig", "%BAD%"),
 		want: wantsvcb(nil),
 		name: "ech_invalid",

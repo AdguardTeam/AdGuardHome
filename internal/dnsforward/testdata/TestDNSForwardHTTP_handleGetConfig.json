@@ -28,7 +28,7 @@
     "edns_cs_enabled": false,
     "dnssec_enabled": false,
     "disable_ipv6": false,
-    "upstream_mode": "",
+    "upstream_mode": "load_balance",
     "cache_size": 0,
     "cache_ttl_min": 0,
     "cache_ttl_max": 0,

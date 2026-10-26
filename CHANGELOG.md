@@ -64,6 +64,34 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
 
+- The following deprecated HTTP APIs:
+    - `GET /control/blocked_services/list`
+    - `GET /control/blocked_services/services`
+    - `GET /control/clients/find`
+    - `GET /control/i18n/current_language`
+    - `GET /control/querylog_info`
+    - `GET /control/stats_info`
+    - `POST /control/blocked_services/set`
+    - `POST /control/i18n/change_language`
+    - `POST /control/querylog_config`
+    - `POST /control/safesearch/disable`
+    - `POST /control/safesearch/enable`
+    - `POST /control/stats_config`
+
+- The following deprecated properties and query parameters in HTTP APIs:
+    - Properties `"filterId"` and `"rule"` in the response of the `GET /control/querylog` HTTP API.
+    - Properties `"filter_id"` and `"rule"` in the response of the `GET /control/filtering/check_host` HTTP API.
+    - Property `"safesearch_enabled"` in the client APIs.
+    - Query parameter `response_status` in the `GET /control/querylog` HTTP API.
+
+- The deprecated usage of an empty value for the `"upstream_mode"` property in the `GET /control/dns_info` and `POST /control/dns_config` HTTP APIs.
+
+- The following deprecated command-line flags:
+    - `--host`/`-h` for the bind host; now it is only used to show the help message along with `--help`.
+    - `--no-mem-optimization`.
+    - `--no-etc-hosts`.
+    - `--port`/`-p`.
+
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608

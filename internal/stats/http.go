@@ -12,7 +12,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
-	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
 )
 
@@ -121,12 +120,7 @@ func parseRecent(recent string, limit time.Duration) (parsedLimit time.Duration,
 	return time.Duration(recentMs) * time.Millisecond, nil
 }
 
-// configResp is the response to the GET /control/stats_info.
-type configResp struct {
-	IntervalDays uint32 `json:"interval"`
-}
-
-// getConfigResp is the response to the GET /control/stats_info.
+// getConfigResp is the response for the GET /control/stats/config HTTP API.
 type getConfigResp struct {
 	// Ignored is the list of host names, which should not be counted.
 	Ignored []string `json:"ignored"`
@@ -140,37 +134,6 @@ type getConfigResp struct {
 
 	// IgnoredEnabled defines if ignored list is enabled.
 	IgnoredEnabled aghalg.NullBool `json:"ignored_enabled"`
-}
-
-// handleStatsInfo is the handler for the GET /control/stats_info HTTP API.
-//
-// Deprecated:  Remove it when migration to the new API is over.
-func (s *StatsCtx) handleStatsInfo(w http.ResponseWriter, r *http.Request) {
-	var (
-		enabled bool
-		limit   time.Duration
-	)
-	func() {
-		s.confMu.RLock()
-		defer s.confMu.RUnlock()
-
-		enabled, limit = s.enabled, s.limit
-	}()
-
-	days := uint32(limit / timeutil.Day)
-	ok := checkInterval(days)
-	if !ok || (enabled && days == 0) {
-		// NOTE: If interval is custom we set it to 90 days for compatibility
-		// with old API.
-		days = 90
-	}
-
-	resp := configResp{IntervalDays: days}
-	if !enabled {
-		resp.IntervalDays = 0
-	}
-
-	aghhttp.WriteJSONResponseOK(r.Context(), s.logger, w, r, resp)
 }
 
 // handleGetStatsConfig is the handler for the GET /control/stats/config HTTP
@@ -190,36 +153,6 @@ func (s *StatsCtx) handleGetStatsConfig(w http.ResponseWriter, r *http.Request) 
 	}()
 
 	aghhttp.WriteJSONResponseOK(r.Context(), s.logger, w, r, resp)
-}
-
-// handleStatsConfig is the handler for the POST /control/stats_config HTTP API.
-//
-// Deprecated:  Remove it when migration to the new API is over.
-func (s *StatsCtx) handleStatsConfig(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	reqData := configResp{}
-	err := json.NewDecoder(r.Body).Decode(&reqData)
-	if err != nil {
-		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusBadRequest, "json decode: %s", err)
-
-		return
-	}
-
-	if !checkInterval(reqData.IntervalDays) {
-		aghhttp.ErrorAndLog(ctx, s.logger, r, w, http.StatusBadRequest, "Unsupported interval")
-
-		return
-	}
-
-	limit := time.Duration(reqData.IntervalDays) * timeutil.Day
-
-	defer s.configModifier.Apply(ctx)
-
-	s.confMu.Lock()
-	defer s.confMu.Unlock()
-
-	s.setLimit(limit)
 }
 
 // handlePutStatsConfig is the handler for the PUT /control/stats/config/update
@@ -303,8 +236,4 @@ func (s *StatsCtx) initWeb() {
 	s.httpReg.Register(http.MethodPost, "/control/stats_reset", s.handleStatsReset)
 	s.httpReg.Register(http.MethodGet, "/control/stats/config", s.handleGetStatsConfig)
 	s.httpReg.Register(http.MethodPut, "/control/stats/config/update", s.handlePutStatsConfig)
-
-	// Deprecated handlers.
-	s.httpReg.Register(http.MethodGet, "/control/stats_info", s.handleStatsInfo)
-	s.httpReg.Register(http.MethodPost, "/control/stats_config", s.handleStatsConfig)
 }

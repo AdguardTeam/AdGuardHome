@@ -23,12 +23,20 @@ type signalHandler struct {
 	// logger is used to log the operation of the signal handler.
 	logger *slog.Logger
 
-	// mu protects clientStorage, tlsManager, and web.
+	// mu protects clientStorage, hostsContainer, hcWatcher, tlsManager, and
+	// web.
 	mu *sync.Mutex
 
 	// clientStorage is used to reload information about runtime clients with an
 	// ARP source.
 	clientStorage *client.Storage
+
+	// hostsContainer is cleaned up on shutdown, if any.
+	hostsContainer *aghnet.HostsContainer
+
+	// hcWatcher is the watcher of [signalHandler.HostsContainer] to be shut
+	// down, if any.
+	hcWatcher service.Interface
 
 	// tlsManager is used to reload the TLS configuration.
 	tlsManager aghtls.Manager
@@ -56,6 +64,15 @@ func newSignalHandler(
 		signals: signals,
 		cleanup: cleanup,
 	}
+}
+
+// addHostsContainer stores the hosts container and its watcher.
+func (h *signalHandler) addHostsContainer(hc *aghnet.HostsContainer, w service.Interface) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.hostsContainer = hc
+	h.hcWatcher = w
 }
 
 // addClientStorage stores the client storage.
@@ -118,6 +135,16 @@ func (h *signalHandler) shutdown(ctx context.Context) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
+	cleanup(ctx, h.logger, h.hostsContainer)
+	if h.hcWatcher != nil {
+		err := h.hcWatcher.Shutdown(ctx)
+		if err != nil {
+			// Likely [os.ErrClosed], if the hosts container has already closed
+			// the watcher.
+			h.logger.DebugContext(ctx, "shutting down hosts file watcher", slogutil.KeyError, err)
+		}
+	}
+
 	if h.tlsManager != nil {
 		err := h.tlsManager.Shutdown(ctx)
 		if err != nil {
@@ -156,9 +183,7 @@ func (h *signalHandler) reloadConfig(ctx context.Context) {
 // [signalHandler].
 type signalHandlerCleanup struct {
 	logger          *slog.Logger
-	hostsContainer  *aghnet.HostsContainer
 	glTokenFileRoot *os.Root
-	hcWatcher       service.Interface
 	done            chan struct{}
 	pidFilePath     string
 	glinetMode      bool
@@ -168,17 +193,11 @@ type signalHandlerCleanup struct {
 func (c *signalHandlerCleanup) cleanup(ctx context.Context) {
 	defer close(c.done)
 
-	cleanup(ctx, c.logger, c.hostsContainer)
 	cleanupAlways(ctx, c.logger, c.pidFilePath)
 
 	if c.glinetMode {
 		err := c.glTokenFileRoot.Close()
 		checkCleanupErr(ctx, c.logger, err, "closing glinet token root")
-	}
-
-	if c.hcWatcher != nil {
-		err := c.hcWatcher.Shutdown(ctx)
-		checkCleanupErr(ctx, c.logger, err, "shutting down hosts file watcher")
 	}
 }
 

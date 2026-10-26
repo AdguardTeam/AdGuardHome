@@ -411,7 +411,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  notFilteredURL,
 		want: &checkHostResp{
 			Reason: reasonNames[NotFilteredNotFound],
-			Rule:   "",
 			Rules:  []*checkHostRespRule{},
 		},
 	}, {
@@ -419,7 +418,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  allowedURL,
 		want: &checkHostResp{
 			Reason: reasonNames[NotFilteredAllowList],
-			Rule:   allowedRule,
 			Rules: []*checkHostRespRule{{
 				Text: allowedRule,
 			}},
@@ -429,7 +427,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  blockedURL,
 		want: &checkHostResp{
 			Reason: reasonNames[FilteredBlockList],
-			Rule:   blockedRule,
 			Rules: []*checkHostRespRule{{
 				Text: blockedRule,
 			}},
@@ -439,7 +436,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  blockedClientURL,
 		want: &checkHostResp{
 			Reason: reasonNames[FilteredBlockList],
-			Rule:   blockedClientRule,
 			Rules: []*checkHostRespRule{{
 				Text: blockedClientRule,
 			}},
@@ -449,7 +445,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  allowedQTypeURL,
 		want: &checkHostResp{
 			Reason: reasonNames[NotFilteredNotFound],
-			Rule:   "",
 			Rules:  []*checkHostRespRule{},
 		},
 	}, {
@@ -457,7 +452,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  blockedQTypeURL,
 		want: &checkHostResp{
 			Reason: reasonNames[FilteredBlockList],
-			Rule:   blockedQTypeRule,
 			Rules: []*checkHostRespRule{{
 				Text: blockedQTypeRule,
 			}},
@@ -467,7 +461,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  blockedClientQTypeURL,
 		want: &checkHostResp{
 			Reason: reasonNames[FilteredBlockList],
-			Rule:   blockedClientQTypeRule,
 			Rules: []*checkHostRespRule{{
 				Text: blockedClientQTypeRule,
 			}},
@@ -477,7 +470,6 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		url:  allowedClientQTypeURL,
 		want: &checkHostResp{
 			Reason: reasonNames[NotFilteredNotFound],
-			Rule:   "",
 			Rules:  []*checkHostRespRule{},
 		},
 	}}
