@@ -5,7 +5,7 @@
 #
 # AdGuard-Project-Version: 4
 
-set -e -f -o 'pipefail' -u
+set -e -f -u
 
 verbose="${VERBOSE:-0}"
 readonly verbose
