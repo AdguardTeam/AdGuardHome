@@ -203,7 +203,7 @@ fi
 run_linter "$go" tool gocyclo --over 10 ./internal/ ./scripts/
 
 # TODO(a.garipov): Enable 10 for all.
-run_linter "$go" tool gocognit --over='14' \
+run_linter "$go" tool gocognit --exact-recursion --over 14 \
 	./internal/dhcpd \
 	;
 
