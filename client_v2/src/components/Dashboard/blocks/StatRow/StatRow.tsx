@@ -27,7 +27,9 @@ export type StatRowProps = {
         | 'threatsBlocked'
         | 'adultWebsitesBlocked'
         | 'safeSearchUsed'
-        | 'averageProcessingTime';
+        | 'cacheHits'
+        | 'averageProcessingTime'
+        | 'cacheInfo';
 };
 
 export const StatRow = (props: StatRowProps) => {

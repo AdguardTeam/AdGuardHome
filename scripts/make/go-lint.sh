@@ -68,6 +68,9 @@ set -f -u
 # NOTE:  Exclude the security_windows.go, because it requires unsafe for the OS
 # APIs.
 #
+# NOTE:  Exclude the dnsforward/cachestats.go, because it requires reflect and
+# unsafe to inspect the dnsproxy cache, which has no public API for that.
+#
 # TODO(a.garipov): Add golibs/log.
 blocklist_imports() {
 	import_or_tab="$(printf '^\\(import \\|\t\\)')"
@@ -79,6 +82,7 @@ blocklist_imports() {
 		'!' '(' \
 		-name '*.pb.go' \
 		-o -path './internal/permcheck/security_windows.go' \
+		-o -path './internal/dnsforward/cachestats.go' \
 		')' \
 		-exec \
 		'grep' \

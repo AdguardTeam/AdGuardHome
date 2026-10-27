@@ -3,6 +3,7 @@ package stats
 import (
 	"testing"
 
+	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -57,6 +58,8 @@ func TestUnit_Deserialize(t *testing.T) {
 			upstreamsTimeSum: map[string]uint64{
 				"1.2.3.4": 246912,
 			},
+			nCacheHits:   3,
+			nCacheMisses: 4,
 		},
 		db: &unitDB{
 			NResult: []uint64{0, 1, 1, 0, 0, 0},
@@ -77,6 +80,8 @@ func TestUnit_Deserialize(t *testing.T) {
 			UpstreamsTimeSum: []countPair{{
 				"1.2.3.4", 246912,
 			}},
+			NCacheHits:   3,
+			NCacheMisses: 4,
 		},
 	}}
 
@@ -172,6 +177,55 @@ func TestTopUpstreamsPairs(t *testing.T) {
 			gotResponses, gotAvgTime := topUpstreamsPairs([]*unitDB{tc.db})
 			assert.Equal(t, tc.wantResponses, gotResponses)
 			assert.Equal(t, tc.wantAvgTime, gotAvgTime)
+		})
+	}
+}
+
+func TestUnit_AddCacheStats(t *testing.T) {
+	testCases := []struct {
+		name       string
+		upsStats   []*proxy.UpstreamStatistics
+		wantHits   uint64
+		wantMisses uint64
+	}{{
+		name:       "no_upstream",
+		upsStats:   nil,
+		wantHits:   0,
+		wantMisses: 0,
+	}, {
+		name: "cached",
+		upsStats: []*proxy.UpstreamStatistics{{
+			Address:  "1.2.3.4",
+			IsCached: true,
+		}},
+		wantHits:   1,
+		wantMisses: 0,
+	}, {
+		name: "upstream",
+		upsStats: []*proxy.UpstreamStatistics{{
+			Address: "1.2.3.4",
+		}},
+		wantHits:   0,
+		wantMisses: 1,
+	}, {
+		name: "upstream_error",
+		upsStats: []*proxy.UpstreamStatistics{{
+			Address: "1.2.3.4",
+			Error:   assert.AnError,
+		}, {
+			Address: "5.6.7.8",
+		}},
+		wantHits:   0,
+		wantMisses: 1,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			u := newUnit(0)
+			u.addCacheStats(tc.upsStats)
+
+			assert.Equal(t, tc.wantHits, u.nCacheHits)
+			assert.Equal(t, tc.wantMisses, u.nCacheMisses)
 		})
 	}
 }

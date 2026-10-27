@@ -8,6 +8,7 @@ export * from './blockedService';
 export * from './blockedServicesAll';
 export * from './blockedServicesArray';
 export * from './blockedServicesSchedule';
+export * from './cacheInfo';
 export * from './checkConfigRequest';
 export * from './checkConfigRequestInfo';
 export * from './checkConfigResponse';

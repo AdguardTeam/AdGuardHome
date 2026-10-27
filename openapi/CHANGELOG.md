@@ -2,6 +2,16 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
+## v0.107.80: API changes
+
+### New `GET /control/cache_info` HTTP API
+
+- The new `GET /control/cache_info` HTTP API returns the number of entries in the DNS cache and the size of the data stored in it.
+
+### New `num_cache_hits` and `num_cache_misses` fields in `GET /control/stats`
+
+- New fields `num_cache_hits` and `num_cache_misses` contain the number of requests answered from the DNS cache and the number of requests sent to the upstream servers respectively.
+
 ## v0.107.79: API changes
 
 - Field `bootstrap_dns` in `POST /control/dns_config` now accepts comments.  A comment must start with the `#` symbol.
