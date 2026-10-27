@@ -14,9 +14,6 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 )
 
-// TODO(a.garipov):  !!  Add a migration for deleted options retained in the
-// service files.
-
 // TODO(a.garipov): Replace with package flag.
 
 // options represents the command-line options.

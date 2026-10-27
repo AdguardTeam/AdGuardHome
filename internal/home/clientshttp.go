@@ -127,10 +127,9 @@ func (clients *clientsContainer) handleGetClients(w http.ResponseWriter, r *http
 }
 
 // newPersistentFromJSON initializes a persistent client with default values as
-// well as values from the JSON.
+// well as values from the JSON.  It does not set c.UID.
 func newPersistentFromJSON(cj clientJSON) (c *client.Persistent, err error) {
 	var (
-		uid              client.UID
 		ignoreQueryLog   bool
 		ignoreStatistics bool
 		upsCacheEnabled  bool
@@ -155,13 +154,8 @@ func newPersistentFromJSON(cj clientJSON) (c *client.Persistent, err error) {
 		return nil, fmt.Errorf("invalid blocked services: %w", err)
 	}
 
-	if (uid == client.UID{}) {
-		uid = client.NewUID()
-	}
-
 	return &client.Persistent{
 		BlockedServices:       svcs,
-		UID:                   uid,
 		IgnoreQueryLog:        ignoreQueryLog,
 		IgnoreStatistics:      ignoreStatistics,
 		UpstreamsCacheEnabled: upsCacheEnabled,
@@ -312,6 +306,7 @@ func (clients *clientsContainer) handleAddClient(w http.ResponseWriter, r *http.
 		return
 	}
 
+	c.UID = client.NewUID()
 	err = clients.storage.Add(ctx, c)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)

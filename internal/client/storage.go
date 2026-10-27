@@ -414,7 +414,7 @@ func (s *Storage) setWHOISInfo(ctx context.Context, ip netip.Addr, wi *whois.Inf
 func (s *Storage) Add(ctx context.Context, p *Persistent) (err error) {
 	defer func() { err = errors.Annotate(err, "adding client: %w") }()
 
-	err = p.validate(ctx, s.logger, s.allowedTags)
+	err = p.validate(ctx, s.logger, s.allowedTags, true)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -636,7 +636,7 @@ func (s *Storage) RemoveByName(ctx context.Context, name string) (ok bool) {
 func (s *Storage) Update(ctx context.Context, name string, p *Persistent) (err error) {
 	defer func() { err = errors.Annotate(err, "updating client: %w") }()
 
-	err = p.validate(ctx, s.logger, s.allowedTags)
+	err = p.validate(ctx, s.logger, s.allowedTags, false)
 	if err != nil {
 		// Don't wrap the error since there is already an annotation deferred.
 		return err
@@ -650,7 +650,7 @@ func (s *Storage) Update(ctx context.Context, name string, p *Persistent) (err e
 		return fmt.Errorf("client %q is not found", name)
 	}
 
-	// Client p has a newly generated UID, so replace it with the stored one.
+	// Client p has an empty UID, so replace it with the stored one.
 	//
 	// TODO(s.chzhen):  Remove when frontend starts handling UIDs.
 	p.UID = stored.UID

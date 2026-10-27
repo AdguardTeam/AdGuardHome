@@ -118,6 +118,12 @@ func (c *searchCriterion) quickMatch(
 		}
 
 		return ctDomainOrClientCaseNonStrict(c.value, c.asciiVal, clientID, name, host, ip)
+	case ctFilteringStatus:
+		// Go on, as we currently don't do quick matches against
+		// filtering statuses.
+		//
+		// TODO(a.garipov):  Remove once the old frontend is completely gone.
+		return true
 	case ctReason:
 		reasonCode := readJSONNumericValue(line, `"Reason":`)
 		if reasonCode == "" {
@@ -146,6 +152,9 @@ func (c *searchCriterion) match(entry *logEntry) bool {
 		// TODO(f.setrakov): Consider comparing [filtering.Reason] instead of
 		// strings.
 		return slices.Contains(c.values, entry.Result.Reason.String())
+	case ctFilteringStatus:
+		// TODO(a.garipov):  Remove once the old frontend is completely gone.
+		return c.ctFilteringStatusCase(entry.Result.Reason, entry.Result.IsFiltered)
 	}
 
 	return false

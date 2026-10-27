@@ -70,8 +70,7 @@ type BlockedClientChecker interface {
 	IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, rule string)
 }
 
-// Init initializes the clients container.  All arguments must not be nil except
-// for objects.
+// Init initializes the clients container.  All arguments must not be nil.
 //
 // NOTE:  This function must be called only once.
 //
@@ -79,7 +78,7 @@ type BlockedClientChecker interface {
 func (clients *clientsContainer) Init(
 	ctx context.Context,
 	baseLogger *slog.Logger,
-	objects []*clientObject,
+	conf *clientsConfig,
 	dhcpServer client.DHCP,
 	etcHosts *aghnet.HostsContainer,
 	arpDB arpdb.Interface,
@@ -100,8 +99,8 @@ func (clients *clientsContainer) Init(
 	clients.confModifier = confModifier
 	clients.httpReg = httpReg
 
-	confClients := make([]*client.Persistent, 0, len(objects))
-	for i, o := range objects {
+	confClients := make([]*client.Persistent, 0, len(conf.Persistent))
+	for i, o := range conf.Persistent {
 		var p *client.Persistent
 		p, err = o.toPersistent(ctx, baseLogger, clients.safeSearchCacheSize, clients.safeSearchCacheTTL)
 		if err != nil {
@@ -112,7 +111,7 @@ func (clients *clientsContainer) Init(
 	}
 
 	var hosts client.HostsContainer
-	if etcHosts != nil {
+	if conf.Sources.HostsFile && etcHosts != nil {
 		// Prevent nil-pointer non-nil interface.
 		hosts = etcHosts
 	}

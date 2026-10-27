@@ -69,7 +69,7 @@ mkdir -p "$test_reports_dir"
 
 # NOTE:  The exit code is ignored intentionally, as go-junit-report will set
 # the exit code by itself.
-{ "$@" 2>&1 || :; } \
+{ go_test 2>&1 || :; } \
 	| tee "${test_reports_dir}/test-output.txt"
 
 # Don't fail on errors in exporting, because TEST_REPORTS_DIR is generally only

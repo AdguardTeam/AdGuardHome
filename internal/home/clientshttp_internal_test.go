@@ -82,7 +82,15 @@ func assertClients(tb testing.TB, want, got []*client.Persistent) {
 
 	for i, a := range want {
 		b := got[i]
-		assert.Truef(tb, a.EqualIDs(b), "%q doesn't have the same ids as %q", a.Name, b.Name)
+		assert.Truef(
+			tb,
+			a.EqualIDs(b),
+			"%q doesn't have the same ids as %q:\nwant: %+v\ngot: %+v",
+			a.Name,
+			b.Name,
+			a,
+			b,
+		)
 	}
 }
 

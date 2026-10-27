@@ -34,7 +34,7 @@ type signalHandler struct {
 	// hostsContainer is cleaned up on shutdown, if any.
 	hostsContainer *aghnet.HostsContainer
 
-	// hcWatcher is the watcher of [signalHandler.HostsContainer] to be shut
+	// hcWatcher is the watcher of [signalHandler.hostsContainer] to be shut
 	// down, if any.
 	hcWatcher service.Interface
 

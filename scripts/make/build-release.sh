@@ -33,7 +33,7 @@ readonly sign
 # TODO(d.kolyshev): Use set -o 'pipefail' when GitHub supports it.
 set -e -f -u
 
-# Function log is an echo wrapper that writes to stderr if the caller requested
+# Function log is a printf wrapper that writes to stderr if the caller requested
 # verbosity level greater than 0.  Otherwise, it does nothing.
 log() {
 	if [ "$verbose" -gt '0' ]; then
@@ -204,7 +204,7 @@ log 'starting builds'
 
 # Go over all platforms defined in the space-separated table above, tweak the
 # values where necessary, and feed to build.
-echo "$platforms" | while read -r os arch arm mips; do
+printf '%s\n' "$platforms" | while read -r os arch arm mips; do
 	# See if the architecture or the OS is in the allowlist.  To do so, try
 	# removing everything that matches the pattern (well, a prefix, but that
 	# doesn't matter here) containing the arch or the OS.
@@ -242,4 +242,4 @@ echo "$platforms" | while read -r os arch arm mips; do
 	build "$dir" "$os" "$arch" "$arm" "$mips"
 done
 
-log "finished"
+log 'finished'

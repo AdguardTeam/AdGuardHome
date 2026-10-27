@@ -119,14 +119,19 @@ type Persistent struct {
 }
 
 // validate returns an error if persistent client information contains errors.
-// allTags must be sorted.
-func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []string) (err error) {
+// l must not be nil.  allTags must be sorted.
+func (c *Persistent) validate(
+	ctx context.Context,
+	l *slog.Logger,
+	allTags []string,
+	requireUID bool,
+) (err error) {
 	switch {
 	case c.Name == "":
 		return errors.Error("empty name")
 	case c.idendifiersLen() == 0:
 		return errors.Error("id required")
-	case c.UID == UID{}:
+	case c.UID == UID{} && requireUID:
 		return errors.Error("uid required")
 	}
 
@@ -158,10 +163,10 @@ func (c *Persistent) validate(ctx context.Context, l *slog.Logger, allTags []str
 // SetIDs parses a list of strings into typed fields and returns an error if
 // there is one.
 func (c *Persistent) SetIDs(ids []string) (err error) {
-	for _, id := range ids {
+	for i, id := range ids {
 		err = c.setID(id)
 		if err != nil {
-			return err
+			return fmt.Errorf("setting id: at index %d: %w", i, err)
 		}
 	}
 
@@ -201,7 +206,7 @@ func subnetCompare(x, y netip.Prefix) (cmp int) {
 // setID parses id into typed field if there is no error.
 func (c *Persistent) setID(id string) (err error) {
 	if id == "" {
-		return errors.Error("clientid is empty")
+		return errors.Error("id is empty")
 	}
 
 	var ip netip.Addr

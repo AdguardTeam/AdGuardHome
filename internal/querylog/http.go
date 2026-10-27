@@ -20,9 +20,6 @@ import (
 	"golang.org/x/net/idna"
 )
 
-// TODO(a.garipov):  !!  Either redo current frontend's query parameters or
-// temporarily return the old query-parameter API.
-
 // getConfigResp is the JSON structure for the querylog configuration.
 type getConfigResp struct {
 	// Ignored is the list of host names, which should not be written to log.
@@ -279,6 +276,11 @@ func (l *queryLog) parseSearchCriterion(
 			// twice.
 			asciiVal = ""
 		}
+	case ctFilteringStatus:
+		// TODO(a.garipov):  Remove once the old frontend is completely gone.
+		if !filteringStatusValues.Has(val) {
+			return false, sc, fmt.Errorf("invalid value %s", val)
+		}
 	case ctReason:
 		values, err = parseReason(q, name)
 		if err != nil {
@@ -382,6 +384,10 @@ func (l *queryLog) parseSearchCriterions(
 	}, {
 		urlField: "reason",
 		ct:       ctReason,
+	}, {
+		// TODO(a.garipov):  Remove once the old frontend is completely gone.
+		urlField: "response_status",
+		ct:       ctFilteringStatus,
 	}} {
 		var ok bool
 		var c searchCriterion

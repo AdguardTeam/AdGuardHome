@@ -81,7 +81,12 @@ func Main(clientBuildFS fs.FS) {
 	//
 	// TODO(a.garipov): The comment above is most likely false.  Replace with
 	// package flag.
-	opts := loadCmdLineOpts()
+	args, legacyNoEtcHosts := filterNoOpOpts(os.Args, os.Stdout, os.Stderr)
+	opts := loadCmdLineOpts(args)
+
+	// TODO(a.garipov):  !!  Migrate noEtcHosts to the config and update the
+	// config version.
+	_ = legacyNoEtcHosts
 
 	// TODO(s.chzhen):  Construct logger from command-line options.
 	l := slog.Default()
@@ -105,6 +110,7 @@ func Main(clientBuildFS fs.FS) {
 
 	// Print the first message after logger is configured.
 	baseLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
+	baseLogger.DebugContext(ctx, "filtered arguments", "before", os.Args, "after", args)
 	baseLogger.DebugContext(ctx, "current working directory", "path", workDir)
 	if opts.runningAsService {
 		baseLogger.InfoContext(ctx, "adguard home is running as a service")
@@ -278,14 +284,16 @@ func configureOS(ctx context.Context, l *slog.Logger, conf *configuration) (err 
 }
 
 // newHostsContainer initializes the structures to keep up-to-date the hosts
-// provided by the OS.  baseLogger must not be nil.
+// provided by the OS.  watcher is never nil.  baseLogger must not be nil.
 func newHostsContainer(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	enabled bool,
 ) (etcHosts *aghnet.HostsContainer, watcher aghos.FSWatcher, err error) {
+	watcher = aghos.EmptyFSWatcher{}
+
 	if !enabled {
-		return nil, aghos.EmptyFSWatcher{}, nil
+		return nil, watcher, nil
 	}
 
 	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
@@ -306,7 +314,7 @@ func newHostsContainer(
 
 	paths, err := hostsfile.DefaultHostsPaths()
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting default system hosts paths: %w", err)
+		return nil, watcher, fmt.Errorf("getting default system hosts paths: %w", err)
 	}
 
 	etcHosts, err = aghnet.NewHostsContainer(
@@ -321,12 +329,12 @@ func newHostsContainer(
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {
 			l.WarnContext(ctx, "initializing hosts container", slogutil.KeyError, err)
 
-			return nil, nil, closeErr
+			return nil, watcher, closeErr
 		}
 
 		err = fmt.Errorf("initializing hosts container: %w", err)
 
-		return nil, nil, errors.WithDeferred(err, closeErr)
+		return nil, watcher, errors.WithDeferred(err, closeErr)
 	}
 
 	return etcHosts, watcher, watcher.Start(ctx)
@@ -414,7 +422,7 @@ func initContextClients(
 	return globalContext.clients.Init(
 		ctx,
 		logger,
-		config.Clients.Persistent,
+		config.Clients,
 		globalContext.dhcpServer,
 		hc,
 		arpDB,
@@ -1297,13 +1305,13 @@ func exitWithError() {
 // from them.  If there is an error or an effect, loadCmdLineOpts processes them
 // and exits.
 //
-// TODO(m.kazantsev):  Consider refactoring the logs so that it
-// resembles AdGuard DNS CLI.
-func loadCmdLineOpts() (opts options) {
-	opts, eff, err := parseCmdOpts(os.Args[0], os.Args[1:])
+// TODO(m.kazantsev):  Consider refactoring the logs so that it resembles
+// AdGuard DNS CLI.
+func loadCmdLineOpts(args []string) (opts options) {
+	opts, eff, err := parseCmdOpts(args[0], args[1:])
 	if err != nil {
 		log.Printf("error: %s\n", err)
-		printHelp(os.Args[0])
+		printHelp(args[0])
 
 		exitWithError()
 	}
@@ -1312,6 +1320,7 @@ func loadCmdLineOpts() (opts options) {
 		err = eff()
 		if err != nil {
 			log.Printf("error: %s\n", err)
+
 			exitWithError()
 		}
 
