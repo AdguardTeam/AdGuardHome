@@ -11,9 +11,10 @@
 #
 # AdGuard-Project-Version: 3
 
-# Exit the script if any part of a pipeline fails (-e, -o 'pipefail'), prevent
-# accidental filename expansion (-f), and consider undefined variables as errors
-# (-u).
+# Exit the script if a pipeline fails (-e), prevent accidental filename
+# expansion (-f), and consider undefined variables as errors (-u).
+#
+# TODO(m.kazantsev):  Use set -o 'pipefail' when GitHub supports it.
 set -e -f -u
 
 # The default verbosity level is 0.  Show every command that is run and every

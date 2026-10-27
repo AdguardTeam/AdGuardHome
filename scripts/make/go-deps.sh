@@ -5,6 +5,7 @@
 #
 # AdGuard-Project-Version: 4
 
+# TODO(m.kazantsev):  Use set -o 'pipefail' when GitHub supports it.
 set -e -f -u
 
 verbose="${VERBOSE:-0}"
