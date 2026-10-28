@@ -106,10 +106,11 @@ func TestDHCPServer_ServeEther4_discoverUnavailable(t *testing.T) {
 	t.Parallel()
 
 	var (
-		busyAddr = testIPv4Conf.RangeStart
-
+		busyAddr        = testIPv4Conf.RangeStart
 		wantAddr        = testLease4Renewing.IP.Next()
 		wantAddrAnother = wantAddr.Next()
+
+		wantChecked = []netip.Addr{busyAddr, wantAddr, wantAddrAnother}
 
 		blockedLease = &dhcpsvc.Lease{
 			IP:       busyAddr,
@@ -121,8 +122,11 @@ func TestDHCPServer_ServeEther4_discoverUnavailable(t *testing.T) {
 
 		pt = testutil.NewPanicT(t)
 
-		checkedCh = make(chan netip.Addr)
-		storedCh  = make(chan []*dhcpsvc.Lease)
+		// The channels are buffered so that the serving goroutine never blocks
+		// on sending while the main test goroutine is busy with its own
+		// assertions.  The rest of them are drained before the test completes.
+		checkedCh = make(chan netip.Addr, len(wantChecked))
+		storedCh  = make(chan []*dhcpsvc.Lease, 1)
 	)
 
 	chk := &testAddressChecker{
@@ -149,17 +153,6 @@ func TestDHCPServer_ServeEther4_discoverUnavailable(t *testing.T) {
 		Enabled:              true,
 	})
 
-	go func() {
-		wantChecked := []netip.Addr{busyAddr, wantAddr, wantAddrAnother}
-
-		for _, wantIP := range wantChecked {
-			checkedIP, ok := testutil.RequireReceive(pt, checkedCh, testTimeout)
-			require.True(pt, ok)
-
-			assert.Equal(pt, wantIP, checkedIP)
-		}
-	}()
-
 	require.True(t, t.Run("unavailable_client", func(t *testing.T) {
 		pkt := newDHCPDISCOVER(t, testHWUnknown)
 		req := testutil.RequireTypeAssert[*layers.DHCPv4](t, pkt.Layer(layers.LayerTypeDHCPv4))
@@ -175,16 +168,26 @@ func TestDHCPServer_ServeEther4_discoverUnavailable(t *testing.T) {
 	}))
 
 	require.True(t, t.Run("another_client", func(t *testing.T) {
-		// Make the db.onStore panic.
-		close(storedCh)
-
 		pkt := newDHCPDISCOVER(t, testHWAnother)
 		req := testutil.RequireTypeAssert[*layers.DHCPv4](t, pkt.Layer(layers.LayerTypeDHCPv4))
 
 		testutil.RequireSend(t, inCh, pkt, testTimeout)
 
 		assertValidResponse4(t, req, outCh, newWantRespOpts4(t, layers.DHCPMsgTypeOffer, ""))
+
+		// The address is available, so no lease is blocked and no store is
+		// expected while handling this client.
+		assert.Empty(t, storedCh)
 	}))
+
+	for _, wantIP := range wantChecked {
+		checkedIP, ok := testutil.RequireReceive(t, checkedCh, testTimeout)
+		require.True(t, ok)
+
+		assert.Equal(t, wantIP, checkedIP)
+	}
+
+	assert.Empty(t, checkedCh)
 }
 
 // TODO(e.burkov):  Test static case.
@@ -706,6 +709,59 @@ func TestDHCPServer_ServeEther4_decline(t *testing.T) {
 			testutil.RequireSend(t, inCh, tc.req, testTimeout)
 		})
 	}
+}
+
+func TestDHCPServer_ServeEther4_declineReleasesHostname(t *testing.T) {
+	t.Parallel()
+
+	storedCh := make(chan []*dhcpsvc.Lease, 4)
+
+	db := newTestDatabase(t)
+	db.onStore = func(_ context.Context, leases []*dhcpsvc.Lease) (err error) {
+		storedCh <- leases
+
+		return nil
+	}
+
+	ndMgr, inCh, _ := newTestNetworkDeviceManager(t, testIfaceAddrV4)
+	srv := startTestDHCPServer(t, &dhcpsvc.Config{
+		Database:             db,
+		Interfaces:           testIPv4InterfacesConf,
+		NetworkDeviceManager: ndMgr,
+		Enabled:              true,
+	})
+
+	require.True(t, t.Run("block", func(t *testing.T) {
+		blockedLease := &dhcpsvc.Lease{
+			IP:       testIPv4Dynamic,
+			Expiry:   testExpiryDynamicLease,
+			Hostname: "",
+			HWAddr:   dhcpsvc.BlockedHardwareAddr,
+			IsStatic: false,
+		}
+
+		pkt := newDHCPDECLINE(t, testHWDynamic, testIPv4Dynamic)
+		testutil.RequireSend(t, inCh, pkt, testTimeout)
+
+		stored, ok := testutil.RequireReceive(t, storedCh, testTimeout)
+		require.True(t, ok)
+		assert.Contains(t, stored, blockedLease)
+
+		assert.Equal(t, netip.Addr{}, srv.IPByHost(testLease4HostnameDynamic))
+	}))
+
+	require.True(t, t.Run("add", func(t *testing.T) {
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+		l := &dhcpsvc.Lease{
+			IP:       testIPv4Unknown,
+			HWAddr:   testHWUnknown,
+			Hostname: testLease4HostnameDynamic,
+			IsStatic: true,
+		}
+
+		require.NoError(t, srv.AddLease(ctx, l))
+	}))
 }
 
 // dhcpRequestConfig contains the configuration for creating a DHCPREQUEST

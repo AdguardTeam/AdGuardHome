@@ -302,6 +302,60 @@ func TestICMPAddressChecker_IsAvailable_connError(t *testing.T) {
 	}
 }
 
+// TestICMPAddressChecker_IsAvailable_closeError tests that a failed closing of
+// the connection doesn't affect the check result.
+func TestICMPAddressChecker_IsAvailable_closeError(t *testing.T) {
+	t.Parallel()
+
+	echo := newEchoMsg(t, ipv4.ICMPTypeEchoReply, testEchoID, dhcpsvc.EchoSequenceNumber)
+	peer := ipToUDPAddr(t, testIPv4Dynamic)
+
+	basePC := newTestPacketConn(t)
+	basePC.OnClose = func() (err error) { return assert.AnError }
+
+	repliedPC := *basePC
+	repliedPC.OnWriteTo = func(p []byte, _ net.Addr) (n int, err error) { return len(p), nil }
+	repliedPC.OnReadFrom = func(p []byte) (n int, addr net.Addr, err error) {
+		return copy(p, echo), peer, nil
+	}
+
+	noReplyPC := *basePC
+	noReplyPC.OnWriteTo = func(p []byte, _ net.Addr) (n int, err error) { return len(p), nil }
+	noReplyPC.OnReadFrom = func(_ []byte) (n int, addr net.Addr, err error) {
+		return 0, nil, os.ErrDeadlineExceeded
+	}
+
+	testCases := []struct {
+		conn net.PacketConn
+		want assert.BoolAssertionFunc
+		name string
+	}{{
+		conn: &repliedPC,
+		want: assert.False,
+		name: "replied",
+	}, {
+		conn: &noReplyPC,
+		want: assert.True,
+		name: "no_reply",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			chk := newTestICMPAddressChecker(t, &dhcpsvc.ICMPAddressCheckerConfig{
+				Dialer: newTestICMPDialer(t, tc.conn, peer, nil),
+			})
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+			ok, err := chk.IsAvailable(ctx, testIPv4Dynamic)
+			require.NoError(t, err)
+			tc.want(t, ok)
+		})
+	}
+}
+
 func TestICMPAddressChecker_IsAvailable_badDialer(t *testing.T) {
 	t.Parallel()
 

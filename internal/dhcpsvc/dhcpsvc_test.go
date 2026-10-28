@@ -541,10 +541,13 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 	return srv
 }
 
-// startTestDHCPServer creates a new DHCPServer for testing and starts it,
-// adding a cleanup function to stop the server on test completion.
-func startTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) {
-	servicetest.RequireRun(tb, newTestDHCPServer(tb, conf), testTimeout)
+// startTestDHCPServer creates a new DHCPServer for testing, starts it, adding
+// a cleanup function to stop the server on test completion, and returns it.
+func startTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv dhcpsvc.Interface) {
+	srv = newTestDHCPServer(tb, conf)
+	servicetest.RequireRun(tb, srv, testTimeout)
+
+	return srv
 }
 
 // newTestPacket creates a valid packet from ls using first as first layer

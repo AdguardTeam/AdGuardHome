@@ -102,23 +102,31 @@ func (idx *leaseIndex) add(l *Lease, iface *netInterface) (err error) {
 
 // remove removes l from idx and from iface.  l must be valid, iface should
 // contain the same lease or the lease itself.  It returns an error if the lease
-// not found.
+// not found.  Leases with empty hostnames are not indexed by name, so that
+// hostname is not checked for them.
 func (idx *leaseIndex) remove(ctx context.Context, l *Lease, iface *netInterface) (err error) {
 	loweredName := strings.ToLower(l.Hostname)
 
 	if _, ok := idx.byAddr[l.IP]; !ok {
 		return fmt.Errorf("no lease for ip %s", l.IP)
-	} else if _, ok = idx.byName[loweredName]; !ok {
-		return fmt.Errorf("no lease for hostname %s", l.Hostname)
+	}
+
+	if loweredName != "" {
+		if _, ok := idx.byName[loweredName]; !ok {
+			return fmt.Errorf("no lease for hostname %s", l.Hostname)
+		}
 	}
 
 	err = iface.removeLease(l)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
 	delete(idx.byAddr, l.IP)
-	delete(idx.byName, loweredName)
+	if loweredName != "" {
+		delete(idx.byName, loweredName)
+	}
 
 	err = idx.dbStore(ctx)
 	if err != nil {
@@ -131,9 +139,9 @@ func (idx *leaseIndex) remove(ctx context.Context, l *Lease, iface *netInterface
 
 // update updates l in idx and in iface.  l must be valid, iface should be
 // responsible for l's IP.  It returns an error if l duplicates at least a
-// single value of another lease, except for the updated lease itself.
-//
-// TODO(e.burkov):  Support empty hostnames.
+// single value of another lease, except for the updated lease itself.  Leases
+// with empty hostnames skip the hostname uniqueness check and aren't indexed
+// by it.
 func (idx *leaseIndex) update(
 	ctx context.Context,
 	l *Lease,
@@ -146,21 +154,29 @@ func (idx *leaseIndex) update(
 		return fmt.Errorf("lease for ip %s already exists", l.IP)
 	}
 
-	existing, ok = idx.byName[loweredName]
-	if ok && !slices.Equal(l.HWAddr, existing.HWAddr) {
-		return fmt.Errorf("lease for hostname %s already exists", l.Hostname)
+	if loweredName != "" {
+		existingName, hasName := idx.byName[loweredName]
+		if hasName && !slices.Equal(l.HWAddr, existingName.HWAddr) {
+			return fmt.Errorf("lease for hostname %s already exists", l.Hostname)
+		}
 	}
 
 	prev, err := iface.updateLease(l)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
 	delete(idx.byAddr, prev.IP)
-	delete(idx.byName, strings.ToLower(prev.Hostname))
+
+	if prevName := strings.ToLower(prev.Hostname); prevName != "" {
+		delete(idx.byName, prevName)
+	}
 
 	idx.byAddr[l.IP] = l
-	idx.byName[loweredName] = l
+	if loweredName != "" {
+		idx.byName[loweredName] = l
+	}
 
 	return idx.dbStore(ctx)
 }
@@ -168,7 +184,9 @@ func (idx *leaseIndex) update(
 // rangeLeases calls f for each lease in idx in an unspecified order until f
 // returns false.  It must not be called concurrently, f must not modify leases.
 func (idx *leaseIndex) rangeLeases(f func(l *Lease) (cont bool)) {
-	for _, l := range idx.byName {
+	// Iterate over byAddr, because it contains all the indexed leases, while
+	// byName may miss the ones with empty hostnames.
+	for _, l := range idx.byAddr {
 		if !f(l) {
 			break
 		}

@@ -91,10 +91,14 @@ func dialICMP6(
 		return pc, net.UDPAddrFromAddrPort(netip.AddrPortFrom(raddr, 0)), nil
 	}
 
+	logger.DebugContext(ctx, "failed to listen udp6", slogutil.KeyError, udpErr)
+
 	pc, rawErr := icmp.ListenPacket("ip6:ipv6-icmp", "::")
 	if rawErr != nil {
 		return nil, nil, errors.Join(udpErr, rawErr)
 	}
+
+	logger.DebugContext(ctx, "listening raw ip6:ipv6-icmp")
 
 	return pc, &net.IPAddr{IP: net.IP(raddr.AsSlice()), Zone: raddr.Zone()}, nil
 }
@@ -151,6 +155,9 @@ type ICMPAddressChecker struct {
 
 // NewICMPAddressChecker returns a new [*ICMPAddressChecker].  c must be
 // valid.
+//
+// TODO(e.burkov):  Set it as the production [Config.AddressChecker] when
+// wiring the service up, see the TODO on [New].
 func NewICMPAddressChecker(c *ICMPAddressCheckerConfig) (chk *ICMPAddressChecker) {
 	return &ICMPAddressChecker{
 		dialer:  c.Dialer,
@@ -181,7 +188,15 @@ func (c *ICMPAddressChecker) IsAvailable(ctx context.Context, ip netip.Addr) (ok
 	if err != nil {
 		return false, fmt.Errorf("dialing icmp: %w", err)
 	}
-	defer func() { err = errors.WithDeferred(err, conn.Close()) }()
+
+	// Don't use [errors.WithDeferred] here, since a failed close on the
+	// successful path would turn a valid check result into an error, while the
+	// result itself is not affected by it.
+	defer func() {
+		if closeErr := conn.Close(); closeErr != nil {
+			c.logger.DebugContext(ctx, "closing icmp connection", slogutil.KeyError, closeErr)
+		}
+	}()
 
 	err = conn.SetDeadline(c.clock.Now().Add(c.timeout))
 	if err != nil {
@@ -310,7 +325,10 @@ func icmpTypes(ip netip.Addr) (reqType, replyType icmp.Type) {
 
 // isMatchingEchoReply reports whether msg is an echo reply of type replyType to
 // the request with the [echoSequenceNumber] received from ip.  It doesn't check
-// for a matching ID.  ip must have no zone.
+// for a matching ID, since the kernel rewrites it to the local port on the
+// unprivileged datagram path, so it cannot be relied upon there, while on the
+// raw path any reply sourced from ip means that the address is in use, no matter
+// whose request it answers.  ip must have no zone.
 func isMatchingEchoReply(
 	msg *icmp.Message,
 	replyType icmp.Type,
