@@ -4,6 +4,7 @@ import { MemoryRouter, Route, createMemoryHistory } from '@solidjs/router';
 
 import { AddClient } from 'panel/components/Clients/AddClient/AddClient';
 import { clearClientForm, initClientForm, updateClientFormField } from 'panel/stores/clientForm';
+import { copyInDom } from 'panel/__tests__/helpers/copy';
 
 // jsdom has no matchMedia; the tags Select and some hooks depend on it.
 beforeAll(() => {
@@ -45,6 +46,9 @@ const renderAddClient = () => {
     ));
 };
 
+const protectionLinkName = () => new RegExp(copyInDom('clients_protection'));
+const blockedServicesLinkName = () => new RegExp(copyInDom('blocked_services'));
+
 describe('AddClient — global settings independence (AGH-234)', () => {
     beforeEach(() => {
         clearClientForm();
@@ -58,8 +62,8 @@ describe('AddClient — global settings independence (AGH-234)', () => {
         // AC 1: «Use global settings» blocks only Protection — the Protection
         // link is disabled (rendered as a non-anchor), everything else stays
         // interactive.
-        expect(screen.queryByRole('link', { name: /Protection/ })).toBeNull();
-        expect(screen.getByRole('link', { name: /Blocked services/ })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: protectionLinkName() })).toBeNull();
+        expect(screen.getByRole('link', { name: blockedServicesLinkName() })).toBeInTheDocument();
 
         const upstreams = document.getElementById('client-upstreams') as HTMLTextAreaElement;
         expect(upstreams).not.toBeDisabled();
@@ -72,12 +76,12 @@ describe('AddClient — global settings independence (AGH-234)', () => {
         initClientForm(null);
         renderAddClient();
 
-        expect(screen.getByRole('link', { name: /Protection/ })).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: protectionLinkName() })).toBeInTheDocument();
 
         updateClientFormField('use_global_settings', true);
 
-        expect(screen.queryByRole('link', { name: /Protection/ })).toBeNull();
+        expect(screen.queryByRole('link', { name: protectionLinkName() })).toBeNull();
         // The row itself is still rendered (just not as a link).
-        expect(screen.getByText(/Enable or disable protection features/)).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('clients_protection_desc'))).toBeInTheDocument();
     });
 });
