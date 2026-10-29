@@ -66,6 +66,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Per-client blocked services schedules being reset when a client was saved in the new web interface ([#8638]).
 
+- Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
+
 ### Removed
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].

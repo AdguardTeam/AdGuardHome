@@ -267,7 +267,10 @@ export const BlockedServices = (props: Props) => {
                     </Link>
 
                     <Show when={isGloballyDisabled()}>
-                        <div class={s.globalNote} data-testid="blocked-services-global-note">
+                        <div
+                            class={cn(theme.text.t3, s.globalNote)}
+                            data-testid="blocked-services-global-note"
+                        >
                             <Icon icon="settings_info" color="gray" class={s.nothingFoundIcon} />
                             <div class={s.globalNoteText}>
                                 {intl.getMessage('clients_global_blocked_services_note')}

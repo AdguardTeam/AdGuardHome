@@ -34,11 +34,18 @@ export const useInitClientFormFromRoute = () => {
             return;
         }
 
-        if (clientFormState.mode !== 'add' || clientFormState.originalName) {
+        const decodedName = decodeURIComponent(urlClientName);
+
+        // Don't clobber a save in flight, and skip when the form already holds
+        // this client.  Otherwise re-initialize so Back/Forward between two
+        // clients cannot show — and save — the previous client's settings.
+        if (clientFormState.processingSave) {
+            return;
+        }
+        if (clientFormState.mode === 'edit' && clientFormState.originalName === decodedName) {
             return;
         }
 
-        const decodedName = decodeURIComponent(urlClientName);
         const client = clients.find((c: Client) => c.name === decodedName);
 
         if (!client) {

@@ -286,7 +286,10 @@ export const InactivitySchedule = (props: Props) => {
         >
             {/* clientScope - render inline */}
             <Show when={isReadOnly()}>
-                <p class={s.readOnlyNote} data-testid="inactivity-schedule-read-only-note">
+                <p
+                    class={cn(theme.text.t3, s.readOnlyNote)}
+                    data-testid="inactivity-schedule-read-only-note"
+                >
                     {intl.getMessage('clients_global_inactivity_schedule_note')}
                 </p>
             </Show>

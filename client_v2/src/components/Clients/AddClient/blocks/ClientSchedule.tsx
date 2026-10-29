@@ -27,6 +27,9 @@ export const ClientSchedule = () => {
                     {
                         path: blockedServicesPath(),
                         title: intl.getMessage('blocked_services'),
+                        props: isEdit()
+                            ? { clientName: encodeURIComponent(clientFormState.originalName) }
+                            : undefined,
                     },
                 ]}
             />
