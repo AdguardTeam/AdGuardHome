@@ -588,7 +588,7 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	}
 
 	if config.TLS.Enabled && config.TLS.PortHTTPS != 0 && len(config.HTTPConfig.DoH.Routes) == 0 {
-		l.WarnContext(ctx, "DoH is enabled, but no DoH routes are configured; DoH is not served")
+		l.WarnContext(ctx, "no dns-over-https routes configured; dns-over-https is not served")
 	}
 
 	if len(config.Users) == 0 {
