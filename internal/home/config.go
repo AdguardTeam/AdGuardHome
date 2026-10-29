@@ -599,10 +599,7 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	}
 
 	if config.TLS.Enabled && config.TLS.PortHTTPS != 0 && len(config.HTTPConfig.DoH.Routes) == 0 {
-		return fmt.Errorf(
-			"doh routes: %w; expected at least one value with enabled doh",
-			errors.ErrNoValue,
-		)
+		l.WarnContext(ctx, "DoH is enabled, but no DoH routes are configured; DoH is not served")
 	}
 
 	if len(config.Users) == 0 {

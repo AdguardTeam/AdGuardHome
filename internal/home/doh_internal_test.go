@@ -60,6 +60,27 @@ func TestWebAPI_wrapMux(t *testing.T) {
 	}))
 
 	var dohCalled bool
+
+	require.True(t, t.Run("doh_enabled_but_no_routes", func(t *testing.T) {
+		web.setDoHServer(newDoHServer(&doHServerConfig{
+			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				dohCalled = true
+			}),
+			logger: testLogger,
+			routes: []string{},
+		}))
+
+		h := web.wrapMux(testLogger)
+
+		ctx := testutil.ContextWithTimeout(t, testTimeout)
+		r := httptest.NewRequestWithContext(ctx, http.MethodGet, dohPath, nil)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+
+		assert.Equal(t, http.StatusUnauthorized, w.Code)
+		assert.False(t, dohCalled)
+	}))
+
 	web.setDoHServer(newDoHServer(&doHServerConfig{
 		handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			dohCalled = true
