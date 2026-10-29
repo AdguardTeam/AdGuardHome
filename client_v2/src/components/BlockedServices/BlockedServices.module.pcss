@@ -34,6 +34,10 @@
     }
 }
 
+.toggle {
+    margin: 8px 0;
+}
+
 .navItem {
     display: flex;
     align-items: flex-start;
@@ -48,6 +52,37 @@
     &:focus-visible {
         background-color: var(--hovered-page-background);
     }
+}
+
+.navItemDisabled {
+    cursor: default;
+    pointer-events: none;
+
+    .navItemTitle,
+    .navItemDesc {
+        color: var(--disabled-main-text);
+    }
+
+    &:hover,
+    &:focus-visible {
+        background-color: transparent;
+    }
+}
+
+.globalNote {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+    gap: 16px;
+    font-size: 14px;
+    text-align: center;
+    color: var(--default-description-text);
+}
+
+.globalNoteText {
+    max-width: 256px;
 }
 
 .navItemContent {

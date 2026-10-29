@@ -22,6 +22,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
 
+### Changed
+
+- Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
+
 ### Fixed
 
 - Incorrect behaviour on the first launch with the `--check-config` flag.
@@ -60,6 +64,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The *Log out* button opening the login page in a new tab in the new web interface ([#8661]).
 
+- Per-client blocked services schedules being reset when a client was saved in the new web interface ([#8638]).
+
 ### Removed
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
@@ -72,6 +78,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
 [#8636]:           https://github.com/AdguardTeam/AdGuardHome/issues/8636
 [#8637]:           https://github.com/AdguardTeam/AdGuardHome/issues/8637
+[#8638]:           https://github.com/AdguardTeam/AdGuardHome/issues/8638
 [#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
 [#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [go-1.27.3]:       https://groups.google.com/g/golang-announce/c/66pojueaQek

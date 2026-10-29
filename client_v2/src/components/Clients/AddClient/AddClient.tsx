@@ -1,5 +1,5 @@
-import { createMemo, createEffect, createSignal, Show, onMount } from 'solid-js';
-import { useNavigate, useParams, useLocation } from '@solidjs/router';
+import { createMemo, createEffect, createSignal, Show } from 'solid-js';
+import { useNavigate, useLocation } from '@solidjs/router';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -12,17 +12,15 @@ import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
-import type { Client } from 'panel/initialState';
 import {
     clientFormState,
     updateClientFormField,
     clearClientForm,
     saveClient,
-    initClientForm,
-    buildFormPayload,
     setFormErrors,
 } from 'panel/stores/clientForm';
-import { dashboardState, getClients } from 'panel/stores/dashboard';
+import { dashboardState } from 'panel/stores/dashboard';
+import { useInitClientFormFromRoute } from 'panel/hooks/useInitClientFormFromRoute';
 import { validateUpstreams, validateCacheSize } from 'panel/helpers/validators';
 import { RoutePath, Paths } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
@@ -34,8 +32,9 @@ import s from './AddClient.module.pcss';
 
 export const AddClient = () => {
     const navigate = useNavigate();
-    const params = useParams<{ clientName?: string }>();
     const location = useLocation();
+
+    useInitClientFormFromRoute();
 
     const [nameError, setNameError] = createSignal<string | undefined>();
     const [cacheSizeError, setCacheSizeError] = createSignal<string | undefined>();
@@ -54,10 +53,6 @@ export const AddClient = () => {
         );
     });
 
-    onMount(() => {
-        getClients();
-    });
-
     const handleNameChange = (e: Event) => {
         const value = (e.target as HTMLInputElement).value;
         updateClientFormField({ field: 'name', value });
@@ -72,32 +67,6 @@ export const AddClient = () => {
         }
 
         updateClientFormField({ field: 'ids', value: [id] });
-    });
-
-    // When on the edit route and clients are loaded, initialize the form
-    // from the URL param. This handles page refreshes on the edit page.
-    createEffect(() => {
-        const urlClientName = params.clientName;
-        const clients = dashboardState.clients || [];
-
-        if (!urlClientName || !clients.length) {
-            return;
-        }
-
-        if (clientFormState.mode !== 'add' || clientFormState.originalName) {
-            return;
-        }
-
-        const decodedName = decodeURIComponent(urlClientName);
-        const client = clients.find((c: Client) => c.name === decodedName);
-
-        if (!client) {
-            clearClientForm();
-            navigate(Paths.Clients, { replace: true });
-            return;
-        }
-
-        initClientForm(buildFormPayload(client));
     });
 
     const isEdit = createMemo(() => clientFormState.mode === 'edit');
@@ -286,14 +255,7 @@ export const AddClient = () => {
                         </div>
                     </Link>
 
-                    <Link
-                        to={blockedServicesRoute()}
-                        props={routeProps()}
-                        class={cn(s.navLink, {
-                            [s.navLinkDisabled]: clientFormState.use_global_settings,
-                        })}
-                        disabled={clientFormState.use_global_settings}
-                    >
+                    <Link to={blockedServicesRoute()} props={routeProps()} class={s.navLink}>
                         <div class={s.navItem}>
                             <div class={s.navItemContent}>
                                 <div class={cn(theme.text.t2, theme.text.semibold, s.navTitle)}>
@@ -307,11 +269,7 @@ export const AddClient = () => {
                         </div>
                     </Link>
 
-                    <h2
-                        class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet, {
-                            [s.disabledText]: clientFormState.use_global_settings,
-                        })}
-                    >
+                    <h2 class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
                         {intl.getMessage('upstream_dns_servers_title')}
                     </h2>
 
@@ -324,7 +282,6 @@ export const AddClient = () => {
                             placeholder={intl.getMessage('upstream_dns_placeholder')}
                             label={intl.getMessage('clients_upstreams_desc')}
                             rows={4}
-                            disabled={clientFormState.use_global_settings}
                             errorMessage={upstreamsError()}
                             highlightComments
                         />
@@ -335,7 +292,6 @@ export const AddClient = () => {
                         title={intl.getMessage('clients_use_dns_cache')}
                         checked={clientFormState.upstreams_cache_enabled}
                         onChange={handleUpstreamsCacheEnabled}
-                        disabled={clientFormState.use_global_settings}
                     >
                         {clientFormState.upstreams_cache_enabled && (
                             <Input

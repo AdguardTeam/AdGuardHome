@@ -69,8 +69,12 @@ export const InactivitySchedule = (props: Props) => {
         return servicesState.processing && !servicesState.list?.ids;
     });
 
+    const isReadOnly = createMemo(
+        () => !!props.clientScope && clientFormState.use_global_blocked_services,
+    );
+
     const handleTimezoneChange = (option: { value: string }) => {
-        if (!option) {
+        if (!option || isReadOnly()) {
             return;
         }
         const newSchedule = props.clientScope
@@ -84,16 +88,25 @@ export const InactivitySchedule = (props: Props) => {
     };
 
     const handleAdd = (day: DayKey) => {
+        if (isReadOnly()) {
+            return;
+        }
         setEditDay(day);
         setModalVisible(true);
     };
 
     const handleEdit = (day: DayKey) => {
+        if (isReadOnly()) {
+            return;
+        }
         setEditDay(day);
         setModalVisible(true);
     };
 
     const handleDelete = (day: DayKey) => {
+        if (isReadOnly()) {
+            return;
+        }
         setDeleteDay(day);
     };
 
@@ -272,6 +285,12 @@ export const InactivitySchedule = (props: Props) => {
             }
         >
             {/* clientScope - render inline */}
+            <Show when={isReadOnly()}>
+                <p class={s.readOnlyNote} data-testid="inactivity-schedule-read-only-note">
+                    {intl.getMessage('clients_global_inactivity_schedule_note')}
+                </p>
+            </Show>
+
             <div
                 class={cn(s.timezoneWrapper, s.timezoneWrapperClientScope)}
                 data-testid="inactivity-schedule-timezone"
@@ -283,7 +302,7 @@ export const InactivitySchedule = (props: Props) => {
                     onChange={handleTimezoneChange}
                     size="responsive"
                     height="big"
-                    isDisabled={clientFormState.processingSave}
+                    isDisabled={clientFormState.processingSave || isReadOnly()}
                     isSearchable
                 />
             </div>
@@ -294,6 +313,7 @@ export const InactivitySchedule = (props: Props) => {
                         <ScheduleRow
                             day={day}
                             data={schedule()?.[day] as ScheduleDayData | undefined}
+                            disabled={isReadOnly()}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
                             onAdd={handleAdd}

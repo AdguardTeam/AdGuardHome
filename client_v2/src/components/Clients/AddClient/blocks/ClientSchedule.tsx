@@ -2,6 +2,7 @@ import { createMemo } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { clientFormState } from 'panel/stores/clientForm';
+import { useInitClientFormFromRoute } from 'panel/hooks/useInitClientFormFromRoute';
 import { RoutePath, type RoutePathKey } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 import { InactivitySchedule } from 'panel/components/BlockedServices/InactivitySchedule/InactivitySchedule';
@@ -10,6 +11,8 @@ import s from './ClientSchedule.module.pcss';
 import { ClientsHeader } from './ClientsHeader';
 
 export const ClientSchedule = () => {
+    useInitClientFormFromRoute();
+
     const isEdit = createMemo(() => clientFormState.mode === 'edit');
 
     const blockedServicesPath = createMemo<RoutePathKey>(() =>

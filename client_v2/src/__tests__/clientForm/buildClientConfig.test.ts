@@ -1,29 +1,47 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildClientConfig } from 'panel/stores/clientForm';
+import { buildClientConfig, buildFormPayload } from 'panel/stores/clientForm';
 import { getInitialClientFormState } from 'panel/initialState';
 
 describe('buildClientConfig', () => {
-    it('syncs use_global_blocked_services from use_global_settings=true', () => {
+    it('keeps use_global_blocked_services independent of use_global_settings', () => {
         const form = {
             ...getInitialClientFormState(),
             use_global_settings: true,
             use_global_blocked_services: false,
         };
         const config = buildClientConfig(form);
-        expect(config.use_global_blocked_services).toBe(true);
+        expect(config.use_global_blocked_services).toBe(false);
         expect(config.use_global_settings).toBe(true);
     });
 
-    it('syncs use_global_blocked_services from use_global_settings=false', () => {
+    it('keeps use_global_blocked_services when use_global_settings is off', () => {
         const form = {
             ...getInitialClientFormState(),
             use_global_settings: false,
             use_global_blocked_services: true,
         };
         const config = buildClientConfig(form);
-        expect(config.use_global_blocked_services).toBe(false);
+        expect(config.use_global_blocked_services).toBe(true);
         expect(config.use_global_settings).toBe(false);
+    });
+
+    it('preserves client blocked services and schedule when global blocked services are enabled', () => {
+        const form = {
+            ...getInitialClientFormState(),
+            use_global_blocked_services: true,
+            blocked_services: ['youtube', 'steam'],
+            blocked_services_schedule: {
+                time_zone: 'UTC',
+                mon: { start: 0, end: 60 },
+            },
+        };
+        const config = buildClientConfig(form);
+        expect(config.blocked_services).toEqual(['youtube', 'steam']);
+        expect(config.blocked_services_schedule).toEqual({
+            time_zone: 'UTC',
+            mon: { start: 0, end: 60 },
+        });
     });
 
     it('filters empty IDs', () => {
@@ -92,5 +110,29 @@ describe('buildClientConfig', () => {
             'use_global_blocked_services',
             'use_global_settings',
         ]);
+    });
+});
+
+describe('buildFormPayload', () => {
+    it('preserves the full blocked services schedule', () => {
+        const payload = buildFormPayload({
+            name: 'Laptop',
+            ids: ['192.168.1.1'],
+            blocked_services: ['youtube'],
+            use_global_blocked_services: true,
+            blocked_services_schedule: {
+                time_zone: 'UTC',
+                mon: { start: 0, end: 60 },
+                sat: { start: 120, end: 240 },
+            },
+        } as any);
+
+        expect(payload.blocked_services).toEqual(['youtube']);
+        expect(payload.use_global_blocked_services).toBe(true);
+        expect(payload.blocked_services_schedule).toEqual({
+            time_zone: 'UTC',
+            mon: { start: 0, end: 60 },
+            sat: { start: 120, end: 240 },
+        });
     });
 });
