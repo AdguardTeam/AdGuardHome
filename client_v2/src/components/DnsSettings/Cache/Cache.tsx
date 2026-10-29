@@ -71,7 +71,9 @@ export const Cache = () => {
                 title={intl.getMessage('dns_cache_size')}
                 description={intl.getMessage('dns_cache_size_desc')}
                 value={cacheSizeValue()}
-                disabled={!dnsConfigState.cache_enabled}
+                // Saving a size without a known switch state would make the
+                // backend infer it and silently change the cache state.
+                disabled={dnsConfigState.cache_enabled === undefined}
                 onClick={cacheSizeDialog.openDialog}
             />
 
@@ -81,7 +83,6 @@ export const Cache = () => {
                 title={intl.getMessage('dns_override_min_ttl')}
                 description={intl.getMessage('dns_override_min_ttl_desc')}
                 value={minTtlValue()}
-                disabled={!dnsConfigState.cache_enabled}
                 onClick={minTtlDialog.openDialog}
             />
 
@@ -91,7 +92,6 @@ export const Cache = () => {
                 title={intl.getMessage('dns_override_max_ttl')}
                 description={intl.getMessage('dns_override_max_ttl_desc')}
                 value={maxTtlValue()}
-                disabled={!dnsConfigState.cache_enabled}
                 onClick={maxTtlDialog.openDialog}
             />
 

@@ -322,7 +322,7 @@ func TestStorage_Add_whois(t *testing.T) {
 	t.Run("can't_set_persistent_client", func(t *testing.T) {
 		err = storage.Add(ctx, &client.Persistent{
 			Name: cliName3,
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 			IPs:  []netip.Addr{cliIP3},
 		})
 		require.NoError(t, err)
@@ -500,7 +500,7 @@ func TestClientsDHCP(t *testing.T) {
 	require.True(t, t.Run("find_persistent", func(t *testing.T) {
 		err = storage.Add(ctx, &client.Persistent{
 			Name: prsCliName,
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 			MACs: []net.HardwareAddr{prsCliMAC},
 		})
 		require.NoError(t, err)
@@ -562,7 +562,7 @@ func TestClientsAddExisting(t *testing.T) {
 		// Add a client.
 		err = storage.Add(ctx, &client.Persistent{
 			Name:    "client1",
-			UID:     client.MustNewUID(),
+			UID:     client.NewUID(),
 			IPs:     []netip.Addr{ip, netip.MustParseAddr("1:2:3::4")},
 			Subnets: []netip.Prefix{netip.MustParsePrefix("2.2.2.0/24")},
 			MACs:    []net.HardwareAddr{{0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA}},
@@ -620,7 +620,7 @@ func TestClientsAddExisting(t *testing.T) {
 		// Add a new client with the same IP as for a client with MAC.
 		err = storage.Add(ctx, &client.Persistent{
 			Name: "client2",
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 			IPs:  []netip.Addr{ip},
 		})
 		require.NoError(t, err)
@@ -628,7 +628,7 @@ func TestClientsAddExisting(t *testing.T) {
 		// Add a new client with the IP from the first client's IP range.
 		err = storage.Add(ctx, &client.Persistent{
 			Name: "client3",
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 			IPs:  []netip.Addr{netip.MustParseAddr("2.2.2.2")},
 		})
 		require.NoError(t, err)
@@ -649,7 +649,7 @@ func newStorage(tb testing.TB, m []*client.Persistent) (s *client.Storage) {
 	require.NoError(tb, err)
 
 	for _, c := range m {
-		c.UID = client.MustNewUID()
+		c.UID = client.NewUID()
 		require.NoError(tb, s.Add(ctx, c))
 	}
 
@@ -668,7 +668,7 @@ func TestStorage_Add(t *testing.T) {
 	)
 
 	var (
-		existingClientUID = client.MustNewUID()
+		existingClientUID = client.NewUID()
 		existingIP        = netip.MustParseAddr("1.2.3.4")
 		existingSubnet    = netip.MustParsePrefix("1.2.3.0/24")
 	)
@@ -705,7 +705,7 @@ func TestStorage_Add(t *testing.T) {
 		cli: &client.Persistent{
 			Name: "basic",
 			IPs:  []netip.Addr{netip.MustParseAddr("1.1.1.1")},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: "",
 	}, {
@@ -721,7 +721,7 @@ func TestStorage_Add(t *testing.T) {
 		cli: &client.Persistent{
 			Name: existingName,
 			IPs:  []netip.Addr{netip.MustParseAddr("3.3.3.3")},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: `adding client: another client uses the same name "existing_name"`,
 	}, {
@@ -729,7 +729,7 @@ func TestStorage_Add(t *testing.T) {
 		cli: &client.Persistent{
 			Name: "duplicate_ip",
 			IPs:  []netip.Addr{existingIP},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: `adding client: another client "existing_name" uses the same IP "1.2.3.4"`,
 	}, {
@@ -737,7 +737,7 @@ func TestStorage_Add(t *testing.T) {
 		cli: &client.Persistent{
 			Name:    "duplicate_subnet",
 			Subnets: []netip.Prefix{existingSubnet},
-			UID:     client.MustNewUID(),
+			UID:     client.NewUID(),
 		},
 		wantErrMsg: `adding client: another client "existing_name" ` +
 			`uses the same subnet "1.2.3.0/24"`,
@@ -746,7 +746,7 @@ func TestStorage_Add(t *testing.T) {
 		cli: &client.Persistent{
 			Name:      "duplicate_client_id",
 			ClientIDs: []client.ClientID{existingClientID},
-			UID:       client.MustNewUID(),
+			UID:       client.NewUID(),
 		},
 		wantErrMsg: `adding client: another client "existing_name" ` +
 			`uses the same ClientID "existing_client_id"`,
@@ -756,7 +756,7 @@ func TestStorage_Add(t *testing.T) {
 			Name: "not_allowed_tag",
 			Tags: []string{notAllowedTag},
 			IPs:  []netip.Addr{netip.MustParseAddr("4.4.4.4")},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: `adding client: invalid tag: "not_allowed_tag"`,
 	}, {
@@ -765,7 +765,7 @@ func TestStorage_Add(t *testing.T) {
 			Name: "allowed_tag",
 			Tags: []string{allowedTag},
 			IPs:  []netip.Addr{netip.MustParseAddr("5.5.5.5")},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: "",
 	}, {
@@ -773,14 +773,14 @@ func TestStorage_Add(t *testing.T) {
 		cli: &client.Persistent{
 			Name: "",
 			IPs:  []netip.Addr{netip.MustParseAddr("6.6.6.6")},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: "adding client: empty name",
 	}, {
 		name: "no_id",
 		cli: &client.Persistent{
 			Name: "no_id",
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: "adding client: id required",
 	}, {
@@ -809,7 +809,7 @@ func TestStorage_RemoveByName(t *testing.T) {
 	existingClient := &client.Persistent{
 		Name: existingName,
 		IPs:  []netip.Addr{netip.MustParseAddr("1.2.3.4")},
-		UID:  client.MustNewUID(),
+		UID:  client.NewUID(),
 	}
 
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
@@ -1050,7 +1050,7 @@ func TestStorage_Update(t *testing.T) {
 		cli: &client.Persistent{
 			Name: "basic",
 			IPs:  []netip.Addr{netip.MustParseAddr("1.1.1.1")},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: "",
 	}, {
@@ -1058,7 +1058,7 @@ func TestStorage_Update(t *testing.T) {
 		cli: &client.Persistent{
 			Name: obstructingName,
 			IPs:  []netip.Addr{netip.MustParseAddr("3.3.3.3")},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: `updating client: another client uses the same name "obstructing_name"`,
 	}, {
@@ -1066,7 +1066,7 @@ func TestStorage_Update(t *testing.T) {
 		cli: &client.Persistent{
 			Name: "duplicate_ip",
 			IPs:  []netip.Addr{obstructingIP},
-			UID:  client.MustNewUID(),
+			UID:  client.NewUID(),
 		},
 		wantErrMsg: `updating client: another client "obstructing_name" uses the same IP "1.2.3.4"`,
 	}, {
@@ -1074,7 +1074,7 @@ func TestStorage_Update(t *testing.T) {
 		cli: &client.Persistent{
 			Name:    "duplicate_subnet",
 			Subnets: []netip.Prefix{obstructingSubnet},
-			UID:     client.MustNewUID(),
+			UID:     client.NewUID(),
 		},
 		wantErrMsg: `updating client: another client "obstructing_name" ` +
 			`uses the same subnet "1.2.3.0/24"`,
@@ -1083,7 +1083,7 @@ func TestStorage_Update(t *testing.T) {
 		cli: &client.Persistent{
 			Name:      "duplicate_client_id",
 			ClientIDs: []client.ClientID{obstructingClientID},
-			UID:       client.MustNewUID(),
+			UID:       client.NewUID(),
 		},
 		wantErrMsg: `updating client: another client "obstructing_name" ` +
 			`uses the same ClientID "obstructing_client_id"`,
@@ -1215,7 +1215,7 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 		Name:      "client_first",
 		IPs:       []netip.Addr{existingIP},
 		ClientIDs: []client.ClientID{existingClientID},
-		UID:       client.MustNewUID(),
+		UID:       client.NewUID(),
 		Upstreams: []string{"192.0.2.0"},
 	})
 	require.NoError(t, err)
@@ -1223,7 +1223,7 @@ func TestStorage_CustomUpstreamConfig(t *testing.T) {
 	err = s.Add(ctx, &client.Persistent{
 		Name:      "client_second",
 		MACs:      []net.HardwareAddr{dhcpCliMAC},
-		UID:       client.MustNewUID(),
+		UID:       client.NewUID(),
 		Upstreams: []string{"192.0.2.0"},
 	})
 	require.NoError(t, err)

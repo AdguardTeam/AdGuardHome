@@ -21,7 +21,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
-	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
 	"github.com/AdguardTeam/dnsproxy/proxy"
 	"github.com/AdguardTeam/golibs/errors"
@@ -111,8 +110,11 @@ type configuration struct {
 	// DNS is a block with DNS configuration params.
 	DNS configmgr.DNSConfig `yaml:"dns"`
 
-	TLS      tlsConfigSettings `yaml:"tls"`
-	QueryLog queryLogConfig    `yaml:"querylog"`
+	// TLS is a block with TLS configuration params.
+	TLS tlsConfigSettings `yaml:"tls"`
+
+	// QueryLog is a block with query log configuration params.
+	QueryLog configmgr.QueryLogConfig `yaml:"querylog"`
 
 	// Stats is a block with statistics configuration settings.
 	Stats configmgr.StatsConfig `yaml:"statistics"`
@@ -128,8 +130,11 @@ type configuration struct {
 	WhitelistFilters []filtering.FilterYAML `yaml:"whitelist_filters"`
 	UserRules        []string               `yaml:"user_rules"`
 
-	DHCP      *dhcpd.ServerConfig `yaml:"dhcp"`
-	Filtering *filtering.Config   `yaml:"filtering"`
+	// DHCP is a block with DHCP configuration params.
+	DHCP *configmgr.DHCPConfig `yaml:"dhcp"`
+
+	// Filtering is a block with DNS filtering configuration settings.
+	Filtering *filtering.Config `yaml:"filtering"`
 
 	// Clients contains the YAML representations of the persistent clients.
 	// This field is only used for reading and writing persistent client data.
@@ -225,38 +230,14 @@ type tlsConfigSettings struct {
 	ServePlainDNS bool `yaml:"-" json:"-"`
 }
 
-type queryLogConfig struct {
-	// DirPath is the custom directory for logs.  If it's empty the default
-	// directory will be used.  See [homeContext.getDataDir].
-	DirPath string `yaml:"dir_path"`
-
-	// Ignored is the list of host names, which should not be written to log.
-	// "." is considered to be the root domain.
-	Ignored []string `yaml:"ignored"`
-
-	// Interval is the interval for query log's files rotation.
-	Interval timeutil.Duration `yaml:"interval"`
-
-	// MemSize is the number of entries kept in memory before they are flushed
-	// to disk.
-	MemSize uint `yaml:"size_memory"`
-
-	// Enabled defines if the query log is enabled.
-	Enabled bool `yaml:"enabled"`
-
-	// IgnoredEnabled defines whether hosts from the ignored list should be
-	// ignored.
-	IgnoredEnabled bool `yaml:"ignored_enabled"`
-
-	// FileEnabled defines, if the query log is written to the file.
-	FileEnabled bool `yaml:"file_enabled"`
-}
-
 // Default block host constants.
 const (
 	defaultSafeBrowsingBlockHost = "standard-block.dns.adguard.com"
 	defaultParentalBlockHost     = "family-block.dns.adguard.com"
 )
+
+// defaultLocalDomainName is the default domain name used for DHCP hosts.
+const defaultLocalDomainName = "lan"
 
 // config is the global configuration structure.
 //
@@ -324,12 +305,13 @@ var config = &configuration{
 		PortDNSOverTLS:  defaultPortTLS, // needs to be passed through to dnsproxy
 		PortDNSOverQUIC: defaultPortQUIC,
 	},
-	QueryLog: queryLogConfig{
-		Enabled:        true,
-		FileEnabled:    true,
+	QueryLog: configmgr.QueryLogConfig{
+		DirPath:        "",
+		Ignored:        []string{},
 		Interval:       timeutil.Duration(90 * timeutil.Day),
 		MemSize:        1000,
-		Ignored:        []string{},
+		Enabled:        true,
+		FileEnabled:    true,
 		IgnoredEnabled: false,
 	},
 	Stats: configmgr.StatsConfig{
@@ -393,15 +375,17 @@ var config = &configuration{
 		ParentalBlockHost:     defaultParentalBlockHost,
 		SafeBrowsingBlockHost: defaultSafeBrowsingBlockHost,
 	},
-	DHCP: &dhcpd.ServerConfig{
-		LocalDomainName: "lan",
-		Conf4: dhcpd.V4ServerConf{
-			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+	DHCP: &configmgr.DHCPConfig{
+		Conf4: &configmgr.DHCPv4Config{
 			ICMPTimeout:   dhcpd.DefaultDHCPTimeoutICMP,
-		},
-		Conf6: dhcpd.V6ServerConf{
 			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
 		},
+		Conf6: &configmgr.DHCPv6Config{
+			LeaseDuration: dhcpd.DefaultDHCPLeaseTTL,
+		},
+		InterfaceName:   "",
+		LocalDomainName: defaultLocalDomainName,
+		Enabled:         false,
 	},
 	Clients: &clientsConfig{
 		Sources: &clientSourcesConfig{
@@ -478,6 +462,7 @@ func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) 
 	// Do the upgrade if necessary.
 	config.fileData, err = readConfigFile(ctx, l, workDir, confPath)
 	if err != nil {
+		// Don't wrap the error, because it's informative enough as is.
 		return err
 	}
 
@@ -584,14 +569,18 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		return err
 	}
 
-	err = validateTransportPorts()
+	err = validateConfigPorts(config)
 	if err != nil {
-		// Don't wrap the error, because it is informative enough as is.
+		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
 	if !filtering.ValidateUpdateIvl(config.Filtering.FiltersUpdateIntervalHours) {
 		config.Filtering.FiltersUpdateIntervalHours = 24
+	}
+
+	if err = config.DHCP.Validate(); err != nil {
+		return fmt.Errorf("validating dhcp config: %w", err)
 	}
 
 	if err = config.HTTPConfig.Validate(); err != nil {
@@ -606,56 +595,55 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
 	}
 
-	validateLanguage(l, ctx, config.Language)
-
-	return nil
-}
-
-// validateTransportPorts validates the specified TCP and UDP ports and returns
-// an error if any of them are invalid.
-func validateTransportPorts() (err error) {
-	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
-
-	udpPorts := aghalg.UniqChecker[udpPort]{}
-	addPorts(udpPorts, udpPort(config.DNS.Port))
-
-	if config.TLS.Enabled {
-		addPorts(
-			tcpPorts,
-			tcpPort(config.TLS.PortHTTPS),
-			tcpPort(config.TLS.PortDNSOverTLS),
-			tcpPort(config.TLS.PortDNSCrypt),
-		)
-
-		// TODO(e.burkov):  Consider adding a udpPort with the same value when
-		// we add support for HTTP/3 for web admin interface.
-		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
-	}
-
-	err = tcpPorts.Validate()
-	if err != nil {
-		return fmt.Errorf("validating tcp ports: %w", err)
-	}
-
-	err = udpPorts.Validate()
-	if err != nil {
-		return fmt.Errorf("validating udp ports: %w", err)
-	}
+	validateLanguage(ctx, l)
 
 	return nil
 }
 
 // validateLanguage validates the specified language and clears it with a
 // warning if it is unsupported.  l must not be nil.
-func validateLanguage(l *slog.Logger, ctx context.Context, language string) {
-	if language != "" && !allowedLanguages.Has(language) {
-		l.WarnContext(ctx, "unsupported language", "lang", language)
+func validateLanguage(ctx context.Context, l *slog.Logger) {
+	if config.Language != "" && !allowedLanguages.Has(config.Language) {
+		l.WarnContext(ctx, "unsupported language", "lang", config.Language)
 
 		// Clear the language so the frontend can use the client's browser
 		// language.
 		config.Language = ""
 	}
+}
+
+// validateConfigPorts returns an error in case the given conf has conflict
+// ports.  conf must not be nil.
+func validateConfigPorts(conf *configuration) (err error) {
+	tcpPorts := aghalg.UniqChecker[tcpPort]{}
+	addPorts(tcpPorts, tcpPort(conf.HTTPConfig.Address.Port()))
+
+	udpPorts := aghalg.UniqChecker[udpPort]{}
+	addPorts(udpPorts, udpPort(conf.DNS.Port))
+
+	if conf.TLS.Enabled {
+		addPorts(
+			tcpPorts,
+			tcpPort(conf.TLS.PortHTTPS),
+			tcpPort(conf.TLS.PortDNSOverTLS),
+			tcpPort(conf.TLS.PortDNSCrypt),
+		)
+
+		// TODO(e.burkov):  Consider adding a udpPort with the same value when
+		// we add support for HTTP/3 for web admin interface.
+		addPorts(udpPorts, udpPort(conf.TLS.PortDNSOverQUIC))
+	}
+
+	var errs []error
+	if err = tcpPorts.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("validating tcp ports: %w", err))
+	}
+
+	if err = udpPorts.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("validating udp ports: %w", err))
+	}
+
+	return errors.Join(errs...)
 }
 
 // udpPort is the port number for UDP protocol.
@@ -717,15 +705,7 @@ func (c *configuration) write(
 	}
 
 	if globalContext.queryLog != nil {
-		dc := querylog.Config{}
-		globalContext.queryLog.WriteDiskConfig(&dc)
-		config.DNS.AnonymizeClientIP = dc.AnonymizeClientIP
-		config.QueryLog.Enabled = dc.Enabled
-		config.QueryLog.FileEnabled = dc.FileEnabled
-		config.QueryLog.Interval = timeutil.Duration(dc.RotationIvl)
-		config.QueryLog.MemSize = dc.MemSize
-		config.QueryLog.Ignored = dc.Ignored.Values()
-		config.QueryLog.IgnoredEnabled = dc.Ignored.IsEnabled()
+		globalContext.queryLog.WriteDiskConfig(&config.QueryLog, &config.DNS)
 	}
 
 	if globalContext.filters != nil {

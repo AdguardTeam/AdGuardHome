@@ -16,7 +16,7 @@ func newIDIndex(m []*Persistent) (ci *index) {
 	ci = newIndex()
 
 	for _, c := range m {
-		c.UID = MustNewUID()
+		c.UID = NewUID()
 		ci.add(c)
 	}
 
@@ -170,7 +170,7 @@ func TestClientIndex_Clashes(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			clone := tc.client.ShallowClone()
-			clone.UID = MustNewUID()
+			clone.UID = NewUID()
 
 			err := ci.clashes(clone)
 			require.Error(t, err)

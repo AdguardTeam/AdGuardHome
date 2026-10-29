@@ -510,7 +510,6 @@
   "password_requirements_characters": "至少 8 個字元",
   "password_requirements_lowercase": "至少 1 個小寫字母",
   "password_requirements_match": "密碼匹配",
-  "password_requirements_special": "英文字母、數字和特殊字元",
   "password_requirements_uppercase": "至少 1 個大寫字母",
   "pause_for_hour": "暫停 %count% 小時",
   "pause_for_minutes": "暫停 %count% 分鐘 | 暫停 %count% 分鐘",

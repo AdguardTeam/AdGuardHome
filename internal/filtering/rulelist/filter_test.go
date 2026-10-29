@@ -53,7 +53,7 @@ func TestFilter_Refresh(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			uid := rulelist.MustNewUID()
+			uid := rulelist.NewUID()
 			f, err := rulelist.NewFilter(&rulelist.FilterConfig{
 				URL:         tc.url,
 				Name:        tc.name,

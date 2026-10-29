@@ -19,9 +19,9 @@ func notify6(flags uint32) {
 }
 
 func TestV6_AddRemove_static(t *testing.T) {
-	s, err := v6Create(V6ServerConf{
+	s, err := newV6Server(V6ServerConf{
 		Enabled:    true,
-		RangeStart: net.ParseIP("2001::1"),
+		RangeStart: netip.MustParseAddr("2001::1"),
 		notify:     notify6,
 	})
 	require.NoError(t, err)
@@ -62,9 +62,9 @@ func TestV6_AddRemove_static(t *testing.T) {
 }
 
 func TestV6_AddReplace(t *testing.T) {
-	sIface, err := v6Create(V6ServerConf{
+	sIface, err := newV6Server(V6ServerConf{
 		Enabled:    true,
-		RangeStart: net.ParseIP("2001::1"),
+		RangeStart: netip.MustParseAddr("2001::1"),
 		notify:     notify6,
 	})
 	require.NoError(t, err)
@@ -110,9 +110,9 @@ func TestV6_AddReplace(t *testing.T) {
 
 func TestV6GetLease(t *testing.T) {
 	var err error
-	sIface, err := v6Create(V6ServerConf{
+	sIface, err := newV6Server(V6ServerConf{
 		Enabled:    true,
-		RangeStart: net.ParseIP("2001::1"),
+		RangeStart: netip.MustParseAddr("2001::1"),
 		notify:     notify6,
 	})
 	require.NoError(t, err)
@@ -204,9 +204,9 @@ func TestV6GetLease(t *testing.T) {
 }
 
 func TestV6GetDynamicLease(t *testing.T) {
-	sIface, err := v6Create(V6ServerConf{
+	sIface, err := newV6Server(V6ServerConf{
 		Enabled:    true,
-		RangeStart: net.ParseIP("2001::2"),
+		RangeStart: netip.MustParseAddr("2001::2"),
 		notify:     notify6,
 	})
 	require.NoError(t, err)

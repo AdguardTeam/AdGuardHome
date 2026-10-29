@@ -23,11 +23,12 @@ vi.mock('panel/common/intl', async () =>
 );
 
 import { getBlockedServices, getAllBlockedServices, servicesState } from 'panel/stores/services';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 
 describe('getBlockedServices — initialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        servicesState.initialized = false;
+        resetStore(servicesState, { initialized: false });
     });
 
     it('marks initialized after a successful request', async () => {
@@ -51,7 +52,7 @@ describe('getBlockedServices — initialized flag', () => {
 describe('getAllBlockedServices — allInitialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        servicesState.allInitialized = false;
+        resetStore(servicesState, { allInitialized: false });
     });
 
     it('marks allInitialized after a successful request', async () => {

@@ -1,4 +1,4 @@
-import { Show, createMemo, createSignal } from 'solid-js';
+import { Show, createSignal } from 'solid-js';
 
 import intl from 'panel/common/intl';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
@@ -30,25 +30,27 @@ type ClientBlockConfirmDialogProps = {
 export const ClientBlockConfirmDialog = (props: ClientBlockConfirmDialogProps) => {
     const isBlock = () => props.state.action === 'block';
 
-    const title = createMemo(() =>
+    // Accessors, not memos: a memo computes eagerly on creation, and the dialog
+    // starts closed with an empty client, so `%ip%` would be reported missing on
+    // every render of the page.  As JSX props these run only once the dialog
+    // opens, and they stay reactive through the prop getters.
+    const getTitle = () =>
         isBlock()
             ? intl.getMessage('confirm_client_block_title', { ip: props.state.client })
-            : intl.getMessage('confirm_client_unblock_title', { ip: props.state.client }),
-    );
+            : intl.getMessage('confirm_client_unblock_title', { ip: props.state.client });
 
-    const text = createMemo(() =>
+    const getText = () =>
         isBlock()
             ? intl.getMessage('confirm_client_block_desc', { ip: props.state.client })
-            : intl.getMessage('confirm_client_unblock_desc', { ip: props.state.client }),
-    );
+            : intl.getMessage('confirm_client_unblock_desc', { ip: props.state.client });
 
     return (
         <Show when={props.state.open}>
             <ConfirmDialog
                 onClose={props.onClose}
                 onConfirm={props.onConfirm}
-                title={title()}
-                text={text()}
+                title={getTitle()}
+                text={getText()}
                 buttonText={isBlock() ? intl.getMessage('block') : intl.getMessage('unblock')}
                 cancelText={intl.getMessage('cancel')}
                 buttonVariant={isBlock() ? 'danger' : 'primary'}

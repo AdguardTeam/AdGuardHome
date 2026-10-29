@@ -49,7 +49,7 @@ func defaultSrv(tb testing.TB) (s DHCPServer) {
 	tb.Helper()
 
 	var err error
-	s, err = v4Create(defaultV4ServerConf())
+	s, err = newV4Server(defaultV4ServerConf())
 	require.NoError(tb, err)
 
 	return s
@@ -353,7 +353,7 @@ func TestV4Server_handle_optionsPriority(t *testing.T) {
 		}
 
 		var err error
-		s, err = v4Create(conf)
+		s, err = newV4Server(conf)
 		require.NoError(t, err)
 
 		s.conf.dnsIPAddrs = []netip.Addr{defaultIP}
@@ -485,7 +485,7 @@ func TestV4Server_updateOptions(t *testing.T) {
 		conf := defaultV4ServerConf()
 		conf.Options = tc.confOpts
 
-		s, err := v4Create(conf)
+		s, err := newV4Server(conf)
 		require.NoError(t, err)
 		require.IsType(t, (*v4Server)(nil), s)
 
@@ -604,7 +604,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		"82 ip 1.2.3.4",
 	}
 
-	s, err := v4Create(conf)
+	s, err := newV4Server(conf)
 	require.NoError(t, err)
 
 	s.conf.dnsIPAddrs = []netip.Addr{netip.MustParseAddr("192.168.10.1")}

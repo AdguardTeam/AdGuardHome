@@ -510,7 +510,6 @@
   "password_requirements_characters": "최소 8자",
   "password_requirements_lowercase": "소문자 1자 이상",
   "password_requirements_match": "비밀번호가 일치합니다.",
-  "password_requirements_special": "영문자, 숫자 및 특수 문자",
   "password_requirements_uppercase": "대문자 1자 이상",
   "pause_for_hour": "%count%시간 동안 일시 중지",
   "pause_for_minutes": "%count%분 동안 일시 중지 | %count%분 동안 일시 중지",

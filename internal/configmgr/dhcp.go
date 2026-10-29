@@ -18,12 +18,14 @@ type DHCPConfig struct {
 	Conf6 *DHCPv6Config `yaml:"dhcpv6"`
 
 	// InterfaceName is the name of the network interface the DHCP server
-	// listens on.
+	// listens on.  It must be a valid network interface name if Enabled is
+	// true.
 	InterfaceName string `yaml:"interface_name"`
 
 	// LocalDomainName is the domain name used for DHCP hosts.  For example, a
 	// DHCP client with the hostname "myhost" can be addressed as "myhost.lan"
-	// when LocalDomainName is "lan".
+	// when LocalDomainName is "lan".  It must be a valid domain name if it is
+	// not empty.
 	//
 	// TODO(e.burkov):  Probably, remove this field.  See the TODO on
 	// [dhcpd.Interface.Enabled].
@@ -60,6 +62,8 @@ type DHCPv4Config struct {
 	//
 	// Option with IP data (only 1 IP is supported):
 	//     DEC_CODE ip IP_ADDR
+	//
+	// It must not be mutated after the configuration is loaded.
 	Options []string `yaml:"options"`
 
 	// ICMPTimeout is the time in milliseconds to wait for an ICMP reply during
@@ -74,7 +78,7 @@ type DHCPv4Config struct {
 type DHCPv6Config struct {
 	// RangeStart is the first IPv6 address of the dynamic lease range.  The
 	// last allowed IP address ends with the 0xff byte.
-	RangeStart net.IP `yaml:"range_start"`
+	RangeStart netip.Addr `yaml:"range_start"`
 
 	// LeaseDuration is the duration of lease in seconds.
 	LeaseDuration uint32 `yaml:"lease_duration"`
@@ -99,12 +103,19 @@ func (c *DHCPConfig) Validate() (err error) {
 		return nil
 	}
 
-	// TODO(d.kolyshev):  Add validations.
+	// TODO(a.garipov):  Consider unconditional validation.
+	var errs []error
+	if c.Conf4 != nil && c.Conf4.RangeStart.IsValid() {
+		errs = validate.Append(errs, "dhcpv4", c.Conf4)
+	}
 
-	return errors.Join(
-		errors.Annotate(c.Conf4.Validate(), "dhcpv4: %w"),
-		errors.Annotate(c.Conf6.Validate(), "dhcpv6: %w"),
-	)
+	if c.Conf6 != nil && c.Conf6.RangeStart.IsValid() {
+		errs = validate.Append(errs, "dhcpv6", c.Conf6)
+	}
+
+	// TODO(d.kolyshev):  Add more validations.
+
+	return errors.Join(errs...)
 }
 
 // type check
@@ -204,6 +215,11 @@ var _ validate.Interface = (*DHCPv6Config)(nil)
 
 // Validate implements the [validate.Interface] interface for *DHCPv6Config.
 func (c *DHCPv6Config) Validate() (err error) {
+	if c == nil {
+		return errors.ErrNoValue
+	}
+
 	// TODO(d.kolyshev):  Add validations.
+
 	return nil
 }

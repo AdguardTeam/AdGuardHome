@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { getAdditionalLogs, setFilteredLogs, getLogsConfig, queryLogsState } from 'panel/stores/queryLogs';
+import { resetStore } from 'panel/__tests__/helpers/resetStore';
 import { queryLog, getQueryLogConfig } from 'panel/api/generated';
 
 vi.mock('panel/api/generated', () => ({
@@ -149,7 +150,7 @@ describe('queryLogs store', () => {
 describe('getLogsConfig — configInitialized flag', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        queryLogsState.configInitialized = false;
+        resetStore(queryLogsState, { configInitialized: false });
     });
 
     it('marks configInitialized after a successful request', async () => {

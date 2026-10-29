@@ -38,7 +38,7 @@ type webUser struct {
 func (wu *webUser) toUser() (u *aghuser.User) {
 	uid := wu.UserID
 	if uid == (aghuser.UserID{}) {
-		uid = aghuser.MustNewUserID()
+		uid = aghuser.NewUserID()
 	}
 
 	return &aghuser.User{

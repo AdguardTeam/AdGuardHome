@@ -6,7 +6,7 @@ import { redirectToCurrentProtocol } from 'panel/helpers/helpers';
  * Replaces the jsdom location with a plain object so `replace()` is a spy.
  * `redirectToCurrentProtocol` reads the location at call time.
  */
-const mockLocation = (props: {
+const mockLocation = (location: {
     protocol: string;
     hostname: string;
     hash: string;
@@ -15,10 +15,10 @@ const mockLocation = (props: {
     const replace = vi.fn();
     Object.defineProperty(window, 'location', {
         value: {
-            protocol: props.protocol,
-            hostname: props.hostname,
-            hash: props.hash,
-            port: props.port ?? '',
+            protocol: location.protocol,
+            hostname: location.hostname,
+            hash: location.hash,
+            port: location.port ?? '',
             replace,
         },
         writable: true,

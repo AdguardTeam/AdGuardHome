@@ -9,6 +9,7 @@ import (
 	"net/netip"
 	"slices"
 	"strings"
+	"uuid"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -16,28 +17,14 @@ import (
 	"github.com/AdguardTeam/dnsproxy/upstream"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
-	"github.com/google/uuid"
 )
 
 // UID is the type for the unique IDs of persistent clients.
 type UID uuid.UUID
 
-// NewUID returns a new persistent client UID.  Any error returned is an error
-// from the cryptographic randomness reader.
-func NewUID() (uid UID, err error) {
-	uuidv7, err := uuid.NewV7()
-
-	return UID(uuidv7), err
-}
-
-// MustNewUID is a wrapper around [NewUID] that panics if there is an error.
-func MustNewUID() (uid UID) {
-	uid, err := NewUID()
-	if err != nil {
-		panic(fmt.Errorf("unexpected uuidv7 error: %w", err))
-	}
-
-	return uid
+// NewUID returns a new persistent client UID.
+func NewUID() (uid UID) {
+	return UID(uuid.NewV7())
 }
 
 // type check

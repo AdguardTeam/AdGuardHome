@@ -503,6 +503,18 @@ describe('numeric range validators', () => {
         expect(validateBetween(16, 0, 32)).toBeUndefined();
     });
 
+    it('validateBetween returns error for non-finite values', () => {
+        expect(validateBetween(NaN, 0, 32)).toBeTruthy();
+        expect(validateBetween(Infinity, 0, 32)).toBeTruthy();
+        expect(validateBetween(-Infinity, 0, 32)).toBeTruthy();
+    });
+
+    it('validateBetween optionally rejects non-integer values', () => {
+        expect(validateBetween(0.5, 0, 32, { integer: true })).toBeTruthy();
+        expect(validateBetween(0.5, 0, 32)).toBeUndefined();
+        expect(validateBetween(16, 0, 32, { integer: true })).toBeUndefined();
+    });
+
     it('validateMinValue returns error when value is below min', () => {
         expect(validateMinValue(0, 1)).toBeTruthy();
         expect(validateMinValue(1, 1)).toBeUndefined();
@@ -537,6 +549,10 @@ describe('validateCacheSize', () => {
     it('returns error for value exceeding UINT32_MAX', () => {
         const result = validateCacheSize(4294967296, true);
         expect(result).toBeTruthy();
+    });
+
+    it('returns error for a fractional size when enabled', () => {
+        expect(validateCacheSize(1.5, true)).toBeTruthy();
     });
 
     it('returns undefined at UINT32_MAX boundary', () => {

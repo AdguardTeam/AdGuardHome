@@ -3,31 +3,15 @@
 package aghuser
 
 import (
-	"fmt"
-
-	"github.com/google/uuid"
+	"uuid"
 )
 
 // UserID is the type for the unique IDs of web users.
 type UserID uuid.UUID
 
-// NewUserID returns a new web user unique identifier.  Any error returned is an
-// error from the cryptographic randomness reader.
-func NewUserID() (uid UserID, err error) {
-	uuidv7, err := uuid.NewV7()
-
-	return UserID(uuidv7), err
-}
-
-// MustNewUserID is a wrapper around [NewUserID] that panics if there is an
-// error.  It is currently only used in tests.
-func MustNewUserID() (uid UserID) {
-	uid, err := NewUserID()
-	if err != nil {
-		panic(fmt.Errorf("unexpected uuidv7 error: %w", err))
-	}
-
-	return uid
+// NewUserID returns a new web user unique identifier.
+func NewUserID() (uid UserID) {
+	return UserID(uuid.NewV7())
 }
 
 // User represents a web user.
