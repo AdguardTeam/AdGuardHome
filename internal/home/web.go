@@ -723,10 +723,16 @@ func checkPortAvailability(
 		newPort:  newConf.PortDNSOverQUIC,
 	}}
 
+	if !newConf.Enabled {
+		return nil
+	}
+
 	var errs []error
+	enabledChanged := newConf.Enabled != currConf.Enabled
 	for _, v := range needBindingCheck {
 		port := v.newPort
-		if v.currPort == port {
+
+		if v.currPort == v.newPort && !enabledChanged {
 			continue
 		}
 
