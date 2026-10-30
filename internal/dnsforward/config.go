@@ -201,7 +201,8 @@ type TLSConfig struct {
 	QUICListenAddrs []*net.UDPAddr
 
 	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
-	// DoH connections.  These addresses are announced with DDR.  Each item in
+	// DoH connections.  These addresses are announced with DDR.  The field is
+	// set only if at least one DoH route is configured.  Each item in
 	// the list must be non-nil.
 	HTTPSListenAddrs []netip.AddrPort
 

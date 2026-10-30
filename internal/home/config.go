@@ -587,10 +587,22 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		return fmt.Errorf("validating http config: %w", err)
 	}
 
+	if config.TLS.Enabled && config.TLS.PortHTTPS != 0 && len(config.HTTPConfig.DoH.Routes) == 0 {
+		l.WarnContext(ctx, "no dns-over-https routes configured; dns-over-https is not served")
+	}
+
 	if len(config.Users) == 0 {
 		l.WarnContext(ctx, "no users in the configuration file; authentication is disabled")
 	}
 
+	validateLanguage(ctx, l)
+
+	return nil
+}
+
+// validateLanguage validates the specified language and clears it with a
+// warning if it is unsupported.  l must not be nil.
+func validateLanguage(ctx context.Context, l *slog.Logger) {
 	if config.Language != "" && !allowedLanguages.Has(config.Language) {
 		l.WarnContext(ctx, "unsupported language", "lang", config.Language)
 
@@ -598,8 +610,6 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		// language.
 		config.Language = ""
 	}
-
-	return nil
 }
 
 // validateConfigPorts returns an error in case the given conf has conflict
