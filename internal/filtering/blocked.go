@@ -21,14 +21,10 @@ import (
 // serviceRules maps a service ID to its filtering rules.
 var serviceRules map[string][]*rules.NetworkRule
 
-// serviceIDs contains service IDs sorted alphabetically.
-var serviceIDs []string
-
 // initBlockedServices initializes package-level blocked service data.  l must
 // not be nil.
 func initBlockedServices(ctx context.Context, l *slog.Logger) {
 	svcLen := len(blockedServices)
-	serviceIDs = make([]string, svcLen)
 	serviceRules = make(map[string][]*rules.NetworkRule, svcLen)
 
 	for i, s := range blockedServices {
@@ -44,17 +40,15 @@ func initBlockedServices(ctx context.Context, l *slog.Logger) {
 			l.ErrorContext(
 				ctx,
 				"parsing blocked service rule",
+				"idx", i,
 				"svc", s.ID,
 				"rule", text,
 				slogutil.KeyError, err,
 			)
 		}
 
-		serviceIDs[i] = s.ID
 		serviceRules[s.ID] = netRules
 	}
-
-	slices.Sort(serviceIDs)
 
 	l.DebugContext(ctx, "initialized services", "svc_len", svcLen)
 }
@@ -153,10 +147,6 @@ func (d *DNSFilter) ApplyBlockedServicesList(setts *Settings, list []string) {
 	}
 }
 
-func (d *DNSFilter) handleBlockedServicesIDs(w http.ResponseWriter, r *http.Request) {
-	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, serviceIDs)
-}
-
 func (d *DNSFilter) handleBlockedServicesAll(w http.ResponseWriter, r *http.Request) {
 	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, struct {
 		BlockedServices []blockedService `json:"blocked_services"`
@@ -165,48 +155,6 @@ func (d *DNSFilter) handleBlockedServicesAll(w http.ResponseWriter, r *http.Requ
 		BlockedServices: blockedServices,
 		ServiceGroups:   serviceGroups,
 	})
-}
-
-// handleBlockedServicesList is the handler for the GET
-// /control/blocked_services/list HTTP API.
-//
-// Deprecated:  Use handleBlockedServicesGet.
-func (d *DNSFilter) handleBlockedServicesList(w http.ResponseWriter, r *http.Request) {
-	var list []string
-	func() {
-		d.confMu.Lock()
-		defer d.confMu.Unlock()
-
-		list = d.conf.BlockedServices.IDs
-	}()
-
-	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, list)
-}
-
-// handleBlockedServicesSet is the handler for the POST
-// /control/blocked_services/set HTTP API.
-//
-// Deprecated:  Use handleBlockedServicesUpdate.
-func (d *DNSFilter) handleBlockedServicesSet(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	list := []string{}
-	err := json.NewDecoder(r.Body).Decode(&list)
-	if err != nil {
-		aghhttp.ErrorAndLog(ctx, d.logger, r, w, http.StatusBadRequest, "json.Decode: %s", err)
-
-		return
-	}
-
-	func() {
-		d.confMu.Lock()
-		defer d.confMu.Unlock()
-
-		d.conf.BlockedServices.IDs = list
-		d.logger.DebugContext(ctx, "updated blocked services list", "len", len(list))
-	}()
-
-	d.conf.ConfModifier.Apply(ctx)
 }
 
 // handleBlockedServicesGet is the handler for the GET
