@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Invalid SVCB record from DDR when DoH routes are empty.
+
 - Incorrect behaviour on the first launch with the `--check-config` flag.
 
 - Reading partially received TCP prefix.
