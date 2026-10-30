@@ -3,7 +3,7 @@ import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { Icon } from 'panel/common/ui/Icon';
-import { Link } from 'panel/common/ui/Link';
+import { SettingLink } from 'panel/common/ui/SettingLink';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
 import theme from 'panel/lib/theme';
@@ -244,25 +244,18 @@ export const BlockedServices = (props: Props) => {
                         </div>
                     </Show>
 
-                    <Link
+                    <SettingLink
                         to={getScheduleRoute()}
-                        props={scheduleRouteProps()}
-                        class={cn(s.navItem, { [s.navItemDisabled]: isGloballyDisabled() })}
+                        linkProps={scheduleRouteProps()}
+                        title={intl.getMessage('inactivity_schedule')}
+                        description={
+                            isGloballyDisabled()
+                                ? intl.getMessage('clients_global_inactivity_schedule_note')
+                                : intl.getMessage('inactivity_schedule_desc')
+                        }
                         disabled={isGloballyDisabled()}
                         data-testid="blocked-services-schedule-link"
-                    >
-                        <div class={s.navItemContent}>
-                            <div class={s.navItemTitle}>
-                                {intl.getMessage('inactivity_schedule')}
-                            </div>
-                            <div class={s.navItemDesc}>
-                                {isGloballyDisabled()
-                                    ? intl.getMessage('clients_global_inactivity_schedule_note')
-                                    : intl.getMessage('inactivity_schedule_desc')}
-                            </div>
-                        </div>
-                        <Icon icon="arrow" color="gray" class={s.icon} />
-                    </Link>
+                    />
 
                     <Show when={isGloballyDisabled()}>
                         <div

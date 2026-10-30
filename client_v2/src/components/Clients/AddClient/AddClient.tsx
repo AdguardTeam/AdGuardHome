@@ -8,9 +8,8 @@ import { Select } from 'panel/common/controls/Select';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { Textarea } from 'panel/common/controls/Textarea';
 import { Button } from 'panel/common/ui/Button';
-import { Icon } from 'panel/common/ui/Icon';
-import { Link } from 'panel/common/ui/Link';
 import { PageLoader } from 'panel/common/ui/Loader';
+import { SettingLink } from 'panel/common/ui/SettingLink';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 import {
     clientFormState,
@@ -234,40 +233,20 @@ export const AddClient = () => {
                         onChange={handleUseGlobalSettings}
                     />
 
-                    <Link
+                    <SettingLink
                         to={protectionRoute()}
-                        props={routeProps()}
-                        class={cn(s.navLink, {
-                            [s.navLinkDisabled]: clientFormState.use_global_settings,
-                        })}
+                        linkProps={routeProps()}
+                        title={intl.getMessage('clients_protection')}
+                        description={intl.getMessage('clients_protection_desc')}
                         disabled={clientFormState.use_global_settings}
-                    >
-                        <div class={s.navItem}>
-                            <div class={s.navItemContent}>
-                                <div class={cn(theme.text.t2, theme.text.semibold, s.navTitle)}>
-                                    {intl.getMessage('clients_protection')}
-                                </div>
-                                <div class={cn(theme.text.t3, s.navDesc)}>
-                                    {intl.getMessage('clients_protection_desc')}
-                                </div>
-                            </div>
-                            <Icon icon="arrow" color="gray" class={s.icon} />
-                        </div>
-                    </Link>
+                    />
 
-                    <Link to={blockedServicesRoute()} props={routeProps()} class={s.navLink}>
-                        <div class={s.navItem}>
-                            <div class={s.navItemContent}>
-                                <div class={cn(theme.text.t2, theme.text.semibold, s.navTitle)}>
-                                    {intl.getMessage('blocked_services')}
-                                </div>
-                                <div class={cn(theme.text.t3, s.navDesc)}>
-                                    {intl.getMessage('blocked_services_desc')}
-                                </div>
-                            </div>
-                            <Icon icon="arrow" color="gray" />
-                        </div>
-                    </Link>
+                    <SettingLink
+                        to={blockedServicesRoute()}
+                        linkProps={routeProps()}
+                        title={intl.getMessage('blocked_services')}
+                        description={intl.getMessage('blocked_services_desc')}
+                    />
 
                     <h2 class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
                         {intl.getMessage('upstream_dns_servers_title')}
