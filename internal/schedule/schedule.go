@@ -72,11 +72,11 @@ func (w *Weekly) Contains(t time.Time) (ok bool) {
 	dr := w.days[wd]
 
 	// Calculate the offset of the day range.
-	//
-	// NOTE: Do not use [time.Truncate] since it requires UTC time zone.
-	y, m, d := t.Date()
-	day := time.Date(y, m, d, 0, 0, 0, 0, w.location)
-	offset := t.Sub(day)
+	h, m, s := t.Clock()
+	offset := time.Duration(h)*time.Hour +
+		time.Duration(m)*time.Minute +
+		time.Duration(s)*time.Second +
+		time.Duration(t.Nanosecond())
 
 	return dr.contains(offset)
 }

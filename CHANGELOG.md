@@ -28,6 +28,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Schedule shift on clock change cases ([#8670]).
+
 - Incorrect behaviour on the first launch with the `--check-config` flag.
 
 - Reading partially received TCP prefix.
@@ -72,6 +74,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
 
+[#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608
