@@ -197,6 +197,8 @@ func (s *Server) processDDRQuery(
 // similar to examples provided by the [draft standard].
 //
 // TODO(a.meshkov):  Consider setting the priority values based on the protocol.
+// TODO(m.kazantsev):  Actually use the effective DoH routes configuration for
+// DDR advertisements.
 //
 // [draft standard]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-10.html.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {

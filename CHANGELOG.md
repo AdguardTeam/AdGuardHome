@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Invalid SVCB record from DDR when DoH routes are empty.
+
 - Schedule shift on clock change cases ([#8670]).
 
 - Incorrect behaviour on the first launch with the `--check-config` flag.

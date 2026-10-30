@@ -79,7 +79,8 @@ func collectDNSAddresses(extTLSConf *aghtls.ExtendedTLSConfig) (addrs []string, 
 		}
 	}
 
-	de := getDNSEncryption(extTLSConf)
+	hasDoHRoutes := len(config.HTTPConfig.DoH.Routes) > 0
+	de := getDNSEncryption(extTLSConf, hasDoHRoutes)
 	if de.https != "" {
 		addrs = append(addrs, de.https)
 	}
