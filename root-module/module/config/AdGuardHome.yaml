@@ -1,0 +1,166 @@
+# Cấu hình AdGuardHome mặc định của module / Default AdGuardHome config of the module.
+# - Bảng điều khiển chỉ lắng nghe trên 127.0.0.1 (không lộ ra mạng LAN).
+# - Mật khẩu ban đầu là hash của một chuỗi ngẫu nhiên không ai biết: bảng điều khiển
+#   AdGuardHome bị khóa cho tới khi bạn đặt mật khẩu trong WebUI của module.
+http:
+  pprof:
+    port: 6060
+    enabled: false
+  address: 127.0.0.1:3000
+  session_ttl: 720h
+users:
+  - name: admin
+    password: $2a$10$Vz7EEh8itLl8vcnAFFJHIuHY/teM5faQ4MNZ4ZxZ6RLB2cBkFlsci
+auth_attempts: 5
+block_auth_min: 15
+http_proxy: ""
+language: vi
+theme: auto
+dns:
+  bind_hosts:
+    - 127.0.0.1
+  port: 5591
+  anonymize_client_ip: false
+  ratelimit: 0
+  refuse_any: true
+  upstream_dns:
+    - https://1.1.1.1/dns-query
+    - https://8.8.8.8/dns-query
+    - https://9.9.9.9/dns-query
+  upstream_dns_file: ""
+  bootstrap_dns:
+    - 1.1.1.1
+    - 8.8.8.8
+    - 9.9.9.9
+  fallback_dns:
+    - https://8.8.8.8/dns-query
+  upstream_mode: parallel
+  fastest_timeout: 1s
+  upstream_timeout: 5s
+  blocked_hosts:
+    - version.bind
+    - id.server
+    - hostname.bind
+  cache_enabled: true
+  cache_size: 67108864
+  cache_ttl_min: 300
+  cache_optimistic: true
+  edns_cs_enabled: false
+  use_http3_upstreams: true
+  use_private_ptr_resolvers: false
+  enable_dnssec: false
+  serve_plain_dns: true
+  hostsfile_enabled: true
+tls:
+  enabled: false
+querylog:
+  enabled: true
+  file_enabled: true
+  interval: 24h
+  size_memory: 1000
+  ignored: []
+statistics:
+  enabled: true
+  interval: 24h
+  ignored: []
+filters:
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+    name: AdGuard DNS filter
+    id: 1
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_48.txt
+    name: HaGeZi Pro
+    id: 48
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_51.txt
+    name: HaGeZi Pro++
+    id: 51
+  - enabled: false
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_49.txt
+    name: HaGeZi Ultimate
+    id: 49
+  - enabled: true
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_16.txt
+    name: ABPVN
+    id: 16
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/filters.txt
+    name: uBlock filters - Ads
+    id: 101
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/badware.txt
+    name: uBlock filters - Badware risks
+    id: 201
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/privacy.txt
+    name: uBlock filters - Privacy
+    id: 202
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/quick-fixes.txt
+    name: uBlock filters - Quick fixes
+    id: 203
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/filters/unbreak.txt
+    name: uBlock filters - Unbreak
+    id: 204
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/thirdparties/easylist.txt
+    name: EasyList
+    id: 205
+  - enabled: false
+    url: https://ublockorigin.github.io/uAssets/thirdparties/easyprivacy.txt
+    name: EasyPrivacy
+    id: 206
+  - enabled: false
+    url: https://malware-filter.gitlab.io/urlhaus-filter/urlhaus-filter-agh-online.txt
+    name: URLhaus malicious URLs
+    id: 207
+  - enabled: false
+    url: https://malware-filter.gitlab.io/phishing-filter/phishing-filter-agh.txt
+    name: Phishing URL blocklist
+    id: 208
+  - enabled: false
+    url: https://pgl.yoyo.org/adservers/serverlist.php?hostformat=adblockplus&showintro=0&mimetype=plaintext
+    name: Peter Lowe's ad and tracking servers
+    id: 209
+  - enabled: false
+    url: https://filters.adtidy.org/extension/ublock/filters/11.txt
+    name: AdGuard Mobile Ads
+    id: 210
+whitelist_filters: []
+user_rules:
+  - '@@||connectivitycheck.gstatic.com^$important'
+  - '@@||connectivitycheck.android.com^$important'
+  - '@@||clients3.google.com^$important'
+  - '@@||time.android.com^$important'
+dhcp:
+  enabled: false
+filtering:
+  filtering_enabled: true
+  protection_enabled: true
+  filters_update_interval: 24
+  blocked_response_ttl: 10
+  blocking_mode: default
+clients:
+  runtime_sources:
+    whois: false
+    arp: false
+    rdns: false
+    dhcp: false
+    hosts: true
+  persistent: []
+log:
+  enabled: true
+  file: ""
+  max_backups: 0
+  max_size: 100
+  max_age: 3
+  compress: false
+  local_time: false
+  verbose: false
+os:
+  group: ""
+  user: ""
+  rlimit_nofile: 0
+schema_version: 34
