@@ -28,18 +28,6 @@ export interface QueryLogItem {
     ecs?: string;
     elapsedMs?: string;
     question?: DnsQuestion;
-    /**
-     * In case if there's a rule applied to this DNS request, this is ID of the filter list that the rule belongs to.
-     * Deprecated: use `rules[*].filter_list_id` instead.
-     * @deprecated
-     */
-    filterId?: number;
-    /**
-     * Filtering rule applied to the request (if any).
-     * Deprecated: use `rules[*].text` instead.
-     * @deprecated
-     */
-    rule?: string;
     /** Applied rules. */
     rules?: ResultRule[];
     reason?: FilteringReason;

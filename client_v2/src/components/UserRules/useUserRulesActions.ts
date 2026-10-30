@@ -305,7 +305,6 @@ export const useUserRulesActions = (
                     ? updateClient(clientSnapshot.name, {
                           ...clientSnapshot,
                           safe_search: { ...clientSnapshot.safe_search, enabled: true },
-                          safesearch_enabled: true,
                       })
                     : toggleSetting('safesearch', { ...currentSafeSearch, enabled: true }),
             refresh: refreshSettingsAndClients,

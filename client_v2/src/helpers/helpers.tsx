@@ -116,8 +116,6 @@ export const normalizeLogs = (logs: QueryLogItem[]): NormalizedQueryLogItem[] =>
             reason,
             status,
             time,
-            filterId,
-            rule,
             rules,
             service_name,
             original_answer,
@@ -141,17 +139,6 @@ export const normalizeLogs = (logs: QueryLogItem[]): NormalizedQueryLogItem[] =>
                   })
                 : [];
 
-        let newRules = Array.isArray(rules) ? rules : [];
-        /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
-        if (rule !== undefined && filterId !== undefined && newRules.length === 0) {
-            newRules = [
-                {
-                    filter_list_id: filterId,
-                    text: rule,
-                },
-            ];
-        }
-
         return {
             time,
             domain,
@@ -168,10 +155,7 @@ export const normalizeLogs = (logs: QueryLogItem[]): NormalizedQueryLogItem[] =>
                       whois: client_info.whois || {},
                   }
                 : null,
-            /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
-            filterId,
-            rule,
-            rules: newRules,
+            rules: Array.isArray(rules) ? rules : [],
             status,
             service_name,
             serviceName: service_name,
