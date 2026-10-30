@@ -9,7 +9,7 @@ verbose="${VERBOSE:-0}"
 readonly verbose
 
 # Don't use -f, because we use globs in this script.
-set -e -u
+set -e -o 'pipefail' -u
 
 if [ "$verbose" -gt '0' ]; then
 	set -x

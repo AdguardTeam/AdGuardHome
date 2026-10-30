@@ -8,7 +8,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 3
+# AdGuard-Project-Version: 5
 
 # Only show interactive prompts if there a terminal is attached to stdout.
 # While this technically doesn't guarantee that reading from /dev/tty works,
