@@ -215,6 +215,10 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 		yamlEqFunc:    require.YAMLEq,
 		name:          "v34",
 		targetVersion: 34,
+	}, {
+		yamlEqFunc:    require.YAMLEq,
+		name:          "v35",
+		targetVersion: 35,
 	}}
 
 	for _, tc := range testCases {
@@ -228,9 +232,10 @@ func TestMigrateConfig_Migrate(t *testing.T) {
 			require.NoError(t, err)
 
 			migrator := configmigrate.New(&configmigrate.Config{
-				Logger:     testLogger,
-				WorkingDir: t.Name(),
-				DataDir:    filepath.Join(t.Name(), "data"),
+				Logger:           testLogger,
+				WorkingDir:       t.Name(),
+				DataDir:          filepath.Join(t.Name(), "data"),
+				LegacyNoEtcHosts: true,
 			})
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			newBody, upgraded, err := migrator.Migrate(ctx, body, tc.targetVersion)
