@@ -251,7 +251,7 @@ export const AddClient = () => {
                                     {intl.getMessage('clients_protection_desc')}
                                 </div>
                             </div>
-                            <Icon icon="arrow" color="gray" />
+                            <Icon icon="arrow" color="gray" class={s.icon} />
                         </div>
                     </Link>
 

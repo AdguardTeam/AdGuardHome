@@ -56,6 +56,8 @@ describe('BlockedServices client scope', () => {
         expect(scheduleLink).toHaveTextContent(
             copyInDom('clients_global_inactivity_schedule_note'),
         );
+        // The arrow stays visible in the disabled row; only its color changes.
+        expect(scheduleLink.querySelector('svg')).not.toBeNull();
 
         expect(document.getElementById('use-global-blocked-services')).toBeChecked();
     });

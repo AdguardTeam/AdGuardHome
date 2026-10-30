@@ -261,9 +261,7 @@ export const BlockedServices = (props: Props) => {
                                     : intl.getMessage('inactivity_schedule_desc')}
                             </div>
                         </div>
-                        <Show when={!isGloballyDisabled()}>
-                            <Icon icon="arrow" color="gray" />
-                        </Show>
+                        <Icon icon="arrow" color="gray" class={s.icon} />
                     </Link>
 
                     <Show when={isGloballyDisabled()}>
