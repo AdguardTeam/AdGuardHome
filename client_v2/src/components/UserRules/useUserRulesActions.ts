@@ -295,7 +295,6 @@ export const useUserRulesActions = (
                               ...effectiveSettings,
                               use_global_settings: false,
                               safe_search: safeSearch,
-                              safesearch_enabled: safeSearch.enabled,
                           };
                       })
                     : toggleSetting('safesearch', { ...currentSafeSearch, enabled: false }),
