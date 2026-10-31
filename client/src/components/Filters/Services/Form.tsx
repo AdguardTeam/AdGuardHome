@@ -1,10 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { Trans, useTranslation } from 'react-i18next';
 
 import { Controller, useForm } from 'react-hook-form';
 
 import { ServiceField } from './ServiceField';
+import { ScheduleForm } from './ScheduleForm';
 
 export type BlockedService = {
     id: string;
@@ -17,6 +18,14 @@ export type ServiceGroups = {
     id: string;
 }
 
+export type ServiceSchedule = {
+    id: string;
+    schedule?: {
+        time_zone: string;
+        [key: string]: any;
+    };
+};
+
 type FormValues = {
     blocked_services: Record<string, boolean>;
 };
@@ -25,7 +34,9 @@ interface FormProps {
     initialValues: Record<string, boolean>;
     blockedServices: BlockedService[];
     serviceGroups: ServiceGroups[];
-    onSubmit: (values: FormValues) => void;
+    serviceSchedules?: ServiceSchedule[];
+    onSubmit: (values: FormValues & { services?: ServiceSchedule[] }) => void;
+    onScheduleSubmit?: (serviceId: string, schedule: any) => void;
     processing: boolean;
     processingSet: boolean;
 }
@@ -34,11 +45,15 @@ export const Form = ({
     initialValues,
     blockedServices,
     serviceGroups,
+    serviceSchedules = [],
+    onSubmit,
+    onScheduleSubmit,
     processing,
     processingSet,
-    onSubmit,
 }: FormProps) => {
     const { t } = useTranslation();
+    const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+    const [currentServiceId, setCurrentServiceId] = useState<string | null>(null);
 
     const {
         handleSubmit,
@@ -63,6 +78,14 @@ export const Form = ({
         }, {} as Record<string, BlockedService[]>);
     }, [blockedServices]);
 
+    const serviceScheduleMap = useMemo(() => {
+        const map: Record<string, any> = {};
+        serviceSchedules.forEach(svc => {
+            map[svc.id] = svc.schedule;
+        });
+        return map;
+    }, [serviceSchedules]);
+
     const handleToggleAllServices = (isSelected: boolean) => {
         blockedServices.forEach((service) => {
             if (!isServicesControlsDisabled) {
@@ -80,6 +103,27 @@ export const Form = ({
         });
     };
 
+    const handleScheduleClick = (serviceId: string) => {
+        setCurrentServiceId(serviceId);
+        setScheduleModalOpen(true);
+    };
+
+    const handleScheduleSubmit = (schedule: any) => {
+        if (currentServiceId && onScheduleSubmit) {
+            onScheduleSubmit(currentServiceId, schedule);
+        }
+        setScheduleModalOpen(false);
+        setCurrentServiceId(null);
+    };
+
+    const handleDeleteSchedule = (serviceId: string) => {
+        if (onScheduleSubmit) {
+            onScheduleSubmit(serviceId, null);
+        }
+        setScheduleModalOpen(false);
+        setCurrentServiceId(null);
+    };
+
     const handleSubmitWithGroups = (values: FormValues) => {
         if (!values || !values.blocked_services) {
             return onSubmit(values);
@@ -93,6 +137,8 @@ export const Form = ({
 
         return onSubmit({ blocked_services: enabledIdsMap });
     };
+
+    const currentServiceSchedule = currentServiceId ? serviceScheduleMap[currentServiceId] : null;
 
     return (
         <form onSubmit={handleSubmit(handleSubmitWithGroups)}>
@@ -166,6 +212,8 @@ export const Form = ({
                                                     placeholder={service.name}
                                                     disabled={isServicesControlsDisabled}
                                                     icon={service.icon_svg}
+                                                    hasSchedule={!!serviceScheduleMap[service.id]}
+                                                    onScheduleClick={() => handleScheduleClick(service.id)}
                                                 />
                                             )}
                                         />
@@ -186,6 +234,42 @@ export const Form = ({
                     <Trans>save_btn</Trans>
                 </button>
             </div>
+
+            {scheduleModalOpen && (
+                <div className="modal d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-lg">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">
+                                    {t('schedule_services')} - {currentServiceId}
+                                </h5>
+                                <button
+                                    type="button"
+                                    className="close"
+                                    onClick={() => setScheduleModalOpen(false)}
+                                >
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <ScheduleForm
+                                    schedule={currentServiceSchedule || { time_zone: 'Local' }}
+                                    onScheduleSubmit={handleScheduleSubmit}
+                                />
+                                {currentServiceSchedule && (
+                                    <button
+                                        type="button"
+                                        className="btn btn-danger mt-3"
+                                        onClick={() => handleDeleteSchedule(currentServiceId!)}
+                                    >
+                                        <Trans>schedule_remove</Trans>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </form>
     );
 };
