@@ -172,11 +172,14 @@ The deploy script bind-mounts `AdGuardHome.nextgen` over the stock
 | Check | Result |
 |---|---|
 | Version | `v1.0.0-b.1-nextgen-ebc23755` |
-| domainhash | **185,994** hashes, 0 collisions, peak batch ~5.6 MiB |
-| On-disk blob | `/opt/adguardhome/work/data/domainhash/blocklist.bin` ≈ 909 KiB |
+| domainhash (baseline lists) | **185,994** hashes, 0 collisions |
+| After +Normal/Pro/Ultimate/TIF | **2,184,149** hashes / 2.71M domains diverted, **3** collisions |
+| On-disk blob | `blocklist.bin` **0.89 MiB → 11 MiB** |
 | Complex leftovers | 7 filter files still in urlfilter |
-| Service memory | ~36 MiB current / ~62 MiB peak (cap 150 MiB) |
-| DNS | answering on `192.168.1.174:53` |
+| Service memory | steady **~38 → ~47 MiB**; rebuild peak **~122–139 MiB** (cap 250 MiB) |
+| DNS | `doubleclick.net` → `0.0.0.0` on `192.168.1.174:53` |
+
+Scale table: [BENCHMARKS.md](BENCHMARKS.md#openstick-live-scale-up-2026-11-01).
 
 Optional knobs for the 8–40 MiB sawtooth on small lists:
 
