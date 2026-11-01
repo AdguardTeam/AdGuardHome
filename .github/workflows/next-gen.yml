@@ -1,0 +1,127 @@
+# Lean CI for AdGuard Home Next-Gen: unit tests + linux/arm64 artifact for
+# OpenStick / router deploys.  The upstream workflow.yaml still runs for
+# broader coverage; this one is the fast path we care about day-to-day.
+name: Next-Gen CI
+
+on:
+  push:
+    branches:
+      - 'next-gen/**'
+      - master
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  GO_VERSION: '1.27.1'
+  CHANNEL: development
+
+jobs:
+  test:
+    name: Test (domainhash + filtering)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Test domainhash (race)
+        run: |
+          set -euo pipefail
+          go test -race -count=1 ./internal/filtering/domainhash/
+
+      - name: Test filtering
+        run: |
+          set -euo pipefail
+          go test -count=1 ./internal/filtering/
+
+      - name: Vet domainhash cross-OS
+        run: |
+          set -euo pipefail
+          GOOS=linux GOARCH=arm64 go vet ./internal/filtering/domainhash/
+          GOOS=linux GOARCH=amd64 go vet ./internal/filtering/domainhash/
+
+  build-arm64:
+    name: Build linux/arm64
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: client_v2/package-lock.json
+
+      - name: Frontend deps + build
+        run: |
+          set -euo pipefail
+          make CLIENT_DIR=client_v2 VERBOSE=1 js-deps js-build
+
+      - name: Cross-compile linux/arm64
+        run: |
+          set -euo pipefail
+          short="$(git rev-parse --short HEAD)"
+          version="v1.0.0-b.1-nextgen-${short}"
+          mkdir -p dist/AdGuardHome_linux_arm64/AdGuardHome
+          out="dist/AdGuardHome_linux_arm64/AdGuardHome/AdGuardHome"
+          env \
+            CGO_ENABLED=0 \
+            GOOS=linux \
+            GOARCH=arm64 \
+            CHANNEL="${CHANNEL}" \
+            VERSION="${version}" \
+            OUT="${out}" \
+            VERBOSE=1 \
+            sh ./scripts/make/go-build.sh
+          chmod +x "${out}"
+          ls -lh "${out}"
+          file "${out}"
+
+      - name: Upload arm64 binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: AdGuardHome-linux-arm64-nextgen
+          path: dist/AdGuardHome_linux_arm64/AdGuardHome/AdGuardHome
+          if-no-files-found: error
+          retention-days: 14
+
+  bench-smoke:
+    name: Bench smoke (domainhash)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Comparative harness (100k only)
+        run: |
+          set -euo pipefail
+          go run ./scripts/bench-domainhash -n 100000 -lookups 2000

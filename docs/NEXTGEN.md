@@ -147,16 +147,43 @@ build. Complex rules and allowlists keep the existing path.
 - OpenStick deploy: HaGeZi TI / similar 500k–1M list usable with DNS latency
   dominated by upstream RTT, not index search (`O(log n)` comparisons)
 
-## OpenStick deploy profile
+## OpenStick deploy
 
-For the current 8–40 MiB RSS sawtooth (small lists), set on the container:
+Live device: `192.168.1.174` (see homelab `hosts-openstick.ini`), aarch64,
+Podman quadlet `adguardhome.service` (`MemoryMax=150M`).
+
+```bash
+# CI builds linux/arm64 artifacts (.github/workflows/next-gen.yml)
+# Local build + deploy:
+make CLIENT_DIR=client_v2 GOTOOLCHAIN=local js-deps js-build
+mkdir -p dist/AdGuardHome_linux_arm64/AdGuardHome
+env CGO_ENABLED=0 GOOS=linux GOARCH=arm64 CHANNEL=development \
+  VERSION=v1.0.0-b.1-nextgen-$(git rev-parse --short HEAD) \
+  OUT=dist/AdGuardHome_linux_arm64/AdGuardHome/AdGuardHome \
+  sh ./scripts/make/go-build.sh
+./scripts/deploy-openstick.sh
+```
+
+The deploy script bind-mounts `AdGuardHome.nextgen` over the stock
+`adguard/adguardhome:v1.0.0-b.1` image binary and restarts the quadlet.
+
+### First live result (2026-11-01)
+
+| Check | Result |
+|---|---|
+| Version | `v1.0.0-b.1-nextgen-ebc23755` |
+| domainhash | **185,994** hashes, 0 collisions, peak batch ~5.6 MiB |
+| On-disk blob | `/opt/adguardhome/work/data/domainhash/blocklist.bin` ≈ 909 KiB |
+| Complex leftovers | 7 filter files still in urlfilter |
+| Service memory | ~36 MiB current / ~62 MiB peak (cap 150 MiB) |
+| DNS | answering on `192.168.1.174:53` |
+
+Optional knobs for the 8–40 MiB sawtooth on small lists:
 
 ```
 GOMEMLIMIT=48MiB
 GOGC=50
 ```
-
-And prefer smaller caches in `AdGuardHome.yaml`:
 
 ```yaml
 dns:
@@ -165,6 +192,3 @@ filtering:
   domain_hash_enabled: true
   domain_hash_bytes: 5  # 40-bit; use 8 for stricter TI collision policy
 ```
-
-With large threat-intel lists, `domain_hash_enabled` keeps steady-state near
-`N × hash_bytes` on disk/mmap instead of hundreds of MiB of `urlfilter` rules.
