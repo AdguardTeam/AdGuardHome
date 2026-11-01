@@ -732,7 +732,7 @@ func checkPortAvailability(
 	for _, v := range needBindingCheck {
 		port := v.newPort
 
-		if v.currPort == v.newPort && !enabledChanged {
+		if v.currPort == port && !enabledChanged {
 			continue
 		}
 

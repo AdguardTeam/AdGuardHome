@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Panic on binding to a busy port ([#8656]).
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
@@ -68,6 +70,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
 
+[#8656]:           https://github.com/AdGuardTeam/adGuardHome/issues/8656
 [#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
