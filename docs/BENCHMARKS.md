@@ -93,6 +93,40 @@ Notes:
   GOMAXPROCS=4 go run ./scripts/bench-domainhash -n 100000,500000,1000000
   ```
 
+## OpenStick live scale-up (2026-11-01)
+
+Device: OpenStick aarch64, 465 MiB RAM, `adguardhome.service` with
+`MemoryMax=250M` (raised from 150M for rebuild headroom). Next-Gen binary,
+`domain_hash_enabled`.
+
+Added HostlistsRegistry lists on top of the existing enabled filters:
+
+| Stage | Added list | List lines (approx) |
+|---|---|---:|
+| 0 | (baseline only) | — |
+| 1 | HaGeZi Normal (`filter_34`) | ~176k |
+| 2 | + HaGeZi Pro (`filter_48`) | ~212k |
+| 3 | + HaGeZi Ultimate (`filter_49`) | ~283k |
+| 4 | + HaGeZi Threat Intelligence Feeds (`filter_44`) | ~1.85M |
+
+### Measured on device
+
+| Stage | Unique hashes | Diverted domains | `blocklist.bin` | Steady RSS | Rebuild peak RSS |
+|---|---:|---:|---:|---:|---:|
+| 0 baseline | **185,994** | 186,053 | 0.89 MiB | ~38 MiB | ~61 MiB |
+| mid (TIF truncated*) | **1,379,839** | 1,867,394 | 6.6 MiB | ~41–62 MiB | ~139 MiB |
+| 4 + full TIF | **2,184,149** | 2,708,009 | **11 MiB** | **~47 MiB** | **~122 MiB** |
+
+\* Mid-point while `filter_44` was only partially on disk; kept as a scale
+sample. Full load collisions: **3** (40-bit). Complex urlfilter leftovers
+stayed at **7** small files.
+
+### Takeaway
+
+Steady RSS barely moves (~38 → ~47 MiB) while hashes grow **~12×**
+(186k → 2.18M). Rebuild peaks stay under ~140 MiB (16 MiB batch cap). The
+same TIF-class load is what OOMs stock urlfilter here.
+
 ## How to reproduce
 
 ```bash
