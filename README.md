@@ -39,6 +39,21 @@
 </p>
 <hr/>
 
+> **AdGuard Home Next-Gen** (this fork) — memory-efficient DNS blocklists for
+> OpenStick / router-class devices. Simple `hosts` / `||domain^` rules go into a
+> disk-backed, `mmap`'d hash index (~5 MiB for 1M domains) instead of a full
+> `urlfilter` engine. Linux keeps warm pages in the **page cache** (not a disk
+> `read()` per lookup). Details: [docs/NEXTGEN.md](docs/NEXTGEN.md),
+> **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)**.
+>
+> | N | urlfilter RSS Δ | domainhash file | domainhash build (desktop / OpenStick est.) | warm hit (desktop) |
+> |---:|---:|---:|---|---:|
+> | 100k | ~25 MiB | 0.5 MiB | 0.15 s / **~2 s** | ~0.4 µs |
+> | 500k | ~90 MiB | 2.4 MiB | 0.6 s / **~7–9 s** | ~0.3 µs |
+> | 1M | ~155 MiB | 4.8 MiB | 0.9 s / **~10–15 s** | ~0.3 µs |
+>
+> Reproduce: `go run ./scripts/bench-domainhash -n 100000,500000,1000000`
+
 AdGuard Home is a network-wide software for blocking ads and tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
 It operates as a DNS server that re-routes tracking domains to a “black hole”, thus preventing your devices from connecting to those servers. It's based on software we use for our public [AdGuard DNS] servers, and both share a lot of code.

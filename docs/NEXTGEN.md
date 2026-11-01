@@ -65,6 +65,16 @@ DNS query
   └─ urlfilter (allowlist + complex block rules)
 ```
 
+### mmap / I/O behaviour
+
+The blocklist file is **`mmap`'d**, not `read()` per query. Linux faults pages
+into the **page cache** on first touch; afterwards warm lookups are RAM-speed
+binary searches over that cache. The kernel may reclaim clean pages under
+memory pressure and fault them back later. A 1M×5-byte index is **~4.8 MiB** —
+small enough to stay resident on OpenStick-class devices when RAM allows.
+
+Full numbers: **[BENCHMARKS.md](BENCHMARKS.md)**.
+
 ### Memory math (1M domains)
 
 | Representation | Steady-state |
@@ -86,29 +96,31 @@ use 64-bit for stricter threat-intel).
 4. Port [#8498](https://github.com/AdguardTeam/AdGuardHome/pull/8498) mitigations
    for whatever remains on the urlfilter path.
 
-## Hashing speed (OpenStick ≈ 4× A53 @ 1 GHz)
+## Hashing / build speed (OpenStick ≈ 4× A53 @ 1 GHz)
 
-**Verdict: hashing is not the bottleneck.**
+**Verdict: raw FNV is cheap; end-to-end build is sort/merge + I/O.**
 
-FNV-1a over 1M short domain strings is on the order of tens of milliseconds on
-this class of CPU. Upstream rebuild cost is dominated by:
+Desktop (`GOMAXPROCS=4`): domainhash build ≈ **0.15 s / 0.6 s / 0.9 s** for
+100k / 500k / 1M. OpenStick estimate (×~12 single-thread factor):
+**~2 s / ~7–9 s / ~10–15 s**. Warm lookups stay ~µs — negligible vs DNS RTT.
 
-- parsing into `NetworkRule`
-- building `ShortcutIndex`
-- GC pressure from millions of heap objects
+Upstream urlfilter rebuild cost is dominated by parsing into `NetworkRule`,
+building `ShortcutIndex`, and GC over millions of heap objects — and its
+**RSS stays ~25 / 90 / 155 MiB** for those sizes versus a **~0.5 / 2.4 / 4.8 MiB**
+mmap file for domainhash.
 
-Worth doing anyway (cheap):
+Worth doing next (cheap):
 
 - parallel hash workers across cores while filling a batch
 - parallel run merge when run count is high
 
 Not worth early investment:
 
-- hand-written NEON FNV kernels — Go already runs multi-core workers; FNV is
-  memory/branch bound on short strings
-- switching to BLAKE3/xxhash for speed alone — FNV matches the ESP32 ecosystem
-  and is fast enough; prefer **64-bit width** over a fancier hash if collision
+- hand-written NEON FNV kernels — build time is not FNV-bound today
+- switching hash family for speed alone — prefer **64-bit width** if collision
   policy matters
+
+See **[BENCHMARKS.md](BENCHMARKS.md)** for the full tables.
 
 ## Feature flag
 
