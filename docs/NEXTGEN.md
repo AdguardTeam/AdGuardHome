@@ -134,3 +134,25 @@ build. Complex rules and allowlists keep the existing path.
 - Rebuild peak ≪ 2× steady-state of the hash blob + small complex engine
 - OpenStick deploy: HaGeZi TI / similar 500k–1M list usable with DNS latency
   dominated by upstream RTT, not index search (`O(log n)` comparisons)
+
+## OpenStick deploy profile
+
+For the current 8–40 MiB RSS sawtooth (small lists), set on the container:
+
+```
+GOMEMLIMIT=48MiB
+GOGC=50
+```
+
+And prefer smaller caches in `AdGuardHome.yaml`:
+
+```yaml
+dns:
+  cache_size: 1048576   # 1 MiB
+filtering:
+  domain_hash_enabled: true
+  domain_hash_bytes: 5  # 40-bit; use 8 for stricter TI collision policy
+```
+
+With large threat-intel lists, `domain_hash_enabled` keeps steady-state near
+`N × hash_bytes` on disk/mmap instead of hundreds of MiB of `urlfilter` rules.

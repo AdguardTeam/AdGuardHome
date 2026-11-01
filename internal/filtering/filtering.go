@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"runtime/debug"
 	"slices"
 	"strings"
 	"sync"
@@ -286,6 +285,21 @@ type DNSFilter struct {
 	// Access only while holding engineLock.
 	domainHashIndex *domainhash.Index
 
+	// initMu serializes rebuilds of the filtering engines performed by
+	// [DNSFilter.initFiltering].  A rebuild keeps the previous engines alive
+	// until the new ones are ready, so concurrent rebuilds would multiply the
+	// peak memory usage.
+	initMu sync.Mutex
+
+	// engineFingerprint is the fingerprint of the rule lists that the current
+	// filtering engines have been built from.  Valid only when hasEngine is
+	// true.  Access only while holding initMu.
+	engineFingerprint fingerprint
+
+	// hasEngine is true if the filtering engines have been built at least
+	// once.  Access only while holding initMu.
+	hasEngine bool
+
 	safeSearch SafeSearch
 
 	// safeBrowsingChecker is the safe browsing hash-prefix checker.
@@ -423,18 +437,8 @@ func (d *DNSFilter) Close() {
 }
 
 func (d *DNSFilter) reset(ctx context.Context) {
-	if d.rulesStorage != nil {
-		if err := d.rulesStorage.Close(); err != nil {
-			d.logger.ErrorContext(ctx, "closing rules storage", slogutil.KeyError, err)
-		}
-	}
-
-	if d.rulesStorageAllow != nil {
-		if err := d.rulesStorageAllow.Close(); err != nil {
-			d.logger.ErrorContext(ctx, "closing allow rules storage", slogutil.KeyError, err)
-		}
-	}
-
+	d.closeStorage(ctx, d.rulesStorage, "rules storage")
+	d.closeStorage(ctx, d.rulesStorageAllow, "allow rules storage")
 	d.closeDomainHashIndex(ctx)
 }
 
@@ -694,6 +698,15 @@ func (d *DNSFilter) matchBlockedServicesRules(
 
 func newRuleStorage(filters []Filter) (rs *filterlist.RuleStorage, err error) {
 	lists := make([]filterlist.Interface, 0, len(filters))
+
+	// Rule lists opened so far own file descriptors, so they must be closed if
+	// the storage is never created and thus never takes ownership of them.
+	defer func() {
+		if err != nil {
+			closeRuleLists(lists)
+		}
+	}()
+
 	for _, f := range filters {
 		var rl filterlist.Interface
 		var skip bool
@@ -766,6 +779,23 @@ func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error
 
 // Initialize urlfilter objects.
 func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilters []Filter) (err error) {
+	d.initMu.Lock()
+	defer d.initMu.Unlock()
+
+	fp := filtersFingerprint(allowFilters, blockFilters)
+	if d.hasEngine && fp == d.engineFingerprint {
+		d.logger.DebugContext(ctx, "filtering engine is up to date")
+
+		return nil
+	}
+
+	defer freeOSMemory()
+
+	restoreGCTarget := rebuildGCTarget.tighten(rebuildGCPercent)
+	defer restoreGCTarget()
+
+	freeOSMemory()
+
 	complexBlockFilters := blockFilters
 	var domainIdx *domainhash.Index
 	if d.conf != nil && d.conf.DomainHashEnabled {
@@ -776,21 +806,33 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 	} else {
 		logDomainHashDisabled(ctx, d.logger)
 	}
+	defer func() {
+		if err != nil {
+			_ = domainIdx.Close()
+		}
+	}()
 
-	rulesStorage, err := newRuleStorage(complexBlockFilters)
+	var rulesStorage *filterlist.RuleStorage
+	rulesStorage, err = newRuleStorage(complexBlockFilters)
 	if err != nil {
-		_ = domainIdx.Close()
-
 		return err
 	}
+	defer func() {
+		if err != nil {
+			d.closeStorage(ctx, rulesStorage, "new rules storage")
+		}
+	}()
 
-	rulesStorageAllow, err := newRuleStorage(allowFilters)
+	var rulesStorageAllow *filterlist.RuleStorage
+	rulesStorageAllow, err = newRuleStorage(allowFilters)
 	if err != nil {
-		_ = rulesStorage.Close()
-		_ = domainIdx.Close()
-
 		return err
 	}
+	defer func() {
+		if err != nil {
+			d.closeStorage(ctx, rulesStorageAllow, "new allow rules storage")
+		}
+	}()
 
 	filteringEngine := urlfilter.NewDNSEngine(rulesStorage)
 	filteringEngineAllow := urlfilter.NewDNSEngine(rulesStorageAllow)
@@ -807,8 +849,7 @@ func (d *DNSFilter) initFiltering(ctx context.Context, allowFilters, blockFilter
 		d.domainHashIndex = domainIdx
 	}()
 
-	// Make sure that the OS reclaims memory as soon as possible.
-	debug.FreeOSMemory()
+	d.engineFingerprint, d.hasEngine = fp, true
 
 	d.logger.DebugContext(ctx, "initialized filtering engine")
 
