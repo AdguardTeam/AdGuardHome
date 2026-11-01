@@ -497,6 +497,9 @@ var config = &configuration{
 		FilteringEnabled:           true,
 		FiltersUpdateIntervalHours: 24,
 
+		// Next-Gen: divert simple domain rules into a disk-backed hash index.
+		DomainHashEnabled: true,
+
 		RewritesEnabled: true,
 
 		ParentalEnabled:     false,
