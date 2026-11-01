@@ -2,12 +2,12 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="doc/adguard_home_darkmode.svg">
-    <img alt="AdGuard Home" src="doc/adguard_home_lightmode.svg" width="300px">
+    <img alt="AdGuard Home Next-Gen" src="doc/adguard_home_lightmode.svg" width="300px">
   </picture>
 </p>
-<h3 align="center">Privacy protection center for you and your devices</h3>
+<h3 align="center">AdGuard Home Next-Gen — for routers, OpenSticks &amp; SBCs</h3>
 <p align="center">
-  Free and open source, powerful network-wide ads & trackers blocking DNS server.
+  Fork of AdGuard Home with memory-efficient DNS blocklists for constrained devices.
 </p>
 <p align="center">
   <a href="https://adguard.com/">AdGuard.com</a> |
@@ -39,20 +39,86 @@
 </p>
 <hr/>
 
-> **AdGuard Home Next-Gen** (this fork) — memory-efficient DNS blocklists for
-> OpenStick / router-class devices. Simple `hosts` / `||domain^` rules go into a
-> disk-backed, `mmap`'d hash index (~5 MiB for 1M domains) instead of a full
-> `urlfilter` engine. Linux keeps warm pages in the **page cache** (not a disk
-> `read()` per lookup). Details: [docs/NEXTGEN.md](docs/NEXTGEN.md),
-> **[docs/BENCHMARKS.md](docs/BENCHMARKS.md)**.
->
-> | N | urlfilter RSS Δ | domainhash file | domainhash build (desktop / OpenStick est.) | warm hit (desktop) |
-> |---:|---:|---:|---|---:|
-> | 100k | ~25 MiB | 0.5 MiB | 0.15 s / **~2 s** | ~0.4 µs |
-> | 500k | ~90 MiB | 2.4 MiB | 0.6 s / **~7–9 s** | ~0.3 µs |
-> | 1M | ~155 MiB | 4.8 MiB | 0.9 s / **~10–15 s** | ~0.3 µs |
->
-> Reproduce: `go run ./scripts/bench-domainhash -n 100000,500000,1000000`
+## AdGuard Home Next-Gen
+
+**Goal:** an AdGuard Home build optimised for **routers**, **OpenStick**-class
+modems, and other **SBCs** with roughly **100–512 MiB** of RAM — so that large
+DNS blocklists (threat-intelligence feeds with **500k–1M+** domains) stay
+usable without OOMing during filter rebuilds.
+
+This repository is a fork of upstream
+[AdGuard Home](https://github.com/AdguardTeam/AdGuardHome)
+(base tag `v1.0.0-b.1`). The domain-hash index is inspired by
+[esp32-c3-adblock](https://github.com/M-Abozaid/esp32-c3-adblock)
+(sorted truncated FNV-1a hashes + binary search on constrained hardware).
+
+Full design notes: [docs/NEXTGEN.md](docs/NEXTGEN.md).  
+Full numbers: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+
+### What is different from stock AdGuard Home?
+
+| | Stock AdGuard Home | **Next-Gen** |
+|---|---|---|
+| Simple DNS block rules (`hosts`, `\|\|domain^`) | Full `urlfilter` `NetworkRule` objects (~hundreds of bytes each + shortcut index) | Diverted into a **sorted hash blob** on disk (`blocklist.bin`), **mmap**'d and binary-searched |
+| Steady memory for ~1M domains | ~**155 MiB** RSS for the rule engine alone (synthetic) | ~**5 MiB** on-disk / page-cache resident index |
+| Filter rebuild peak | Often **2–3×** live engine size (old + new + `GOGC`); TI-class lists can spike **hundreds of MiB** | Batched hashing sized from `MemAvailable − margin`; rebuild peak stays near the small complex leftover engine |
+| Complex / allowlist rules | `urlfilter` | Still `urlfilter` (only rules a hash table cannot express) |
+| Lookup I/O | In-memory rule graph | Warm lookups are **RAM-speed** over the kernel **page cache** (not a `read()` per query) |
+| Target hardware | Desktops, NAS, Pi-class and up | **Routers / OpenStick / SBCs** with tight RAM |
+
+Upstream PR
+[#8498](https://github.com/AdguardTeam/AdGuardHome/pull/8498)
+reduces rebuild peaks for stock urlfilter, but **steady-state still stores every
+rule as a rich object**. Next-Gen changes that representation for the common
+DNS-block case.
+
+### Synthetic benchmarks (desktop, 2026-11-01)
+
+Same-shape `||domain^` lists. Host: linux/amd64, `GOMAXPROCS=4`.
+
+| N | urlfilter RSS Δ | domainhash file | domainhash build (desktop / OpenStick est.) | warm hit (desktop) |
+|---:|---:|---:|---|---:|
+| 100k | ~25 MiB | 0.5 MiB | 0.15 s / **~2 s** | ~0.4 µs |
+| 500k | ~90 MiB | 2.4 MiB | 0.6 s / **~7–9 s** | ~0.3 µs |
+| 1M | ~155 MiB | 4.8 MiB | 0.9 s / **~10–15 s** | ~0.3 µs |
+
+Warm domainhash lookups stay **sub-microsecond** and almost flat with N
+(`O(log N)`). Urlfilter hit cost grows with list size.
+
+```bash
+go run ./scripts/bench-domainhash -n 100000,500000,1000000 -lookups 20000
+```
+
+### Real-life OpenStick usage (2026-11-01)
+
+Device: OpenStick **aarch64**, **465 MiB** RAM, `adguardhome.service` with
+`MemoryMax=250M`, Next-Gen binary `v1.0.0-b.1-nextgen-ebc23755`,
+`domain_hash_enabled`.
+
+Loaded HaGeZi **Normal / Pro / Ultimate / Threat Intelligence Feeds** on top of
+existing filters:
+
+| Stage | Unique hashes | Diverted domains | `blocklist.bin` | Steady RSS | Rebuild peak |
+|---|---:|---:|---:|---:|---:|
+| Baseline lists | 186k | 186k | 0.89 MiB | ~38 MiB | ~61 MiB |
+| Mid (partial TIF) | 1.38M | 1.87M | 6.6 MiB | ~41–62 MiB | ~139 MiB |
+| **+ full TIF** | **2.18M** | **2.71M** | **11 MiB** | **~47 MiB** | **~122 MiB** |
+
+Takeaway: hashes **×12**, steady RSS **+~9 MiB**. Rebuild peaks stay under
+~140 MiB. DNS blocking verified (`doubleclick.net` → `0.0.0.0`). Complex
+urlfilter leftovers stayed at **7** small files; **3** 40-bit collisions on the
+full load.
+
+That same TIF-class load is what tends to OOM stock urlfilter on this class of
+device.
+
+### Enable on a device
+
+```yaml
+filtering:
+  domain_hash_enabled: true
+  domain_hash_bytes: 5  # 40-bit; use 8 for stricter TI collision policy
+```
 
 AdGuard Home is a network-wide software for blocking ads and tracking. After you set it up, it'll cover ALL your home devices, and you don't need any client-side software for that.
 
@@ -60,6 +126,11 @@ It operates as a DNS server that re-routes tracking domains to a “black hole�
 
 [AdGuard DNS]: https://adguard-dns.io/
 
+- [AdGuard Home Next-Gen](#adguard-home-next-gen)
+    - [What is different from stock AdGuard Home?](#what-is-different-from-stock-adguard-home)
+    - [Synthetic benchmarks (desktop, 2026-11-01)](#synthetic-benchmarks-desktop-2026-11-01)
+    - [Real-life OpenStick usage (2026-11-01)](#real-life-openstick-usage-2026-11-01)
+    - [Enable on a device](#enable-on-a-device)
 - [Getting Started](#getting-started)
     - [Automated install (Linux/Unix/MacOS/FreeBSD/OpenBSD)](#automated-install-linux-and-mac)
     - [Alternative methods](#alternative-methods)
