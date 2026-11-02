@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 18
+# AdGuard-Project-Version: 19
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -34,7 +34,9 @@ set -f -u
 #
 #   *  Packages log and github.com/AdguardTeam/golibs/log are replaced by
 #      stdlib's new package log/slog and AdGuard's new utilities package
-#      github.com/AdguardTeam/golibs/logutil/slogutil.
+#      github.com/AdguardTeam/golibs/logutil/slogutil.  The exceptions are
+#      packages home, dhcpd, and aghos, where package log is used before the
+#      main logger is configured.
 #
 #   *  Package github.com/prometheus/client_golang/prometheus/promauto is not
 #      recommended, as it encourages reliance on global state.
@@ -56,8 +58,9 @@ set -f -u
 #   *  Package unsafe is… unsafe.
 #
 # Currently, the only standard exception are files generated from protobuf
-# schemas, which use package reflect.  If your project needs more exceptions,
-# add and document them.
+# schemas, which use package reflect.  Additionally, some packages are allowed
+# to use package log, see above.  If your project needs more exceptions, add and
+# document them.
 #
 # NOTE:  Flag -H for grep is non-POSIX but all of Busybox, GNU, macOS, and
 # OpenBSD support it.
@@ -86,10 +89,24 @@ blocklist_imports() {
 		'-e' "$import_or_tab"'"golang.org/x/exp/slices"$' \
 		'-e' "$import_or_tab"'"golang.org/x/net/context"$' \
 		'-e' "$import_or_tab"'"io/ioutil"$' \
-		'-e' "$import_or_tab"'"log"$' \
 		'-e' "$import_or_tab"'"reflect"$' \
 		'-e' "$import_or_tab"'"sort"$' \
 		'-e' "$import_or_tab"'"unsafe"$' \
+		'-n' \
+		'{}' \
+		';'
+
+	# Package home is allowed to use package log, see the comment above.
+	find_with_ignore \
+		-type 'f' \
+		-name '*.go' \
+		'!' '(' \
+		-path './internal/home/*' \
+		')' \
+		-exec \
+		'grep' \
+		'-H' \
+		'-e' "$import_or_tab"'"log"$' \
 		'-n' \
 		'{}' \
 		';'
@@ -186,11 +203,11 @@ fi
 run_linter "$go" tool gocyclo --over 10 ./internal/ ./scripts/
 
 # TODO(a.garipov): Enable 10 for all.
-run_linter "$go" tool gocognit --over='14' \
+run_linter "$go" tool gocognit --exact-recursion --over 14 \
 	./internal/dhcpd \
 	;
 
-run_linter "$go" tool gocognit --over='10' \
+run_linter "$go" tool gocognit --exact-recursion --over 10 \
 	./internal/aghalg/ \
 	./internal/agh/ \
 	./internal/aghhttp/ \
@@ -209,7 +226,6 @@ run_linter "$go" tool gocognit --over='10' \
 	./internal/home/ \
 	./internal/ipset \
 	./internal/next/ \
-	./internal/ossvc/ \
 	./internal/permcheck/ \
 	./internal/querylog/ \
 	./internal/rdns/ \

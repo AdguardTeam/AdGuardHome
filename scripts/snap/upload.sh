@@ -12,8 +12,7 @@ set -e -f -u
 # verbosity level greater than 0.  Otherwise, it does nothing.
 log() {
 	if [ "$verbose" -gt '0' ]; then
-		# Don't use quotes to get word splitting.
-		echo "$1" 1>&2
+		printf '%s\n' "$1" 1>&2
 	fi
 }
 
@@ -73,7 +72,7 @@ for arch in \
 	*'A file with this exact same content has already been uploaded'* | \
 		*'Error checking upload uniqueness'*)
 
-		log "warning: duplicate upload, skipping"
+		log 'warning: duplicate upload, skipping'
 		log "snapcraft upload error: ${snapcraft_output}"
 
 		continue

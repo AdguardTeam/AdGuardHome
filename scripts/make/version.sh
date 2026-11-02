@@ -74,7 +74,7 @@ readonly channel
 case "$channel" in
 'development')
 	# commit_number is the number of current commit within the branch.
-	commit_number="$(git rev-list --count master..HEAD)"
+	commit_number="$(git rev-list --count origin/master..HEAD)"
 	readonly commit_number
 
 	# The development builds are described with a combination of unset semantic

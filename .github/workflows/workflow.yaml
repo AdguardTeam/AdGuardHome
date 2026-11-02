@@ -1,0 +1,168 @@
+'env':
+  'CLIENT_DIR': 'client'
+  'GO_VERSION': '1.26.10'
+  'NODE_VERSION': '24'
+'jobs':
+  'ESLint':
+    'if': |
+      ${{ github.repository_owner != 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'ubuntu-latest'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid  GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'name': 'Install modules'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          npm \
+              --prefix="./${{ env.CLIENT_DIR }}" \
+              ci \
+              ;
+      - 'name': 'Run ESLint'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          npm \
+              --prefix="./${{ env.CLIENT_DIR }}" \
+              run lint \
+              ;
+  'TestJob':
+    'if': |
+      ${{ github.repository_owner != 'AdGuardSoftwareLimited' }}
+    'permissions':
+      'contents': 'read'
+    'runs-on': '${{ matrix.os }}'
+    'strategy':
+      'fail-fast': false
+      'matrix':
+        'os':
+          - 'windows-latest'
+          - 'macos-latest'
+          - 'ubuntu-latest'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/setup-go@v6'
+        'with':
+          'go-version': '${{ env.GO_VERSION }}'
+      - 'name': 'Lint step'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          # NOTE: Only run those checks that only need Go and Go tools.
+          make \
+              VERBOSE=1 \
+              go-deps \
+              go-os-check \
+              go-lint \
+              ;
+        'shell': 'bash'
+      - 'uses': 'actions/setup-node@v7'
+        'with':
+          'node-version': '${{ env.NODE_VERSION }}'
+      - 'name': 'Run tests'
+        'shell': 'bash'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+          make \
+              CLIENT_DIR=${{ env.CLIENT_DIR }} \
+              VERBOSE=1 \
+              deps \
+              test \
+              go-bench \
+              go-fuzz \
+              ;
+      - 'name': 'Upload coverage'
+        'uses': 'codecov/codecov-action@v1'
+        'if': "success() && matrix.os == 'ubuntu-latest'"
+        'with':
+          'token': '${{ secrets.CODECOV_TOKEN }}'
+          'file': './cover.out'
+  'BuildSnapshot':
+    'if': |
+      ${{ github.repository_owner != 'AdGuardSoftwareLimited' }}
+    'needs': 'TestJob'
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'ubuntu-latest'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/setup-go@v6'
+        'with':
+          'go-version': '${{ env.GO_VERSION }}'
+      - 'name': 'Set up Go modules cache'
+        'uses': 'actions/cache@v4'
+        'with':
+          'path': '~/go/pkg/mod'
+          'key': "${{ runner.os }}-go-${{ hashFiles('go.sum') }}"
+          'restore-keys': '${{ runner.os }}-go-'
+      - 'uses': 'actions/setup-node@v7'
+        'with':
+          'node-version': '${{ env.NODE_VERSION }}'
+      - 'name': 'Set up Snapcraft'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          sudo snap install snapcraft --classic
+      - 'name': 'Set up QEMU'
+        'uses': 'docker/setup-qemu-action@v3'
+      - 'name': 'Set up Docker Buildx'
+        'uses': 'docker/setup-buildx-action@v3'
+        'with':
+          'install': true
+      - 'name': 'Run snapshot build'
+        'run': |
+          #!/bin/sh
+
+          set -e -f -u -x
+
+          # Set a custom version string, since the checkout action does not seem
+          # to know about the master branch, while the version script uses it to
+          # count the number of commits within the branch.
+          make \
+              CLIENT_DIR=${{ env.CLIENT_DIR }} \
+              SIGN=0 \
+              VERBOSE=1 \
+              VERSION="v0.0.0-github" \
+              build-release \
+              build-docker \
+              ;
+'name': 'Test and snapshot workflow'
+'on':
+  'push':
+    'tags':
+      - 'v*'
+    'branches':
+      - '*'
+  'pull_request':
+# Permissions are disabled for all the jobs by default, and then overridden for
+# specific jobs if needed.  This is a recommended practice for security reasons,
+# and also allows to avoid mistakes with permissions when creating new jobs.
+#
+# See https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#permissions.
+'permissions': {}

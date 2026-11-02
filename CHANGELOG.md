@@ -9,18 +9,31 @@ The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/
 <!--
 ## [v1.0.0] – TBA
 
-## [v0.107.80] - 2026-09-03 (APPROX.)
+## [v0.107.81] - 2026-12-03 (APPROX.)
 
-See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
+See also the [v0.107.81 GitHub milestone][ms-v0.107.81].
 
-[ms-v0.107.80]: https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
+[ms-v0.107.81]: https://github.com/AdguardTeam/AdGuardHome/milestone/116?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
-
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.80] - 2026-11-02
+
+See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
+
+### Security
+
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.10][go-1.26.10].
+
+- Support for Multipath TCP has been disabled to prevent the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
+
+[cve-2026-98432]: https://nvd.nist.gov/vuln/detail/CVE-2026-98432
+[go-1.26.10]:     https://groups.google.com/g/golang-announce/c/66pojueaQek
+[ms-v0.107.80]:   https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
 
 ## [v0.107.79] - 2026-08-18
 
@@ -56,10 +69,10 @@ See also the [v0.107.79 GitHub milestone][ms-v0.107.79].
 
 - Blocked requests without an EDNS(0) OPT record ([#8183]).
 
-[#7514]:     https://github.com/AdguardTeam/AdGuardHome/issues/7514
-[#8183]:     https://github.com/AdguardTeam/AdGuardHome/issues/8183
-[go-1.26.6]: https://groups.google.com/g/golang-announce/c/94pEornpRlI
+[#7514]: https://github.com/AdguardTeam/AdGuardHome/issues/7514
+[#8183]: https://github.com/AdguardTeam/AdGuardHome/issues/8183
 
+[go-1.26.6]:    https://groups.google.com/g/golang-announce/c/94pEornpRlI
 [ms-v0.107.79]: https://github.com/AdguardTeam/AdGuardHome/milestone/114?closed=1
 
 ## [v0.107.78] - 2026-07-13
@@ -110,13 +123,13 @@ See also the [v0.107.78 GitHub milestone][ms-v0.107.78].
 
 - Blocked services check on the Custom filtering rules page does not work properly without specifying of a client.
 
-[#7955]:     https://github.com/AdguardTeam/AdGuardHome/issues/7955
-[#8276]:     https://github.com/AdguardTeam/AdGuardHome/issues/8276
-[#8410]:     https://github.com/AdguardTeam/AdGuardHome/issues/8410
-[go-1.26.5]: https://groups.google.com/g/golang-announce/c/OrmQE_Yp5Sc
-[rfc9113]:   https://datatracker.ietf.org/doc/html/rfc9113
+[#7955]: https://github.com/AdguardTeam/AdGuardHome/issues/7955
+[#8276]: https://github.com/AdguardTeam/AdGuardHome/issues/8276
+[#8410]: https://github.com/AdguardTeam/AdGuardHome/issues/8410
 
+[go-1.26.5]:    https://groups.google.com/g/golang-announce/c/OrmQE_Yp5Sc
 [ms-v0.107.78]: https://github.com/AdguardTeam/AdGuardHome/milestone/113?closed=1
+[rfc9113]:      https://datatracker.ietf.org/doc/html/rfc9113
 
 ## [v0.107.77] - 2026-06-01
 
@@ -200,7 +213,7 @@ See also the [v0.107.75 GitHub milestone][ms-v0.107.75].
 [#8359]: https://github.com/AdguardTeam/AdGuardHome/issues/8359
 
 [ms-v0.107.75]: https://github.com/AdguardTeam/AdGuardHome/milestone/110?closed=1
-[go-1.26.3]: https://groups.google.com/g/golang-announce/c/qcCIEXso47M
+[go-1.26.3]:    https://groups.google.com/g/golang-announce/c/qcCIEXso47M
 
 ## [v0.107.74] - 2026-04-16
 
@@ -3738,11 +3751,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
-[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.81...HEAD
+[v0.107.81]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...v0.107.81
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
+[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
 [v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
 [v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78
 [v0.107.77]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...v0.107.77

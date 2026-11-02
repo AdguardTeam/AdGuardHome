@@ -1,58 +1,58 @@
 'body':
   - 'attributes':
-        'description': >
-            Please make sure that the issue is not a duplicate or a question.
-            If it's a duplicate, please react to the original issue with a
-            thumbs up.  If it's a question, please post it to the GitHub
-            Discussions page.
-        'label': 'Prerequisites'
-        'options':
-          - 'label': >
-                I have checked the
-                [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and
-                [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions)
-                and found no answer
-            'required': true
-          - 'label': >
-                I have searched other issues and found no duplicates
-            'required': true
-          - 'label': >
-                I want to request a feature or enhancement and not ask a
-                question
-            'required': true
+      'description': >
+        Please make sure that the issue is not a duplicate or a question. If it's a duplicate, please react to the original issue with a thumbs up.  If it's a question, please post it to the GitHub Discussions page.
+
+      'label': 'Prerequisites'
+      'options':
+        - 'label': >
+            I have checked the [Wiki](https://github.com/AdguardTeam/AdGuardHome/wiki) and [Discussions](https://github.com/AdguardTeam/AdGuardHome/discussions) and found no answer
+
+          'required': true
+        - 'label': >
+            I have searched other issues and found no duplicates
+
+          'required': true
+        - 'label': >
+            I want to request a feature or enhancement and not ask a question
+
+          'required': true
     'id': 'prerequisites'
     'type': 'checkboxes'
   - 'attributes':
-        'description': 'Please describe the problem you are trying to solve'
-        'label': 'The problem'
-        'placeholder': >
-            Please describe the problem you are trying to solve
+      'description': 'Please describe the problem you are trying to solve'
+      'label': 'The problem'
+      'placeholder': >
+        Please describe the problem you are trying to solve
+
     'id': 'problem'
     'type': 'textarea'
     'validations':
-        'required': true
+      'required': true
   - 'attributes':
-        'description': 'What feature are you proposing to solve this problem?'
-        'label': 'Proposed solution'
-        'placeholder': >
-            What feature are you proposing to solve this problem?
+      'description': 'What feature are you proposing to solve this problem?'
+      'label': 'Proposed solution'
+      'placeholder': >
+        What feature are you proposing to solve this problem?
+
     'id': 'proposed_solution'
     'type': 'textarea'
     'validations':
-        'required': true
+      'required': true
   - 'attributes':
-        'label': 'Alternatives considered and additional information'
-        'placeholder': >
-            Are there any other ways to solve the problem?
+      'label': 'Alternatives considered and additional information'
+      'placeholder': >
+        Are there any other ways to solve the problem?
+
     'id': 'additional'
     'type': 'textarea'
     'validations':
-        'required': false
+      'required': false
 # NOTE: GitHub limits the description length to 200 characters.  Also, Markdown
 # doesn't work here.
 'description': |
-    Write the title in English to make it easier for other people to search for
-    duplicates.  (Any language is fine in the body.)
+  Write the title in English to make it easier for other people to search for
+  duplicates.  (Any language is fine in the body.)
 'labels':
   - 'feature request'
 'name': 'Feature request or enhancement'
