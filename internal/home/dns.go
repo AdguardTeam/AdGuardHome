@@ -250,7 +250,7 @@ func newServerConfig(
 ) (newConf *dnsforward.ServerConfig, err error) {
 	hosts := aghalg.CoalesceSlice(dnsConf.BindHosts, []netip.Addr{netutil.IPv4Localhost()})
 
-	intTLSConf, err := newDNSTLSConfig(tlsManager, dohAddr.Addr(), hosts)
+	intTLSConf, err := newDNSTLSConfig(tlsManager, dohConf, dohAddr.Addr(), hosts)
 	if err != nil {
 		return nil, fmt.Errorf("constructing tls config: %w", err)
 	}
@@ -350,9 +350,10 @@ func dnsConfigToInternal(
 
 // newDNSTLSConfig converts values from the configuration file into the internal
 // TLS settings for the DNS server.  dohAddr is used to construct the DDR hints.
-// tlsManager must not be nil.
+// tlsManager and dohConf must not be nil.
 func newDNSTLSConfig(
 	tlsManager aghtls.Manager,
+	dohConf *configmgr.DoHConfig,
 	dohAddr netip.Addr,
 	addrs []netip.Addr,
 ) (dnsConf *dnsforward.TLSConfig, err error) {
@@ -380,7 +381,7 @@ func newDNSTLSConfig(
 		return dnsConf, nil
 	}
 
-	if extTLSConf.PortHTTPS != 0 {
+	if extTLSConf.PortHTTPS != 0 && len(dohConf.Routes) > 0 {
 		// DoH requests are handled by the web server, so the DDR hints must
 		// use its address.
 		//
@@ -455,13 +456,13 @@ type dnsEncryption struct {
 
 // getDNSEncryption returns the TLS encryption addresses that AdGuard Home
 // listens on.  extTLSConf must not be nil.
-func getDNSEncryption(extTLSConf *aghtls.ExtendedTLSConfig) (de dnsEncryption) {
+func getDNSEncryption(extTLSConf *aghtls.ExtendedTLSConfig, hasDoHRoutes bool) (de dnsEncryption) {
 	if !extTLSConf.Enabled || extTLSConf.ServerName == "" {
 		return dnsEncryption{}
 	}
 
 	hostname := extTLSConf.ServerName
-	if extTLSConf.PortHTTPS != 0 {
+	if extTLSConf.PortHTTPS != 0 && hasDoHRoutes {
 		addr := hostname
 		if p := extTLSConf.PortHTTPS; p != defaultPortHTTPS {
 			addr = netutil.JoinHostPort(addr, p)
