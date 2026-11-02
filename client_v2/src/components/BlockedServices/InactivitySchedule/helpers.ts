@@ -1,8 +1,6 @@
 export const FULL_DAY_END_MS = 86340000;
 
-export const DAYS_OF_WEEK = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
-
-export type DayKey = (typeof DAYS_OF_WEEK)[number];
+export { DAYS_OF_WEEK, type DayKey } from 'panel/helpers/schedule';
 
 export type TimeValue = {
     hours: number;

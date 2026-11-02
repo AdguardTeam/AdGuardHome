@@ -170,13 +170,18 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
 
 	var upstreamMode jsonUpstreamMode
-	switch s.conf.UpstreamMode {
+	switch m := s.conf.UpstreamMode; m {
 	case proxy.UpstreamModeLoadBalance:
 		upstreamMode = jsonUpstreamModeLoadBalance
 	case proxy.UpstreamModeParallel:
 		upstreamMode = jsonUpstreamModeParallel
 	case proxy.UpstreamModeFastestAddr:
 		upstreamMode = jsonUpstreamModeFastestAddr
+	default:
+		// TODO(a.garipov):  Remove or replace with a panic once the
+		// configuration file is properly validated.
+		s.logger.WarnContext(ctx, "bad upstream mode; using load balance", "mode", m)
+		upstreamMode = jsonUpstreamModeLoadBalance
 	}
 
 	defPTRUps, err := s.defaultLocalPTRUpstreams(ctx)

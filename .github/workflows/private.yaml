@@ -67,15 +67,26 @@
           readonly exit_code
 
           exit "$exit_code"
+  'ResolveMacOSRunner':
+    'runs-on': 'team-go'
+    'outputs':
+      'image': ${{ steps.kv.outputs.value }}
+    'steps':
+      - 'uses': 'AdGuardSoftwareLimited/actions/actions/kv-get@master'
+        'id': 'kv'
+        'with':
+          'key': 'build-images/macos'
   'LintAndTestJobMacOS':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs':
+      - 'ResolveMacOSRunner'
     'permissions':
       'contents': 'read'
     'runs-on':
       - 'ephemeral'
       - 'ephemeral-mac'
-      - '${{ vars.BUILD_IMAGE_VERSION_MACOS }}'
+      - '${{ needs.ResolveMacOSRunner.outputs.image }}'
       - 'ephemeral-job-key-${{ github.run_id }}-${{ github.job }}-${{ strategy.job-index || 0 }}'
     'steps':
       - 'uses': 'actions/checkout@v6'
@@ -100,15 +111,26 @@
               go-bench \
               go-fuzz \
               ;
+  'ResolveWindowsRunner':
+    'runs-on': 'team-go'
+    'outputs':
+      'image': ${{ steps.kv.outputs.value }}
+    'steps':
+      - 'uses': 'AdGuardSoftwareLimited/actions/actions/kv-get@master'
+        'id': 'kv'
+        'with':
+          'key': 'build-images/windows2022-go'
   'LintAndTestJobWindows':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs':
+      - 'ResolveWindowsRunner'
     'permissions':
       'contents': 'read'
     'runs-on':
       - 'ephemeral'
       - 'ephemeral-vmwin'
-      - '${{ vars.BUILD_IMAGE_VERSION_WINDOWS_GO }}'
+      - '${{ needs.ResolveWindowsRunner.outputs.image }}'
       - 'ephemeral-limit-memory-8192'
       - 'ephemeral-limit-cpu-4'
       - 'ephemeral-job-key-${{ github.run_id }}-${{ github.job }}-${{ strategy.job-index || 0 }}'
