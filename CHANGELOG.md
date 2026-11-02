@@ -27,12 +27,17 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 
 ### Security
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.26.10][go-1.26.10].
+- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
 
 - Support for Multipath TCP has been disabled to prevent the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
 
+### Removed
+
+- The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
+
 [cve-2026-98432]: https://nvd.nist.gov/vuln/detail/CVE-2026-98432
-[go-1.26.10]:     https://groups.google.com/g/golang-announce/c/66pojueaQek
+[go-1.27-notes]:  https://go.dev/doc/go1.27#darwin
+[go-1.27.3]:      https://groups.google.com/g/golang-announce/c/66pojueaQek
 [ms-v0.107.80]:   https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
 
 ## [v0.107.79] - 2026-08-18
