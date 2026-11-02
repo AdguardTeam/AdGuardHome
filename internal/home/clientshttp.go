@@ -247,7 +247,7 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 		UseGlobalSettings:   !c.UseOwnSettings,
 		FilteringEnabled:    c.FilteringEnabled,
 		ParentalEnabled:     c.ParentalEnabled,
-		SafeSearchConf:      &c.SafeSearchConf,
+		SafeSearchConf:      new(c.SafeSearchConf),
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,

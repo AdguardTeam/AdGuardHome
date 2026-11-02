@@ -135,16 +135,6 @@ func (h *signalHandler) shutdown(ctx context.Context) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	cleanup(ctx, h.logger, h.hostsContainer)
-	if h.hcWatcher != nil {
-		err := h.hcWatcher.Shutdown(ctx)
-		if err != nil {
-			// Likely [os.ErrClosed], if the hosts container has already closed
-			// the watcher.
-			h.logger.DebugContext(ctx, "shutting down hosts file watcher", slogutil.KeyError, err)
-		}
-	}
-
 	if h.tlsManager != nil {
 		err := h.tlsManager.Shutdown(ctx)
 		if err != nil {
@@ -156,6 +146,16 @@ func (h *signalHandler) shutdown(ctx context.Context) {
 		err := h.web.Shutdown(ctx)
 		if err != nil {
 			h.logger.ErrorContext(ctx, "shutting down web", slogutil.KeyError, err)
+		}
+	}
+
+	cleanup(ctx, h.logger, h.hostsContainer)
+	if h.hcWatcher != nil {
+		err := h.hcWatcher.Shutdown(ctx)
+		if err != nil {
+			// Likely [os.ErrClosed], if the hosts container has already closed
+			// the watcher.
+			h.logger.DebugContext(ctx, "shutting down hosts file watcher", slogutil.KeyError, err)
 		}
 	}
 
