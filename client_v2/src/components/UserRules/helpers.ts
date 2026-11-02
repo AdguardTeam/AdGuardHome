@@ -72,7 +72,6 @@ export const getEffectiveClientProtectionSettings = ({
             ? Boolean(settingsList?.safebrowsing.enabled)
             : client.safebrowsing_enabled,
         safe_search: effectiveSafeSearch,
-        safesearch_enabled: effectiveSafeSearch.enabled,
     };
 };
 

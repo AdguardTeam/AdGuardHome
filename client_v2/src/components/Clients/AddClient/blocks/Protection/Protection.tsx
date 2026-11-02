@@ -4,6 +4,7 @@ import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 import { clientFormState, updateClientFormField } from 'panel/stores/clientForm';
+import { useInitClientFormFromRoute } from 'panel/hooks/useInitClientFormFromRoute';
 import {
     SAFE_SEARCH_PROVIDERS,
     SAFE_SEARCH_PROVIDER_KEYS,
@@ -16,6 +17,8 @@ import { ClientsHeader } from '../ClientsHeader';
 import s from './Protection.module.pcss';
 
 export const Protection = () => {
+    useInitClientFormFromRoute();
+
     const disabled = createMemo(() => clientFormState.use_global_settings);
 
     const handleToggle = (field: keyof typeof clientFormState) => (e: Event) => {
