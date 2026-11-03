@@ -158,6 +158,5 @@ tool (
 	mvdan.cc/unparam
 )
 
-// TODO(e.burkov):  Remove the replace once v0.8.2 and the fix for
-// https://github.com/dominikh/go-tools/issues/1748 are shipped.
-replace honnef.co/go/tools v0.8.1 => honnef.co/go/tools v0.7.0-0.dev.0.20260824195211-6cb65e58a558
+// See CVE-2026-98432.
+godebug multipathtcp=0
