@@ -18,10 +18,6 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
-### Security
-
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
-
 ### Changed
 
 - Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
@@ -72,10 +68,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
 
-### Removed
-
-- The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
-
 [#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
@@ -88,12 +80,29 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8638]:           https://github.com/AdguardTeam/AdGuardHome/issues/8638
 [#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
 [#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
-[go-1.27.3]:       https://groups.google.com/g/golang-announce/c/66pojueaQek
-[go-1.27-notes]:   https://go.dev/doc/go1.27#darwin
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+## [v0.107.80] - 2026-11-03
+
+See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
+
+### Security
+
+- Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
+
+- Support for Multipath TCP has been disabled to mitigate the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
+
+### Removed
+
+- The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
+
+[cve-2026-98432]: https://nvd.nist.gov/vuln/detail/CVE-2026-98432
+[go-1.27-notes]:  https://go.dev/doc/go1.27#darwin
+[go-1.27.3]:      https://groups.google.com/g/golang-announce/c/66pojueaQek
+[ms-v0.107.80]:   https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
 
 ## [v0.107.79] - 2026-08-18
 
@@ -3811,11 +3820,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
-[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.81...HEAD
+[v0.107.81]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...v0.107.81
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
+[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
 [v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
 [v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78
 [v0.107.77]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...v0.107.77
