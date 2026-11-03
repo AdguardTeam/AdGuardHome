@@ -21,7 +21,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v0.107.80] - 2026-11-02
+## [v0.107.80] - 2026-11-03
 
 See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 
