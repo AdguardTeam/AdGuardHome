@@ -12,7 +12,7 @@ type CheckResultMeta = {
     title: string;
     reason?: string;
     actions: ResultAction[];
-    rule?: string;
+    rules: CheckResultRule[];
     source?: string;
     sourceListType?: 'blocklist' | 'allowlist';
 };
@@ -147,8 +147,9 @@ export const getCheckResultMeta = ({
     filters: Filter[];
     whitelistFilters: Filter[];
 }): CheckResultMeta => {
-    const primaryRule = getPrimaryRule(rules);
-    const sourceName = getSourceName(rules, filters, whitelistFilters);
+    const rulesList = rules ?? [];
+    const primaryRule = getPrimaryRule(rulesList);
+    const sourceName = getSourceName(rulesList, filters, whitelistFilters);
     const isCustomRule = primaryRule?.filter_list_id === SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES;
     const sourceListType = getSourceListType(
         primaryRule?.filter_list_id,
@@ -165,7 +166,7 @@ export const getCheckResultMeta = ({
                 actions: isCustomRule
                     ? [createAction('allow')]
                     : [createAction('allow'), createAction('disable-filter')],
-                rule: primaryRule?.text,
+                rules: rulesList,
                 source: sourceName,
                 sourceListType,
             };
@@ -175,7 +176,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_domain_is_allowed'),
                 reason: getAllowedReason(isCustomRule, sourceName, sourceListType),
                 actions: isCustomRule ? [createAction('block')] : [createAction('disable-filter')],
-                rule: primaryRule?.text,
+                rules: rulesList,
                 source: sourceName,
                 sourceListType,
             };
@@ -187,6 +188,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_domain_is_processed'),
                 reason: intl.getMessage('user_rules_no_rules_matched'),
                 actions: [createAction('allow'), createAction('block')],
+                rules: rulesList,
             };
         case FILTERED_STATUS.FILTERED_SAFE_BROWSING:
             return {
@@ -194,7 +196,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_domain_blocked'),
                 reason: intl.getMessage('blocked_threats'),
                 actions: [createAction('allow'), createAction('disable-safebrowsing')],
-                rule: primaryRule?.text,
+                rules: rulesList,
                 source: intl.getMessage('safe_browsing'),
             };
         case FILTERED_STATUS.FILTERED_PARENTAL:
@@ -205,6 +207,7 @@ export const getCheckResultMeta = ({
                     source: intl.getMessage('parental_control'),
                 }),
                 actions: [createAction('allow'), createAction('disable-parental')],
+                rules: rulesList,
             };
         case FILTERED_STATUS.FILTERED_SAFE_SEARCH:
             return {
@@ -212,6 +215,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_rewrite_rule_is_applied'),
                 reason: intl.getMessage('settings_safe_search'),
                 actions: [createAction('allow'), createAction('disable-safesearch')],
+                rules: rulesList,
             };
         case FILTERED_STATUS.FILTERED_BLOCKED_SERVICE:
             return {
@@ -219,7 +223,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_domain_blocked'),
                 reason: intl.getMessage('blocked_services'),
                 actions: [createAction('allow'), createAction('disable-blocked-service')],
-                rule: primaryRule?.text,
+                rules: rulesList,
             };
         case FILTERED_STATUS.REWRITE:
             return {
@@ -227,6 +231,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_rewrite_rule_is_applied'),
                 reason: intl.getMessage('rewritten'),
                 actions: [],
+                rules: rulesList,
             };
         case FILTERED_STATUS.REWRITE_RULE:
             return {
@@ -234,7 +239,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_rewrite_rule_is_applied'),
                 reason: intl.getMessage('custom_filtering_rules'),
                 actions: isCustomRule ? [createAction('remove-rewrite-rule')] : [],
-                rule: primaryRule?.text,
+                rules: rulesList,
             };
         case FILTERED_STATUS.REWRITE_HOSTS:
             return {
@@ -242,6 +247,7 @@ export const getCheckResultMeta = ({
                 title: intl.getMessage('user_rules_rewrite_rule_is_applied'),
                 reason: intl.getMessage('rewrite_hosts_applied'),
                 actions: [],
+                rules: rulesList,
                 source: intl.getMessage('system_host_files'),
             };
         default: {
@@ -254,7 +260,7 @@ export const getCheckResultMeta = ({
                     : intl.getMessage('user_rules_domain_is_processed'),
                 reason: reason || intl.getMessage('check_not_found'),
                 actions: [],
-                rule: primaryRule?.text,
+                rules: rulesList,
                 source: sourceName,
                 sourceListType,
             };

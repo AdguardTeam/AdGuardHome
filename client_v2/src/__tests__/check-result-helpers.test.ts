@@ -92,9 +92,62 @@ describe('getCheckResultMeta', () => {
         );
         expect(safeBrowsingMeta.reason).toBe(intl.getMessage('blocked_threats'));
         expect(safeBrowsingMeta.source).toBe(intl.getMessage('safe_browsing'));
-        expect(safeBrowsingMeta.rule).toBe('adguard-malware-shavar');
+        expect(safeBrowsingMeta.rules).toEqual([
+            { filter_list_id: SPECIAL_FILTER_ID.SAFE_BROWSING, text: 'adguard-malware-shavar' },
+        ]);
         expect(blockedServicesMeta.reason).toBe(intl.getMessage('blocked_services'));
-        expect(blockedServicesMeta.rule).toBe('||amemv.com^');
+        expect(blockedServicesMeta.rules).toEqual([{ filter_list_id: 0, text: '||amemv.com^' }]);
+    });
+
+    it('exposes every rule from the response and derives source from the first one', () => {
+        const rules = [
+            { filter_list_id: 101, text: '||filtered.example^' },
+            { filter_list_id: 201, text: '@@||allowed.example^$important' },
+            { filter_list_id: 101, text: '||filtered.example^' },
+        ];
+
+        const meta = getCheckResultMeta({
+            reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
+            rules,
+            filters,
+            whitelistFilters,
+        });
+
+        expect(meta.rules).toEqual(rules);
+        expect(meta.source).toBe('Example Blocklist');
+        expect(meta.sourceListType).toBe('blocklist');
+        expect(meta.actions).toEqual([
+            {
+                kind: 'allow',
+                label: intl.getMessage('user_rules_add_to_allowlist'),
+            },
+            {
+                kind: 'disable-filter',
+                label: intl.getMessage('user_rules_disable_filter'),
+            },
+        ]);
+    });
+
+    it('detects a custom rule for actions from the first rule only', () => {
+        const meta = getCheckResultMeta({
+            reason: FILTERED_STATUS.NOT_FILTERED_WHITE_LIST,
+            rules: [
+                {
+                    filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES,
+                    text: '@@||allowed.example^$important',
+                },
+                { filter_list_id: 101, text: '||filtered.example^' },
+            ],
+            filters,
+            whitelistFilters: [],
+        });
+
+        expect(meta.actions).toEqual([
+            {
+                kind: 'block',
+                label: intl.getMessage('block'),
+            },
+        ]);
     });
 
     it('renders Safe Search as a rewritten result with the Safe search status', () => {

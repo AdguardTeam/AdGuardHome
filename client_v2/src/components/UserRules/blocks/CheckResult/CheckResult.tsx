@@ -162,10 +162,14 @@ export const CheckResult = (props: Props) => {
                         </div>
                     </Show>
 
-                    <Show when={meta().tone !== 'rewritten' && meta().rule}>
-                        <div class={s.resultItem}>
-                            {intl.getMessage('user_rules_rule', { rule: meta().rule })}
-                        </div>
+                    <Show when={meta().tone !== 'rewritten'}>
+                        <For each={meta().rules}>
+                            {(rule) => (
+                                <div class={s.resultItem} data-testid="user-rules-result-rule">
+                                    {intl.getMessage('user_rules_rule', { rule: rule.text })}
+                                </div>
+                            )}
+                        </For>
                     </Show>
 
                     <Show when={meta().tone === 'rewritten' && redirectedValue()}>
@@ -180,10 +184,14 @@ export const CheckResult = (props: Props) => {
                         </div>
                     </Show>
 
-                    <Show when={meta().tone === 'rewritten' && meta().rule}>
-                        <div class={s.resultItem}>
-                            {intl.getMessage('user_rules_rule', { rule: meta().rule })}
-                        </div>
+                    <Show when={meta().tone === 'rewritten'}>
+                        <For each={meta().rules}>
+                            {(rule) => (
+                                <div class={s.resultItem} data-testid="user-rules-result-rule">
+                                    {intl.getMessage('user_rules_rule', { rule: rule.text })}
+                                </div>
+                            )}
+                        </For>
                     </Show>
 
                     <Show when={meta().tone !== 'rewritten' && props.checkResult.cname}>

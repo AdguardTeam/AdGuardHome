@@ -72,11 +72,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
 
+- The *Check the filtering* result in the new web interface showing only the
+  first matched rule ([#8677]).
+
 ### Removed
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
 
 [#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
+[#8677]:           https://github.com/AdguardTeam/AdGuardHome/issues/8677
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608
