@@ -9,7 +9,13 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 2
+# AdGuard-Project-Version: 3
+
+# Exit the script if a pipeline fails (-e), prevent accidental filename
+# expansion (-f), and consider undefined variables as errors (-u).
+#
+# TODO(m.kazantsev):  Use set -o 'pipefail' when GitHub supports it.
+set -e -f -u
 
 # The default verbosity level is 0.  Show every command that is run and every
 # package that is processed if the caller requested verbosity level greater than
@@ -33,10 +39,6 @@ else
 	x_flags='-x=0'
 fi
 readonly x_flags v_flags
-
-# Exit the script if a pipeline fails (-e), prevent accidental filename
-# expansion (-f), and consider undefined variables as errors (-u).
-set -e -f -u
 
 # Allow users to override the go command from environment.  For example, to
 # build two releases with two different Go versions and test the difference.

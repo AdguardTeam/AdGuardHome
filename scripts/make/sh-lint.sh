@@ -3,7 +3,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 5
+# AdGuard-Project-Version: 6
 
 # Don't use -f, because we use globs in this script.
 set -e -o 'pipefail' -u
@@ -21,7 +21,7 @@ fi
 go="${GO:-go}"
 readonly go
 
-run_linter -e "$go" tool shfmt --binary-next-line -d -p -s \
+run_linter "$go" tool shfmt --binary-next-line -d -p -s \
 	./scripts/hooks/* \
 	./scripts/install.sh \
 	./scripts/make/*.sh \

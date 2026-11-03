@@ -20,6 +20,20 @@ func TestWeekly_Contains(t *testing.T) {
 	// is actually UTC+03:00.
 	otherTZ := time.FixedZone("Etc/GMT-3", 3*60*60)
 
+	romeTZ, err := time.LoadLocation("Europe/Rome")
+	require.NoError(t, err)
+
+	// Rome local is explicitly used there to reproduce the schedule shift bug
+	// on DST transition cases.
+	//
+	// See https://github.com/AdguardTeam/AdGuardHome/issues/8670.
+	romeSchedule := &Weekly{
+		days: [7]dayRange{
+			time.Sunday: {start: 9*time.Hour + 15*time.Minute, end: 20*time.Hour + 30*time.Minute},
+		},
+		location: romeTZ,
+	}
+
 	// baseSchedule, 12:00 to 14:00.
 	baseSchedule := &Weekly{
 		days: [7]dayRange{
@@ -46,79 +60,99 @@ func TestWeekly_Contains(t *testing.T) {
 
 	testCases := []struct {
 		schedule *Weekly
-		assert   assert.BoolAssertionFunc
+		want     assert.BoolAssertionFunc
 		t        time.Time
 		name     string
 	}{{
 		schedule: EmptyWeekly(),
-		assert:   assert.False,
+		want:     assert.False,
 		t:        baseTime,
 		name:     "empty",
 	}, {
 		schedule: allDaySchedule,
-		assert:   assert.True,
+		want:     assert.True,
 		t:        baseTime,
 		name:     "same_day_all_day",
 	}, {
 		schedule: baseSchedule,
-		assert:   assert.True,
+		want:     assert.True,
 		t:        baseTime.Add(13 * time.Hour),
 		name:     "same_day_inside",
 	}, {
 		schedule: baseSchedule,
-		assert:   assert.False,
+		want:     assert.False,
 		t:        baseTime.Add(11 * time.Hour),
 		name:     "same_day_outside",
 	}, {
 		schedule: allDaySchedule,
-		assert:   assert.True,
+		want:     assert.True,
 		t:        baseTime.Add(24*time.Hour - time.Second),
 		name:     "same_day_last_second",
 	}, {
 		schedule: allDaySchedule,
-		assert:   assert.False,
+		want:     assert.False,
 		t:        otherTime,
 		name:     "other_day_all_day",
 	}, {
 		schedule: baseSchedule,
-		assert:   assert.False,
+		want:     assert.False,
 		t:        otherTime.Add(13 * time.Hour),
 		name:     "other_day_inside",
 	}, {
 		schedule: baseSchedule,
-		assert:   assert.False,
+		want:     assert.False,
 		t:        otherTime.Add(11 * time.Hour),
 		name:     "other_day_outside",
 	}, {
 		schedule: baseSchedule,
-		assert:   assert.True,
+		want:     assert.True,
 		t:        baseTime.Add(13 * time.Hour).In(otherTZ),
 		name:     "same_day_inside_other_tz",
 	}, {
 		schedule: baseSchedule,
-		assert:   assert.False,
+		want:     assert.False,
 		t:        baseTime.Add(11 * time.Hour).In(otherTZ),
 		name:     "same_day_outside_other_tz",
 	}, {
 		schedule: oneMinSchedule,
-		assert:   assert.True,
+		want:     assert.True,
 		t:        baseTime,
 		name:     "one_minute_beginning",
 	}, {
 		schedule: oneMinSchedule,
-		assert:   assert.True,
+		want:     assert.True,
 		t:        baseTime.Add(1*time.Minute - 1),
 		name:     "one_minute_end",
 	}, {
 		schedule: oneMinSchedule,
-		assert:   assert.False,
+		want:     assert.False,
 		t:        baseTime.Add(1 * time.Minute),
 		name:     "one_minute_past_end",
+	}, {
+		schedule: romeSchedule,
+		want:     assert.False,
+		t:        time.Date(2026, time.October, 25, 9, 14, 0, 0, romeTZ),
+		name:     "dst_transition_before",
+	}, {
+		schedule: romeSchedule,
+		want:     assert.True,
+		t:        time.Date(2026, time.October, 25, 9, 15, 0, 0, romeTZ),
+		name:     "dst_transition_left_border",
+	}, {
+		schedule: romeSchedule,
+		want:     assert.True,
+		t:        time.Date(2026, time.October, 25, 19, 30, 0, 0, romeTZ),
+		name:     "dst_transition_inside",
+	}, {
+		schedule: romeSchedule,
+		want:     assert.False,
+		t:        time.Date(2026, time.October, 25, 20, 30, 0, 0, romeTZ),
+		name:     "dst_transition_right_border",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.assert(t, tc.schedule.Contains(tc.t))
+			tc.want(t, tc.schedule.Contains(tc.t))
 		})
 	}
 }

@@ -21,13 +21,13 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -341,6 +341,63 @@ func newHostsContainer(
 	return etcHosts, watcher, watcher.Start(ctx)
 }
 
+// dhcpConfigToInternal converts c to the DHCP server settings.  All arguments
+// must not be nil, workDir must not be empty.
+func dhcpConfigToInternal(
+	c *configmgr.DHCPConfig,
+	baseLogger *slog.Logger,
+	confModifier agh.ConfigModifier,
+	httpReg aghhttp.Registrar,
+	workDir string,
+) (s *dhcpd.ServerConfig) {
+	return &dhcpd.ServerConfig{
+		Conf6:              dhcpV6ConfigToInternal(c.Conf6),
+		CommandConstructor: executil.SystemCommandConstructor{},
+		ConfModifier:       confModifier,
+		HTTPReg:            httpReg,
+		Logger:             baseLogger.With(slogutil.KeyPrefix, "dhcpd"),
+		InterfaceName:      c.InterfaceName,
+		LocalDomainName:    c.LocalDomainName,
+		//lint:ignore SA1019 Remove it when migration of DHCP leases will be not
+		// needed.
+		WorkDir: workDir,
+		DataDir: filepath.Join(workDir, dataDir),
+		Conf4:   dhcpV4ConfigToInternal(c.Conf4),
+		Enabled: c.Enabled,
+	}
+}
+
+// dhcpV4ConfigToInternal converts c to the DHCPv4 server settings.
+func dhcpV4ConfigToInternal(c *configmgr.DHCPv4Config) (s dhcpd.V4ServerConf) {
+	if c == nil {
+		return dhcpd.V4ServerConf{}
+	}
+
+	return dhcpd.V4ServerConf{
+		GatewayIP:     c.GatewayIP,
+		RangeStart:    c.RangeStart,
+		RangeEnd:      c.RangeEnd,
+		SubnetMask:    c.SubnetMask,
+		Options:       c.Options,
+		LeaseDuration: c.LeaseDuration,
+		ICMPTimeout:   c.ICMPTimeout,
+	}
+}
+
+// dhcpV6ConfigToInternal converts c to the DHCPv6 server settings.
+func dhcpV6ConfigToInternal(c *configmgr.DHCPv6Config) (s dhcpd.V6ServerConf) {
+	if c == nil {
+		return dhcpd.V6ServerConf{}
+	}
+
+	return dhcpd.V6ServerConf{
+		RangeStart:    c.RangeStart,
+		LeaseDuration: c.LeaseDuration,
+		RASLAACOnly:   c.RASLAACOnly,
+		RAAllowSLAAC:  c.RAAllowSLAAC,
+	}
+}
+
 // initContextClients initializes Context clients and related fields.  All
 // arguments except hc must not be nil.
 func initContextClients(
@@ -352,21 +409,13 @@ func initContextClients(
 	workDir string,
 	hc *aghnet.HostsContainer,
 ) (err error) {
-	//lint:ignore SA1019 Migration is not over.
-	config.DHCP.WorkDir = workDir
-	config.DHCP.DataDir = filepath.Join(workDir, dataDir)
-	config.DHCP.HTTPReg = httpReg
-	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
-	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
-	config.DHCP.ConfModifier = confModifier
-
-	globalContext.dhcpServer, err = dhcpd.Create(ctx, config.DHCP)
+	serverConf := dhcpConfigToInternal(config.DHCP, logger, confModifier, httpReg, workDir)
+	globalContext.dhcpServer, err = dhcpd.Create(ctx, serverConf)
 	if globalContext.dhcpServer == nil || err != nil {
-		// TODO(a.garipov): There are a lot of places in the code right
-		// now which assume that the DHCP server can be nil despite this
-		// condition.  Inspect them and perhaps rewrite them to use
-		// Enabled() instead.
-		return fmt.Errorf("initing dhcp: %w", err)
+		// TODO(a.garipov):  There are a lot of places in the code right now
+		// which assume that the DHCP server can be nil despite this condition.
+		// Inspect them and perhaps rewrite them to use Enabled() instead.
+		return fmt.Errorf("initializing dhcp: %w", err)
 	}
 
 	var arpDB arpdb.Interface
@@ -414,7 +463,7 @@ func setupBindOpts(opts options) (err error) {
 		config.HTTPConfig.Address = bindAddr
 
 		if config.HTTPConfig.Address.Port() != 0 {
-			err = checkPorts()
+			err = validateConfigPorts(config)
 			if err != nil {
 				// Don't wrap the error, because it's informative enough as is.
 				return err
@@ -430,7 +479,7 @@ func setupBindOpts(opts options) (err error) {
 			opts.bindPort,
 		)
 
-		err = checkPorts()
+		err = validateConfigPorts(config)
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
@@ -570,34 +619,6 @@ func setupDNSFilteringConf(
 	})
 	if err != nil {
 		return fmt.Errorf("initializing safesearch: %w", err)
-	}
-
-	return nil
-}
-
-// checkPorts is a helper for ports validation in config.
-func checkPorts() (err error) {
-	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
-
-	udpPorts := aghalg.UniqChecker[udpPort]{}
-	addPorts(udpPorts, udpPort(config.DNS.Port))
-
-	if config.TLS.Enabled {
-		addPorts(
-			tcpPorts,
-			tcpPort(config.TLS.PortHTTPS),
-			tcpPort(config.TLS.PortDNSOverTLS),
-			tcpPort(config.TLS.PortDNSCrypt),
-		)
-
-		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
-	}
-
-	if err = tcpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating tcp ports: %w", err)
-	} else if err = udpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
 	return nil
