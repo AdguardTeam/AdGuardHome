@@ -329,6 +329,7 @@ export type DnsConfigData = {
     ratelimit_subnet_len_ipv6?: number;
     edns_cs_use_custom?: boolean;
     edns_cs_custom_ip?: string;
+    edns_cs_use_client_addr?: boolean;
     cache_enabled?: boolean;
     cache_size?: number;
     cache_ttl_max?: number;
@@ -502,6 +503,7 @@ export const initialState: RootState = {
         blocked_response_ttl: 10,
         upstream_timeout: 10,
         edns_cs_enabled: false,
+        edns_cs_use_client_addr: false,
         disable_ipv6: false,
         dnssec_enabled: false,
         upstream_dns_file: '',

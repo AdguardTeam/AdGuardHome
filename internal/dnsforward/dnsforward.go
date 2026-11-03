@@ -306,9 +306,10 @@ func (s *Server) WriteDiskConfig(dc *configmgr.DNSConfig) {
 	sc := s.conf.Config
 
 	dc.EDNSClientSubnet = &configmgr.EDNSClientSubnet{
-		CustomIP:  sc.EDNSClientSubnet.CustomIP,
-		Enabled:   sc.EDNSClientSubnet.Enabled,
-		UseCustom: sc.EDNSClientSubnet.UseCustom,
+		CustomIP:             sc.EDNSClientSubnet.CustomIP,
+		Enabled:              sc.EDNSClientSubnet.Enabled,
+		UseCustom:            sc.EDNSClientSubnet.UseCustom,
+		UseClientAddrFromECS: sc.EDNSClientSubnet.UseClientAddrFromECS,
 	}
 
 	dc.IpsetListFileName = sc.IpsetListFileName

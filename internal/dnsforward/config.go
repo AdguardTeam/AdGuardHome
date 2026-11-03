@@ -180,6 +180,10 @@ type EDNSClientSubnet struct {
 
 	// UseCustom defines if CustomIP should be used.
 	UseCustom bool `yaml:"use_custom"`
+
+	// UseClientAddrFromECS defines if the EDNS Client Subnet is used for
+	// client identification instead of the connection address.
+	UseClientAddrFromECS bool `yaml:"use_client_addr_from_ecs"`
 }
 
 // TLSConfig contains the TLS configuration settings for DNSCrypt,
