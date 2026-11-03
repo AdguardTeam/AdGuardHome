@@ -151,6 +151,3 @@ tool (
 	mvdan.cc/sh/v3/cmd/shfmt
 	mvdan.cc/unparam
 )
-
-// See CVE-2026-98432.
-godebug multipathtcp=0
