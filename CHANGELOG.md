@@ -91,9 +91,9 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 
 ### Security
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
+- Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
 
-- Support for Multipath TCP has been disabled to prevent the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
+- Support for Multipath TCP has been disabled to mitigate the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
 
 ### Removed
 
