@@ -1,0 +1,60 @@
+.link {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+
+    &:focus-visible {
+        background-color: var(--hovered-page-background);
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--hovered-page-background);
+        }
+    }
+}
+
+.linkDisabled {
+    cursor: default;
+    pointer-events: none;
+
+    .title,
+    .description,
+    .arrow {
+        color: var(--disabled-main-text);
+    }
+
+    &:focus-visible {
+        background-color: transparent;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: transparent;
+        }
+    }
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--default-main-text);
+}
+
+.description {
+    font-size: 14px;
+    line-height: 1.3;
+    color: var(--default-description-text);
+}
