@@ -23,6 +23,7 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // cookieTTL is the time-to-live of the session cookie.
@@ -30,12 +31,6 @@ const cookieTTL = 365 * timeutil.Day
 
 // sessionCookieName is the name of the session cookie.
 const sessionCookieName = "agh_session"
-
-// fakePassword is used to emulate the password verification for unknown
-// usernames, mitigating timing attacks.
-var fakePassword = aghuser.NewDefaultPassword(
-	"$2a$10$aGCqdlW./wwSzcge191oEuQ6Wl/oA2JCl3BZsKFxTgLhnoFk1K0Au",
-)
 
 // loginJSON is the JSON structure for authentication.
 type loginJSON struct {
@@ -221,9 +216,9 @@ func newCookie(
 	if user == nil {
 		rateLimiter.inc(addr)
 
-		// Run fakePassword.Authenticate against received password for unknown
-		// usernames so known and unknown paths take comparable time.
-		_ = fakePassword.Authenticate(ctx, req.Password)
+		// Run hash calculation for the received password even for unknown
+		// usernames so that known and unknown paths take comparable time.
+		_, _ = bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
 		return nil, errInvalidLogin
 	}
@@ -585,9 +580,9 @@ func (mw *authMiddlewareDefault) userFromRequestBasicAuth(
 
 	user, _ = mw.users.ByLogin(ctx, aghuser.Login(login))
 	if user == nil {
-		// Run fakePassword.Authenticate against received password for unknown
-		// usernames so known and unknown paths take comparable time.
-		_ = fakePassword.Authenticate(ctx, pass)
+		// Run hash calculation for the received password even for unknown
+		// usernames so that known and unknown paths take comparable time.
+		_, _ = bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
 
 		return nil, errInvalidLogin
 	}

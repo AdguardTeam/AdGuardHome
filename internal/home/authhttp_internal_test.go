@@ -22,8 +22,8 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/httphdr"
-	"github.com/AdguardTeam/golibs/netutil/httputil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/version"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
@@ -787,14 +787,16 @@ func TestRealIP(t *testing.T) {
 	}
 }
 
-// BenchmarkAuthMiddlewareDefault measures the response time of an arbitrary
-// handler wrapped in the default authentication middleware.  It is used to
-// check that failed logins take comparable time regardless of whether the
-// username exists, mitigating timing attacks.
-func BenchmarkAuthMiddlewareDefault(b *testing.B) {
+// TestAuthMiddlewareDefault_Wrap_handleTime measures the time taken by the
+// authentication middleware for handling requests, and asserts that failed
+// logins take comparable time to successful ones.
+func TestAuthMiddlewareDefault_Wrap_handleTime(t *testing.T) {
+	t.Parallel()
+
+	// login is a test valid user login.
 	const login = aghuser.Login(testUsername)
 
-	user := newTestUser(b, testPassword, login)
+	user := newTestUser(t, testPassword, login)
 	users := map[aghuser.Login]*aghuser.User{
 		login: user,
 	}
@@ -814,51 +816,93 @@ func BenchmarkAuthMiddlewareDefault(b *testing.B) {
 		users:       usersDB,
 	})
 
-	h := mw.Wrap(httputil.PlainTextHandler("OK"))
+	// handler is a simple HTTP handler that responds with status OK.  It's
+	// intended to handle the requests as fast as possible, to accurately
+	// measure the middleware's overhead.
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
-	benchCases := []struct {
-		name     string
-		user     string
-		pass     string
-		wantCode int
-	}{{
-		name:     "success",
-		user:     testUsername,
-		pass:     testPassword,
-		wantCode: http.StatusOK,
-	}, {
-		name:     "unknown_user",
-		user:     "unknown",
-		pass:     testPassword,
-		wantCode: http.StatusUnauthorized,
-	}, {
-		name:     "wrong_password",
-		user:     testUsername,
-		pass:     "wrong",
-		wantCode: http.StatusUnauthorized,
-	}}
+	h := mw.Wrap(handler)
 
-	for _, bc := range benchCases {
-		b.Run(bc.name, func(b *testing.B) {
-			req := authRequest("/control/profile", nil, bc.user, bc.pass)
-			w := httptest.NewRecorder()
+	var (
+		// reqsCount is the number of requests to perform for measuring average
+		// handling time.
+		//
+		// TODO(e.burkov):  !! Adjust the value to keep the test reasonably fast
+		// and accurate.
+		reqsCount = 100
 
-			b.ReportAllocs()
-			for b.Loop() {
-				h.ServeHTTP(w, req)
-			}
+		// expectedFractionDenom is the denominator used for calculating the
+		// allowed fraction of deviation between average success and failure
+		// times.
+		//
+		// TODO(e.burkov):  !! Adjust the value to keep the test reasonably fast
+		// and accurate.
+		expectedFractionDenom = 100.0
+	)
 
-			assert.Equal(b, bc.wantCode, w.Code)
-		})
+	if version.RaceEnabled {
+		reqsCount = 10
+		expectedFractionDenom = 10.0
 	}
 
-	// Most recent results:
-	//
-	//	goos: darwin
-	//	goarch: arm64
-	//	pkg: github.com/AdguardTeam/AdGuardHome/internal/home
-	//	cpu: Apple M1 Pro
-	//	BenchmarkAuthMiddlewareDefault/success-8         	      16	  66631250 ns/op	    5749 B/op	      17 allocs/op
-	//	BenchmarkAuthMiddlewareDefault/unknown_user-8    	      18	  64178595 ns/op	    5400 B/op	      16 allocs/op
-	//	BenchmarkAuthMiddlewareDefault/wrong_password-8  	      18	  64253727 ns/op	    5387 B/op	      16 allocs/op
+	var averageSuccessTime time.Duration
+
+	require.True(t, t.Run("success", func(t *testing.T) {
+		req := authRequest("/control/profile", nil, testUsername, testPassword)
+		w := httptest.NewRecorder()
+
+		for i := range reqsCount {
+			start := time.Now()
+			h.ServeHTTP(w, req)
+			averageSuccessTime += time.Since(start)
+
+			require.Equalf(t, http.StatusOK, w.Code, "attempt %d", i)
+		}
+
+		averageSuccessTime /= time.Duration(reqsCount)
+	}))
+
+	testCases := []struct {
+		name string
+		user string
+		pass string
+	}{{
+		name: "wrong_password",
+		user: testUsername,
+		pass: "wrong",
+	}, {
+		name: "unknown_user",
+		user: "unknown",
+		pass: testPassword,
+	}}
+
+	for _, tc := range testCases {
+		req := authRequest("/control/profile", nil, tc.user, tc.pass)
+		w := httptest.NewRecorder()
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var averageBadTime time.Duration
+
+			for i := range reqsCount {
+				start := time.Now()
+				h.ServeHTTP(w, req)
+				averageBadTime += time.Since(start)
+
+				require.Equalf(t, http.StatusUnauthorized, w.Code, "attempt %d", i)
+			}
+
+			averageBadTime /= time.Duration(reqsCount)
+
+			assert.InDelta(
+				t,
+				averageSuccessTime,
+				averageBadTime,
+				float64(averageSuccessTime)/expectedFractionDenom,
+			)
+		})
+	}
 }
