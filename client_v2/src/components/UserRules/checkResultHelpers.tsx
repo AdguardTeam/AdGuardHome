@@ -19,6 +19,7 @@ type CheckResultMeta = {
     actions: ResultAction[];
     rules: CheckResultRule[];
     ruleGroups: CheckResultRuleGroup[];
+    showRulesSection?: boolean;
     source?: string;
     sourceListType?: 'blocklist' | 'allowlist';
 };
@@ -240,6 +241,7 @@ export const getCheckResultMeta = ({
                 actions: [createAction('allow'), createAction('disable-parental')],
                 rules: rulesList,
                 ruleGroups,
+                showRulesSection: false,
             };
         case FILTERED_STATUS.FILTERED_SAFE_SEARCH:
             return {

@@ -123,6 +123,51 @@ describe('CheckResult rules', () => {
         expect(screen.queryAllByTestId('user-rules-result-source')).toHaveLength(0);
     });
 
+    it('hides source and rule lines for a parental control result', () => {
+        renderCheckResult({
+            hostname: '4chan.org',
+            reason: FILTERED_STATUS.FILTERED_PARENTAL,
+            rules: [
+                {
+                    filter_list_id: SPECIAL_FILTER_ID.PARENTAL,
+                    text: 'parental CATEGORY_BLACKLISTED',
+                },
+            ],
+        });
+
+        expect(screen.queryAllByTestId('user-rules-result-source')).toHaveLength(0);
+        expect(screen.queryAllByTestId('user-rules-result-rule')).toHaveLength(0);
+        expect(
+            screen.getByText(
+                copyInDom('user_rules_reason', {
+                    reason: copy('user_rules_reason_blocked_by', {
+                        source: copy('parental_control'),
+                    }),
+                }),
+            ),
+        ).toBeInTheDocument();
+    });
+
+    it('keeps source and rule lines for a safe browsing result', () => {
+        renderCheckResult({
+            hostname: 'malware.example',
+            reason: FILTERED_STATUS.FILTERED_SAFE_BROWSING,
+            rules: [
+                { filter_list_id: SPECIAL_FILTER_ID.SAFE_BROWSING, text: 'adguard-malware-shavar' },
+            ],
+        });
+
+        const sourceLabels = screen.getAllByTestId('user-rules-result-source');
+        expect(sourceLabels).toHaveLength(1);
+        expect(sourceLabels[0]).toHaveTextContent(
+            copyInDom('user_rules_source', { value: copy('safe_browsing') }),
+        );
+
+        const ruleLines = screen.getAllByTestId('user-rules-result-rule');
+        expect(ruleLines).toHaveLength(1);
+        expect(ruleLines[0]).toHaveTextContent('adguard-malware-shavar');
+    });
+
     it('renders a single rule exactly once', () => {
         renderCheckResult({
             hostname: 'blocked.example',

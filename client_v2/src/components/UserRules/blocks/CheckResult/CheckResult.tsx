@@ -176,35 +176,37 @@ export const CheckResult = (props: Props) => {
                         </div>
                     </Show>
 
-                    <For each={ruleGroups()}>
-                        {(group) => (
-                            <>
-                                <Show when={group.source}>
-                                    {(source) => (
-                                        <div
-                                            class={s.resultItem}
-                                            data-testid="user-rules-result-source"
-                                        >
-                                            {renderSourceLabel(source(), group.sourceListType)}
-                                        </div>
-                                    )}
-                                </Show>
+                    <Show when={meta().showRulesSection !== false}>
+                        <For each={ruleGroups()}>
+                            {(group) => (
+                                <>
+                                    <Show when={group.source}>
+                                        {(source) => (
+                                            <div
+                                                class={s.resultItem}
+                                                data-testid="user-rules-result-source"
+                                            >
+                                                {renderSourceLabel(source(), group.sourceListType)}
+                                            </div>
+                                        )}
+                                    </Show>
 
-                                <For each={group.rules}>
-                                    {(rule) => (
-                                        <div
-                                            class={s.resultItem}
-                                            data-testid="user-rules-result-rule"
-                                        >
-                                            {intl.getMessage('user_rules_rule', {
-                                                rule: rule.text,
-                                            })}
-                                        </div>
-                                    )}
-                                </For>
-                            </>
-                        )}
-                    </For>
+                                    <For each={group.rules}>
+                                        {(rule) => (
+                                            <div
+                                                class={s.resultItem}
+                                                data-testid="user-rules-result-rule"
+                                            >
+                                                {intl.getMessage('user_rules_rule', {
+                                                    rule: rule.text,
+                                                })}
+                                            </div>
+                                        )}
+                                    </For>
+                                </>
+                            )}
+                        </For>
+                    </Show>
 
                     <Show when={meta().tone !== 'rewritten' && props.checkResult.cname}>
                         <div class={s.resultItem}>

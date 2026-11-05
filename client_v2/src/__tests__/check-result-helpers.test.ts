@@ -226,6 +226,52 @@ describe('getCheckResultMeta', () => {
         ]);
     });
 
+    it('suppresses the generic rules section for parental control responses', () => {
+        const rules = [
+            {
+                filter_list_id: SPECIAL_FILTER_ID.PARENTAL,
+                text: 'parental CATEGORY_BLACKLISTED',
+            },
+        ];
+
+        const meta = getCheckResultMeta({
+            reason: FILTERED_STATUS.FILTERED_PARENTAL,
+            rules,
+            filters: [],
+            whitelistFilters: [],
+        });
+
+        expect(meta.showRulesSection).toBe(false);
+        expect(meta.ruleGroups).toEqual([
+            {
+                source: intl.getMessage('parental_control'),
+                sourceListType: undefined,
+                rules,
+            },
+        ]);
+    });
+
+    it('keeps the generic rules section enabled for other reasons', () => {
+        const blockedMeta = getCheckResultMeta({
+            reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
+            rules: [{ filter_list_id: 101, text: '||filtered.example^' }],
+            filters,
+            whitelistFilters: [],
+        });
+
+        const safeBrowsingMeta = getCheckResultMeta({
+            reason: FILTERED_STATUS.FILTERED_SAFE_BROWSING,
+            rules: [
+                { filter_list_id: SPECIAL_FILTER_ID.SAFE_BROWSING, text: 'adguard-malware-shavar' },
+            ],
+            filters: [],
+            whitelistFilters: [],
+        });
+
+        expect(blockedMeta.showRulesSection).not.toBe(false);
+        expect(safeBrowsingMeta.showRulesSection).not.toBe(false);
+    });
+
     it('detects a custom rule for actions from the first rule only', () => {
         const meta = getCheckResultMeta({
             reason: FILTERED_STATUS.NOT_FILTERED_WHITE_LIST,
