@@ -676,7 +676,15 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 	}
 
 	// Don't wrap the error because it's informative enough as is.
-	return checkPortAvailability(tlsConf, setts.tlsConfigSettings, webAPIAddr)
+	return checkPortAvailability(tlsConf, setts.tlsConfigSettings, webAPIAddr, web.conf.serveHTTP3)
+}
+
+// bindingCheck represents a single network protocol binding check.
+type bindingCheck struct {
+	network  string
+	proto    string
+	currPort uint16
+	newPort  uint16
 }
 
 // checkPortAvailability checks [tlsConfigSettings.PortHTTPS],
@@ -685,13 +693,16 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 // the current configuration and, if needed, attempts to bind to the port.  The
 // function returns human-readable error messages for the frontend.  This is
 // best-effort check to prevent an "address already in use" error.
-//
-// TODO(a.garipov): Adapt for HTTP/3.
 func checkPortAvailability(
 	currConf tlsConfigSettings,
 	newConf tlsConfigSettings,
 	addr netip.Addr,
+	useHTTP3 bool,
 ) (err error) {
+	if !newConf.Enabled {
+		return nil
+	}
+
 	const (
 		networkTCP = "tcp"
 		networkUDP = "udp"
@@ -701,12 +712,7 @@ func checkPortAvailability(
 		protoDoQ   = "DNS-over-QUIC"
 	)
 
-	needBindingCheck := []struct {
-		network  string
-		proto    string
-		currPort uint16
-		newPort  uint16
-	}{{
+	needBindingCheck := []bindingCheck{{
 		network:  networkTCP,
 		proto:    protoHTTPS,
 		currPort: currConf.PortHTTPS,
@@ -723,8 +729,15 @@ func checkPortAvailability(
 		newPort:  newConf.PortDNSOverQUIC,
 	}}
 
-	if !newConf.Enabled {
-		return nil
+	if useHTTP3 {
+		http3Check := bindingCheck{
+			network:  networkUDP,
+			proto:    protoHTTPS,
+			currPort: currConf.PortHTTPS,
+			newPort:  newConf.PortHTTPS,
+		}
+
+		needBindingCheck = append(needBindingCheck, http3Check)
 	}
 
 	var errs []error
