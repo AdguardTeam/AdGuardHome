@@ -3,9 +3,14 @@ import { FILTERED_STATUS, SPECIAL_FILTER_ID } from 'panel/helpers/constants';
 import { checkFiltered, getFilterName, type Filter } from 'panel/helpers/helpers';
 import type { FilteringReason } from 'panel/api/model/filteringReason';
 
-import { CheckResultData, ResultAction, ResultActionKind } from './types';
+import { CheckResultData, CheckResultRule, ResultAction, ResultActionKind } from './types';
+import { getPrimaryRule } from './helpers';
 
-type CheckResultRule = NonNullable<CheckResultData['rules']>[number];
+type CheckResultRuleGroup = {
+    source?: string;
+    sourceListType?: 'blocklist' | 'allowlist';
+    rules: CheckResultRule[];
+};
 
 type CheckResultMeta = {
     tone: 'blocked' | 'allowed' | 'rewritten' | 'processed';
@@ -13,6 +18,7 @@ type CheckResultMeta = {
     reason?: string;
     actions: ResultAction[];
     rules: CheckResultRule[];
+    ruleGroups: CheckResultRuleGroup[];
     source?: string;
     sourceListType?: 'blocklist' | 'allowlist';
 };
@@ -48,17 +54,11 @@ const createAction = (kind: ResultActionKind): ResultAction => ({
     label: getActionLabel(kind),
 });
 
-const getPrimaryRule = (rules?: CheckResultData['rules']): CheckResultRule | undefined =>
-    rules?.[0];
-
 const getSourceName = (
-    rules: CheckResultData['rules'],
+    filterListId: number | undefined,
     filters: Filter[],
     whitelistFilters: Filter[],
 ) => {
-    const primaryRule = getPrimaryRule(rules);
-    const filterListId = primaryRule?.filter_list_id;
-
     if (filterListId === undefined) {
         return undefined;
     }
@@ -96,6 +96,32 @@ const getSourceListType = (
     }
 
     return undefined;
+};
+
+const getRuleGroups = (
+    rules: CheckResultRule[],
+    filters: Filter[],
+    whitelistFilters: Filter[],
+): CheckResultRuleGroup[] => {
+    const groups = new Map<number | undefined, CheckResultRuleGroup>();
+
+    for (const rule of rules) {
+        const filterListId = rule.filter_list_id;
+        let group = groups.get(filterListId);
+
+        if (!group) {
+            group = {
+                source: getSourceName(filterListId, filters, whitelistFilters),
+                sourceListType: getSourceListType(filterListId, filters, whitelistFilters),
+                rules: [],
+            };
+            groups.set(filterListId, group);
+        }
+
+        group.rules.push(rule);
+    }
+
+    return Array.from(groups.values());
 };
 
 const getBlockedReason = (
@@ -148,14 +174,15 @@ export const getCheckResultMeta = ({
     whitelistFilters: Filter[];
 }): CheckResultMeta => {
     const rulesList = rules ?? [];
-    const primaryRule = getPrimaryRule(rulesList);
-    const sourceName = getSourceName(rulesList, filters, whitelistFilters);
+    const primaryRule = getPrimaryRule({ rules: rulesList });
+    const sourceName = getSourceName(primaryRule?.filter_list_id, filters, whitelistFilters);
     const isCustomRule = primaryRule?.filter_list_id === SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES;
     const sourceListType = getSourceListType(
         primaryRule?.filter_list_id,
         filters,
         whitelistFilters,
     );
+    const ruleGroups = getRuleGroups(rulesList, filters, whitelistFilters);
 
     switch (reason) {
         case FILTERED_STATUS.FILTERED_BLACK_LIST:
@@ -167,6 +194,7 @@ export const getCheckResultMeta = ({
                     ? [createAction('allow')]
                     : [createAction('allow'), createAction('disable-filter')],
                 rules: rulesList,
+                ruleGroups,
                 source: sourceName,
                 sourceListType,
             };
@@ -177,6 +205,7 @@ export const getCheckResultMeta = ({
                 reason: getAllowedReason(isCustomRule, sourceName, sourceListType),
                 actions: isCustomRule ? [createAction('block')] : [createAction('disable-filter')],
                 rules: rulesList,
+                ruleGroups,
                 source: sourceName,
                 sourceListType,
             };
@@ -189,6 +218,7 @@ export const getCheckResultMeta = ({
                 reason: intl.getMessage('user_rules_no_rules_matched'),
                 actions: [createAction('allow'), createAction('block')],
                 rules: rulesList,
+                ruleGroups,
             };
         case FILTERED_STATUS.FILTERED_SAFE_BROWSING:
             return {
@@ -197,6 +227,7 @@ export const getCheckResultMeta = ({
                 reason: intl.getMessage('blocked_threats'),
                 actions: [createAction('allow'), createAction('disable-safebrowsing')],
                 rules: rulesList,
+                ruleGroups,
                 source: intl.getMessage('safe_browsing'),
             };
         case FILTERED_STATUS.FILTERED_PARENTAL:
@@ -208,6 +239,7 @@ export const getCheckResultMeta = ({
                 }),
                 actions: [createAction('allow'), createAction('disable-parental')],
                 rules: rulesList,
+                ruleGroups,
             };
         case FILTERED_STATUS.FILTERED_SAFE_SEARCH:
             return {
@@ -216,6 +248,7 @@ export const getCheckResultMeta = ({
                 reason: intl.getMessage('settings_safe_search'),
                 actions: [createAction('allow'), createAction('disable-safesearch')],
                 rules: rulesList,
+                ruleGroups,
             };
         case FILTERED_STATUS.FILTERED_BLOCKED_SERVICE:
             return {
@@ -224,6 +257,7 @@ export const getCheckResultMeta = ({
                 reason: intl.getMessage('blocked_services'),
                 actions: [createAction('allow'), createAction('disable-blocked-service')],
                 rules: rulesList,
+                ruleGroups,
             };
         case FILTERED_STATUS.REWRITE:
             return {
@@ -232,6 +266,7 @@ export const getCheckResultMeta = ({
                 reason: intl.getMessage('rewritten'),
                 actions: [],
                 rules: rulesList,
+                ruleGroups,
             };
         case FILTERED_STATUS.REWRITE_RULE:
             return {
@@ -240,6 +275,7 @@ export const getCheckResultMeta = ({
                 reason: intl.getMessage('custom_filtering_rules'),
                 actions: isCustomRule ? [createAction('remove-rewrite-rule')] : [],
                 rules: rulesList,
+                ruleGroups,
             };
         case FILTERED_STATUS.REWRITE_HOSTS:
             return {
@@ -248,6 +284,7 @@ export const getCheckResultMeta = ({
                 reason: intl.getMessage('rewrite_hosts_applied'),
                 actions: [],
                 rules: rulesList,
+                ruleGroups,
                 source: intl.getMessage('system_host_files'),
             };
         default: {
@@ -261,6 +298,7 @@ export const getCheckResultMeta = ({
                 reason: reason || intl.getMessage('check_not_found'),
                 actions: [],
                 rules: rulesList,
+                ruleGroups,
                 source: sourceName,
                 sourceListType,
             };

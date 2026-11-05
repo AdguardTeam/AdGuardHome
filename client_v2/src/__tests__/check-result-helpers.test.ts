@@ -15,6 +15,14 @@ describe('getCheckResultMeta', () => {
             lastUpdated: '',
             rulesCount: 12,
         },
+        {
+            id: 1793714189,
+            name: 'Multi list',
+            url: 'https://filters.example/multi.txt',
+            enabled: true,
+            lastUpdated: '',
+            rulesCount: 2,
+        },
     ];
     const whitelistFilters = [
         {
@@ -92,14 +100,23 @@ describe('getCheckResultMeta', () => {
         );
         expect(safeBrowsingMeta.reason).toBe(intl.getMessage('blocked_threats'));
         expect(safeBrowsingMeta.source).toBe(intl.getMessage('safe_browsing'));
-        expect(safeBrowsingMeta.rules).toEqual([
-            { filter_list_id: SPECIAL_FILTER_ID.SAFE_BROWSING, text: 'adguard-malware-shavar' },
+        expect(safeBrowsingMeta.ruleGroups).toEqual([
+            {
+                source: intl.getMessage('safe_browsing'),
+                sourceListType: undefined,
+                rules: [
+                    {
+                        filter_list_id: SPECIAL_FILTER_ID.SAFE_BROWSING,
+                        text: 'adguard-malware-shavar',
+                    },
+                ],
+            },
         ]);
         expect(blockedServicesMeta.reason).toBe(intl.getMessage('blocked_services'));
         expect(blockedServicesMeta.rules).toEqual([{ filter_list_id: 0, text: '||amemv.com^' }]);
     });
 
-    it('exposes every rule from the response and derives source from the first one', () => {
+    it('exposes every rule grouped by filter list and derives source from the first one', () => {
         const rules = [
             { filter_list_id: 101, text: '||filtered.example^' },
             { filter_list_id: 201, text: '@@||allowed.example^$important' },
@@ -114,6 +131,18 @@ describe('getCheckResultMeta', () => {
         });
 
         expect(meta.rules).toEqual(rules);
+        expect(meta.ruleGroups).toEqual([
+            {
+                source: 'Example Blocklist',
+                sourceListType: 'blocklist',
+                rules: [rules[0], rules[2]],
+            },
+            {
+                source: 'Example Allowlist',
+                sourceListType: 'allowlist',
+                rules: [rules[1]],
+            },
+        ]);
         expect(meta.source).toBe('Example Blocklist');
         expect(meta.sourceListType).toBe('blocklist');
         expect(meta.actions).toEqual([
@@ -124,6 +153,75 @@ describe('getCheckResultMeta', () => {
             {
                 kind: 'disable-filter',
                 label: intl.getMessage('user_rules_disable_filter'),
+            },
+        ]);
+    });
+
+    it('groups the QA multi-list fixture under each rule\'s own source', () => {
+        const rules = [
+            {
+                filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES,
+                text: '127.0.0.1 hosts.example',
+            },
+            { filter_list_id: 1793714189, text: '0.0.0.0 hosts.example' },
+        ];
+
+        const meta = getCheckResultMeta({
+            reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
+            rules,
+            filters,
+            whitelistFilters: [],
+        });
+
+        expect(meta.ruleGroups).toEqual([
+            {
+                source: intl.getMessage('custom_rules'),
+                sourceListType: undefined,
+                rules: [rules[0]],
+            },
+            {
+                source: 'Multi list',
+                sourceListType: 'blocklist',
+                rules: [rules[1]],
+            },
+        ]);
+        expect(meta.source).toBe(intl.getMessage('custom_rules'));
+    });
+
+    it('puts rules without a filter list id in an unlabeled group', () => {
+        const rules = [{ text: '||custom.example^' }];
+
+        const meta = getCheckResultMeta({
+            reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
+            rules,
+            filters,
+            whitelistFilters,
+        });
+
+        expect(meta.ruleGroups).toEqual([
+            {
+                source: undefined,
+                sourceListType: undefined,
+                rules,
+            },
+        ]);
+    });
+
+    it('keeps empty-text rules in ruleGroups for the renderer to skip', () => {
+        const rules = [{ filter_list_id: SPECIAL_FILTER_ID.SAFE_SEARCH, text: '' }];
+
+        const meta = getCheckResultMeta({
+            reason: FILTERED_STATUS.FILTERED_SAFE_SEARCH,
+            rules,
+            filters: [],
+            whitelistFilters: [],
+        });
+
+        expect(meta.ruleGroups).toEqual([
+            {
+                source: intl.getMessage('safe_search'),
+                sourceListType: undefined,
+                rules,
             },
         ]);
     });

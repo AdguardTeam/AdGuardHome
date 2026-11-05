@@ -4,10 +4,20 @@ import { render, screen } from '@solidjs/testing-library';
 import { CheckResult } from 'panel/components/UserRules/blocks/CheckResult/CheckResult';
 import type { CheckResultData } from 'panel/components/UserRules/types';
 import { FILTERED_STATUS, SPECIAL_FILTER_ID } from 'panel/helpers/constants';
+import { copy, copyInDom } from 'panel/__tests__/helpers/copy';
 
 vi.mock('panel/stores/filtering', () => ({
     filteringState: {
-        filters: [],
+        filters: [
+            {
+                id: 1793714189,
+                name: 'Multi list',
+                url: 'https://filters.example/multi.txt',
+                enabled: true,
+                lastUpdated: '',
+                rulesCount: 2,
+            },
+        ],
         whitelistFilters: [],
     },
 }));
@@ -36,7 +46,7 @@ const renderCheckResult = (checkResult: CheckResultData) =>
 describe('CheckResult rules', () => {
     const ptrRule = '||10.10.10.10.in-addr.arpa^$dnsrewrite=NOERROR;PTR;router.home.arpa.';
 
-    it('renders every rule returned by the backend without deduplication', () => {
+    it('renders every rule returned by the backend under one source label', () => {
         renderCheckResult({
             hostname: '10.10.10.10.in-addr.arpa',
             reason: FILTERED_STATUS.REWRITE_RULE,
@@ -46,16 +56,78 @@ describe('CheckResult rules', () => {
             })),
         });
 
+        const sourceLabels = screen.getAllByTestId('user-rules-result-source');
+        expect(sourceLabels).toHaveLength(1);
+        expect(sourceLabels[0]).toHaveTextContent(
+            copyInDom('user_rules_source', { value: copy('custom_rules') }),
+        );
+
         const ruleLines = screen.getAllByTestId('user-rules-result-rule');
         expect(ruleLines).toHaveLength(3);
         ruleLines.forEach((line) => expect(line).toHaveTextContent(ptrRule));
+    });
+
+    it('renders each rule under its own filter list source', () => {
+        renderCheckResult({
+            hostname: 'hosts.example',
+            reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
+            rules: [
+                {
+                    filter_list_id: SPECIAL_FILTER_ID.CUSTOM_FILTERING_RULES,
+                    text: '127.0.0.1 hosts.example',
+                },
+                {
+                    filter_list_id: 1793714189,
+                    text: '0.0.0.0 hosts.example',
+                },
+            ],
+        });
+
+        const sourceLabels = screen.getAllByTestId('user-rules-result-source');
+        expect(sourceLabels).toHaveLength(2);
+        expect(sourceLabels[0]).toHaveTextContent(
+            copyInDom('user_rules_source', { value: copy('custom_rules') }),
+        );
+        expect(sourceLabels[1]).toHaveTextContent(
+            copyInDom('user_rules_source_blocklist', { value: 'Multi list' }),
+        );
+
+        const ruleLines = screen.getAllByTestId('user-rules-result-rule');
+        expect(ruleLines).toHaveLength(2);
+        expect(sourceLabels[0].nextElementSibling).toHaveTextContent('127.0.0.1 hosts.example');
+        expect(sourceLabels[1].nextElementSibling).toHaveTextContent('0.0.0.0 hosts.example');
+    });
+
+    it('renders a rule without a filter list id without a source label', () => {
+        renderCheckResult({
+            hostname: 'custom.example',
+            reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
+            rules: [{ text: '||custom.example^' }],
+        });
+
+        expect(screen.queryAllByTestId('user-rules-result-source')).toHaveLength(0);
+        const ruleLines = screen.getAllByTestId('user-rules-result-rule');
+        expect(ruleLines).toHaveLength(1);
+        expect(ruleLines[0]).toHaveTextContent('||custom.example^');
+    });
+
+    it('skips an empty-text rule in a Safe Search result', () => {
+        renderCheckResult({
+            hostname: 'www.google.com',
+            reason: FILTERED_STATUS.FILTERED_SAFE_SEARCH,
+            rules: [{ filter_list_id: SPECIAL_FILTER_ID.SAFE_SEARCH, text: '' }],
+            cname: 'forcesafesearch.google.com',
+        });
+
+        expect(screen.queryAllByTestId('user-rules-result-rule')).toHaveLength(0);
+        expect(screen.queryAllByTestId('user-rules-result-source')).toHaveLength(0);
     });
 
     it('renders a single rule exactly once', () => {
         renderCheckResult({
             hostname: 'blocked.example',
             reason: FILTERED_STATUS.FILTERED_BLACK_LIST,
-            rules: [{ filter_list_id: 101, text: '||blocked.example^' }],
+            rules: [{ filter_list_id: 1793714189, text: '||blocked.example^' }],
         });
 
         const ruleLines = screen.getAllByTestId('user-rules-result-rule');
