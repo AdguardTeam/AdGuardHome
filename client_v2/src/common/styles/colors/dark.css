@@ -1,9 +1,4 @@
 [data-theme='dark'] {
-    /*
-     * The design system's dark values (`Product Primary/60`, `Red/50`, …) have
-     * no step in the palette, so the shades that differ from the light theme
-     * are written literally here.
-     */
     /* Page background */
     --default-page-background: var(--gray-90);
     --hovered-page-background: var(--gray-80);
@@ -47,8 +42,8 @@
     --pressed-dropdown-menu-background: var(--gray-60);
     /* Main button */
     --default-main-button: var(--product-primary-50);
-    --hovered-main-button: #589968;
-    --pressed-main-button: #487c54;
+    --hovered-main-button: var(--product-primary-60);
+    --pressed-main-button: var(--product-primary-70);
     --disabled-main-button: var(--product-primary-90);
     --default-primary-button-text: var(--gray-0);
     --disabled-primary-button-text: var(--product-primary-20);
@@ -66,48 +61,48 @@
     --pressed-secondary-card-button: var(--gray-60);
     --disabled-secondary-card-button: var(--gray-80);
     /* Danger button */
-    --default-danger-button: #f67247;
-    --hovered-danger-button: #df6740;
+    --default-danger-button: var(--red-50);
+    --hovered-danger-button: var(--red-60);
     --pressed-danger-button: var(--red-70);
     --disabled-danger-button: var(--red-30);
-    --hovered-secondary-danger-button: #7b3923;
+    --hovered-secondary-danger-button: var(--red-100);
     /* Warning button */
     --default-warning-button: var(--orange-50);
-    --hovered-warning-button: #c47a00;
+    --hovered-warning-button: var(--orange-60);
     --pressed-warning-button: var(--orange-70);
     --disabled-warning-button: var(--orange-30);
     /* Link */
     --default-link: var(--product-primary-50);
-    --hovered-link: #589968;
-    --pressed-link: #487c54;
+    --hovered-link: var(--product-primary-60);
+    --pressed-link: var(--product-primary-70);
     --visited-link: var(--product-primary-30);
-    --disabled-link: #315439;
+    --disabled-link: var(--product-primary-90);
     /* Attention link */
     --default-attention-link: var(--orange-50);
-    --hovered-attention-link: #c47a00;
+    --hovered-attention-link: var(--orange-60);
     --pressed-attention-link: var(--orange-70);
     --disabled-attention-link: var(--orange-30);
     /* Additional link */
     --default-additional-link: var(--product-secondary-50);
     /* Error link */
-    --default-error-link: #f67247;
+    --default-error-link: var(--red-50);
     /* Icons */
     --default-product-icon: var(--product-primary-50);
     --default-black-icons: var(--gray-20);
     --default-gray-icons: var(--gray-40);
     --disabled-gray-icons: var(--gray-70);
-    --disabled-product-icon: #243e2a;
-    --default-error-icon: #f67247;
+    --disabled-product-icon: var(--product-primary-90);
+    --default-error-icon: var(--red-50);
     --stroke-icons-white-icons-default: var(--gray-0);
     --stroke-icons-secondary-icon-disabled: var(--product-secondary-100);
     --stroke-icons-tertiary-icon-disabled: var(--product-tertiary-100);
     --default-product-secondary-icon-stroke: var(--product-secondary-50);
     --default-attention-icon-stroke: var(--orange-50);
     /* Focus outline */
-    --default-focus-outline: #315439;
+    --default-focus-outline: var(--product-primary-90);
     /* Stat */
     --default-stats-background: var(--gray-70);
-    --default-red-stat: #f67247;
+    --default-red-stat: var(--red-50);
     --default-tertiary-stat: var(--gray-40);
     /* Modal */
     --modal-iframe-overlay: #00000075;
@@ -134,21 +129,21 @@
     --text-toplines-topline-button-text-default: var(--gray-0);
     --fills-toplines-topline-background-image: none;
     --fills-toplines-topline-button-default: var(--product-primary-50);
-    --fills-toplines-topline-button-hovered: #589968;
-    --fills-toplines-topline-button-pressed: #487c54;
+    --fills-toplines-topline-button-hovered: var(--product-primary-60);
+    --fills-toplines-topline-button-pressed: var(--product-primary-70);
     --stroke-toplines-button-stroke-default: var(--product-primary-50);
-    --stroke-toplines-button-stroke-hovered: #589968;
-    --stroke-toplines-button-stroke-pressed: #487c54;
+    --stroke-toplines-button-stroke-hovered: var(--product-primary-60);
+    --stroke-toplines-button-stroke-pressed: var(--product-primary-70);
     --stroke-toplines-close-icon-default: var(--gray-0);
     --stroke-toplines-close-icon-hovered: var(--gray-10);
     --stroke-toplines-close-icon-pressed: var(--gray-20);
     --fills-backgrounds-recent-activity: var(--product-primary-100);
     --fills-backgrounds-recent-activity-changed: var(--orange-90);
-    --fills-backgrounds-recent-activity-blocked: #5b2a1a;
+    --fills-backgrounds-recent-activity-blocked: var(--red-90);
     /* Switch */
     --fills-switch-on-default: var(--product-primary-50);
-    --fills-switch-on-hovered: #589968;
-    --fills-switch-on-disabled: #315439;
+    --fills-switch-on-hovered: var(--product-primary-60);
+    --fills-switch-on-disabled: var(--product-primary-90);
     --fills-switch-off-default: var(--gray-70);
     --fills-switch-off-hovered: var(--gray-60);
     --fills-switch-off-disabled: var(--gray-70);
