@@ -72,17 +72,19 @@ type Interface interface {
 
 	// MacByIP returns the MAC address of a client with ip.  It returns nil if
 	// there is no such client, due to an assumption that a DHCP client must
-	// always have a HardwareAddr.
+	// always have a HardwareAddr.  Expired dynamic leases are ignored.
 	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	// HostByIP returns the hostname of the DHCP client with the given IP
 	// address.  The address will be netip.Addr{} if there is no such client,
 	// due to an assumption that a DHCP client must always have an IP address.
+	// Expired dynamic leases are ignored.
 	HostByIP(ip netip.Addr) (host string)
 
 	// IPByHost returns the IP address of the DHCP client with the given
 	// hostname.  The address will be netip.Addr{} if there is no such client,
 	// due to an assumption that a DHCP client must always have an IP address.
+	// Expired dynamic leases are ignored.
 	IPByHost(host string) (ip netip.Addr)
 
 	// WriteDiskConfig writes the configuration to dc, dc must not be nil.

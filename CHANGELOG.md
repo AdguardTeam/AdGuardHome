@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Expired dynamic leases are served by DNS ([#8671]).
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
@@ -68,6 +70,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
 
+[#8671]:           https://github.com/AdguardTeam/AdGuardHome/issues/8671
 [#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
