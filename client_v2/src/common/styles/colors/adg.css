@@ -65,4 +65,19 @@
     --red-80: #bc3f15;
     --red-90: #a13612;
     --red-100: #77280d;
+    /*
+     * Shades that the design system defines only for the dark theme.  They live
+     * in the palette, so the semantic variables in `dark.css` reference them
+     * instead of hardcoding colors.
+     */
+    --product-primary-60-dark: #589968;
+    --product-primary-70-dark: #487c54;
+    --product-primary-90-dark: #315439;
+    /* `Stroke/Icons/Product_icon:Disabled` has no step in the scale. */
+    --product-primary-disabled-dark: #243e2a;
+    --orange-60-dark: #c47a00;
+    --red-50-dark: #f67247;
+    --red-60-dark: #df6740;
+    --red-90-dark: #7b3923;
+    --red-100-dark: #5b2a1a;
 }

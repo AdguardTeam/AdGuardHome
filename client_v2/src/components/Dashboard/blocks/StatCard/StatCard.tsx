@@ -163,7 +163,6 @@ export const StatCard = (props: StatCardProps) => {
     return (
         <div
             class={cn(s.statCard, {
-                [s.statCardQueries]: props.cardTheme === CARDS_THEME.QUERIES,
                 [s.statCardAds]: props.cardTheme === CARDS_THEME.ADS,
                 [s.statCardThreats]: props.cardTheme === CARDS_THEME.THREATS,
                 [s.statCardAdult]: props.cardTheme === CARDS_THEME.ADULT,
@@ -197,7 +196,11 @@ export const StatCard = (props: StatCardProps) => {
                     <div class={s.statCardChart}>
                         <canvas ref={setCanvasRef} />
                     </div>
-                    <div ref={setTooltipRef} class={s.chartTooltip} />
+                    <div
+                        ref={setTooltipRef}
+                        class={s.chartTooltip}
+                        style={{ 'border-color': props.color }}
+                    />
                 </div>
             </div>
             <div class={cn(theme.text.t3, s.statCardLabel)}>
