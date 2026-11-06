@@ -18,10 +18,20 @@
     gap: 8px;
 }
 
+.statCardQueries {
+    & .chartTooltip {
+        border-color: var(--chart-queries);
+    }
+}
+
 .statCardAds {
     & .statCardPercent,
     & .statCardLabel {
         color: var(--default-error-link);
+    }
+
+    & .chartTooltip {
+        border-color: var(--chart-ads);
     }
 }
 
@@ -30,12 +40,20 @@
     & .statCardLabel {
         color: var(--default-attention-link);
     }
+
+    & .chartTooltip {
+        border-color: var(--chart-threats);
+    }
 }
 
 .statCardAdult {
     & .statCardPercent,
     & .statCardLabel {
         color: var(--default-additional-link);
+    }
+
+    & .chartTooltip {
+        border-color: var(--chart-adult);
     }
 }
 
@@ -125,7 +143,6 @@
     }
 }
 
-/* The chart tooltip border is set from the chart color in `StatCard.tsx`. */
 .chartTooltip {
     position: absolute;
     pointer-events: none;

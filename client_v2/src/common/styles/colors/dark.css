@@ -29,6 +29,11 @@
     --default-placeholder: var(--gray-50);
     --default-input-on-card-background: var(--gray-70);
     --disabled-input-on-card-background: var(--gray-70);
+    /*
+     * Both states use the same step here: `--gray-50` is too light for the
+     * `--default-main-text` label, and a darker hover would blend into the
+     * card behind the menu.  Pending confirmation with the design system.
+     */
     --hovered-input-on-card-background: var(--gray-60);
     --pressed-input-on-card-background: var(--gray-60);
     /* Dropdown */
@@ -100,6 +105,11 @@
     --default-stats-background: var(--gray-70);
     --default-red-stat: var(--red-50-dark);
     --default-tertiary-stat: var(--gray-40);
+    /* Charts */
+    --chart-queries: var(--product-primary-50);
+    --chart-ads: var(--red-50-dark);
+    --chart-threats: var(--orange-50);
+    --chart-adult: var(--product-secondary-50);
     /* Modal */
     --modal-iframe-overlay: #00000075;
     --modal-overlay: #00000075;
