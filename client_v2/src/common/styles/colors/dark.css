@@ -49,7 +49,7 @@
     --default-main-button: var(--product-primary-50);
     --hovered-main-button: #589968;
     --pressed-main-button: #487c54;
-    --disabled-main-button: #366642;
+    --disabled-main-button: var(--product-primary-90);
     --default-primary-button-text: var(--gray-0);
     --disabled-primary-button-text: var(--product-primary-20);
     --default-primary-button-icon: var(--gray-0);
@@ -112,8 +112,6 @@
     /* Modal */
     --modal-iframe-overlay: #00000075;
     --modal-overlay: #00000075;
-    --dialog-overlay: rgba(19, 19, 19, 0.8);
-    --backdrop-overlay: rgba(0, 0, 0, 0.5);
     /* Notifications */
     --default-notifications-attention: var(--orange-100);
     /* Logo key */

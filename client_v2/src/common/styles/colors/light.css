@@ -102,8 +102,6 @@
     /* Modal */
     --modal-iframe-overlay: #ffffff50;
     --modal-overlay: #00000050;
-    --dialog-overlay: rgba(19, 19, 19, 0.8);
-    --backdrop-overlay: rgba(0, 0, 0, 0.5);
     /* Notifications */
     --default-notifications-attention: var(--orange-10);
     /* Logo key */

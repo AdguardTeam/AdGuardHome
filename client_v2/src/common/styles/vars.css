@@ -70,4 +70,10 @@
     --scroll-shadow-up:
         0 -4px 8px 3px rgba(0, 0, 0, 0.05),
         0 -1px 3px 0 rgba(0, 0, 0, 0.1);
+
+    /* OVERLAY */
+
+    /* The same in both themes, so they are not repeated in light/dark. */
+    --dialog-overlay: rgba(19, 19, 19, 0.8);
+    --backdrop-overlay: rgba(0, 0, 0, 0.5);
 }
