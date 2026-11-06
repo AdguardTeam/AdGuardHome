@@ -23,7 +23,7 @@ type Props = {
 /**
  * Chart line colors per theme.  Chart.js paints into a canvas, which cannot
  * consume CSS custom properties, so the chart palette is repeated here; keep it
- * in sync with the `--chart-*` tokens in `common/styles/colors/{light,dark}.css`.
+ * in sync with the `--chart-*` tokens in `common/styles/colors/light.css`.
  */
 const CHART_COLORS = {
     light: {

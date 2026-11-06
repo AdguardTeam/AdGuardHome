@@ -99,11 +99,15 @@
     --default-stats-background: var(--gray-20);
     --default-red-stat: var(--red-50);
     --default-tertiary-stat: var(--gray-60);
-    /* Charts */
-    --chart-queries: var(--product-primary-50);
-    --chart-ads: var(--red-50);
-    --chart-threats: var(--orange-50);
-    --chart-adult: var(--product-secondary-50);
+    /*
+     * Chart colors: the canvas paints from `CHART_COLORS` in `StatCards.tsx`,
+     * while the chart UI in CSS uses these aliases.  They resolve to the dark
+     * values automatically, so they are declared once.
+     */
+    --chart-queries: var(--default-product-icon);
+    --chart-ads: var(--default-error-link);
+    --chart-threats: var(--default-attention-link);
+    --chart-adult: var(--default-additional-link);
     /* Modal */
     --modal-iframe-overlay: #ffffff50;
     --modal-overlay: #00000050;
