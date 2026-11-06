@@ -109,7 +109,6 @@
     --default-stats-background: var(--gray-70);
     --default-red-stat: #f67247;
     --default-tertiary-stat: var(--gray-40);
-    /* Charts are aliased in `light.css` and follow the semantic tokens above. */
     /* Modal */
     --modal-iframe-overlay: #00000075;
     --modal-overlay: #00000075;

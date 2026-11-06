@@ -22,8 +22,8 @@ type Props = {
 
 /**
  * Chart line colors per theme.  Chart.js paints into a canvas, which cannot
- * consume CSS custom properties, so the chart palette is repeated here; keep it
- * in sync with the `--chart-*` tokens in `common/styles/colors/light.css`.
+ * consume CSS custom properties, so the palette is repeated here; keep it in
+ * sync with the semantic colors used by the chart UI in `StatCard.module.pcss`.
  */
 const CHART_COLORS = {
     light: {
