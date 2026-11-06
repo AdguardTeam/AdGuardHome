@@ -66,15 +66,3 @@
     --red-90: #a13612;
     --red-100: #77280d;
 }
-
-[data-theme='dark'] {
-    --product-primary-60: #589968;
-    --product-primary-70: #487c54;
-    --product-primary-90: #315439;
-    --product-secondary-60: #9964a2;
-    --orange-60: #c47a00;
-    --red-50: #f67247;
-    --red-60: #df6740;
-    --red-90: #7b3923;
-    --red-100: #5b2a1a;
-}

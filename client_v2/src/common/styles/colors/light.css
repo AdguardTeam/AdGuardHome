@@ -93,6 +93,8 @@
     --stroke-icons-secondary-icon-disabled: var(--product-secondary-30);
     --default-product-secondary-icon-stroke: var(--product-secondary-50);
     --default-attention-icon-stroke: var(--orange-50);
+    /* Focus outline */
+    --default-focus-outline: var(--product-primary-90);
     /* Stat */
     --default-stats-background: var(--gray-20);
     --default-red-stat: var(--red-50);
