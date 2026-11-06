@@ -26,6 +26,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
 
+- Dark theme colors in the new web interface have been aligned with the
+  design system, including dashboard charts, notifications, dropdowns, and
+  tooltips.
+
 ### Fixed
 
 - Invalid SVCB record from DDR when DoH routes are empty.

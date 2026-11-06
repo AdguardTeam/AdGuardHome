@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { createExternalTooltipHandler } from 'panel/helpers/useChart';
+import { createCursorLinePlugin, createExternalTooltipHandler } from 'panel/helpers/useChart';
 
 /** Viewport size the stubs below report. */
 const VIEWPORT_WIDTH = 1024;
@@ -57,6 +57,56 @@ const createTooltipState = (overrides: Record<string, unknown> = {}) => ({
     caretX: 100,
     caretY: 50,
     ...overrides,
+});
+
+describe('createCursorLinePlugin', () => {
+    const createChart = (activeElements: Array<{ element: { x: number } }>) => {
+        const ctx = {
+            save: vi.fn(),
+            beginPath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            stroke: vi.fn(),
+            restore: vi.fn(),
+            strokeStyle: '',
+            lineWidth: 0,
+        };
+
+        return {
+            ctx,
+            chart: {
+                tooltip: { getActiveElements: () => activeElements },
+                scales: { y: { top: 5, bottom: 55 } },
+                ctx,
+            },
+        };
+    };
+
+    it('draws the cursor line in the color the accessor returns', () => {
+        let color = 'rgb(103, 178, 121)';
+        const plugin = createCursorLinePlugin(() => color);
+        const { chart, ctx } = createChart([{ element: { x: 42 } }]);
+
+        plugin.afterDraw?.(chart as never, {} as never, {} as never);
+
+        expect(ctx.strokeStyle).toBe('rgb(103, 178, 121)');
+        expect(ctx.moveTo).toHaveBeenCalledWith(42, 5);
+        expect(ctx.lineTo).toHaveBeenCalledWith(42, 55);
+
+        color = 'rgb(230, 101, 58)';
+        plugin.afterDraw?.(chart as never, {} as never, {} as never);
+
+        expect(ctx.strokeStyle).toBe('rgb(230, 101, 58)');
+    });
+
+    it('does not draw without an active element', () => {
+        const plugin = createCursorLinePlugin(() => 'rgb(103, 178, 121)');
+        const { chart, ctx } = createChart([]);
+
+        plugin.afterDraw?.(chart as never, {} as never, {} as never);
+
+        expect(ctx.stroke).not.toHaveBeenCalled();
+    });
 });
 
 describe('createExternalTooltipHandler', () => {

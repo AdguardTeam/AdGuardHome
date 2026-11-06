@@ -18,10 +18,20 @@
     gap: 8px;
 }
 
+.statCardQueries {
+    & .chartTooltip {
+        border-color: var(--default-product-icon);
+    }
+}
+
 .statCardAds {
     & .statCardPercent,
     & .statCardLabel {
         color: var(--default-error-link);
+    }
+
+    & .chartTooltip {
+        border-color: var(--default-error-link);
     }
 }
 
@@ -30,12 +40,20 @@
     & .statCardLabel {
         color: var(--default-attention-link);
     }
+
+    & .chartTooltip {
+        border-color: var(--default-attention-link);
+    }
 }
 
 .statCardAdult {
     & .statCardPercent,
     & .statCardLabel {
         color: var(--default-additional-link);
+    }
+
+    & .chartTooltip {
+        border-color: var(--default-additional-link);
     }
 }
 
@@ -137,7 +155,7 @@
     white-space: nowrap;
     border-radius: 4px;
     padding: 4px 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--small-box-shadow);
 }
 
 .chartTooltipValue {

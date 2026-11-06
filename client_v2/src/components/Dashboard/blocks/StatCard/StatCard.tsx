@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Paths';
 
+import { withAlpha } from 'panel/helpers/colors';
 import { formatNumber } from 'panel/helpers/helpers';
 import {
     useChart,
@@ -40,13 +41,6 @@ export const CARDS_THEME = {
     ADS: 'ads',
     THREATS: 'threats',
     ADULT: 'adult',
-};
-
-export const CARDS_COLORS = {
-    QUERIES: '#7F7F7F',
-    ADS: '#E07575',
-    THREATS: '#F5A623',
-    ADULT: '#9B59B6',
 };
 
 export type StatCardProps = {
@@ -83,8 +77,8 @@ export const StatCard = (props: StatCardProps) => {
                             0,
                             context.chart.height || 100,
                         );
-                        gradient.addColorStop(0, `${props.color}4D`);
-                        gradient.addColorStop(1, `${props.color}00`);
+                        gradient.addColorStop(0, withAlpha(props.color, 0.3));
+                        gradient.addColorStop(1, withAlpha(props.color, 0));
                         return gradient;
                     },
                     fill: true,
@@ -98,7 +92,7 @@ export const StatCard = (props: StatCardProps) => {
         };
     });
 
-    const cursorLinePlugin = createCursorLinePlugin(untrack(() => props.color));
+    const cursorLinePlugin = createCursorLinePlugin(() => props.color);
 
     const externalTooltipHandler = createExternalTooltipHandler(
         () => tooltipEl,

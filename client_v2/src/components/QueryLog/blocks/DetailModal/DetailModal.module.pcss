@@ -226,13 +226,9 @@
 
 .dialog:global([data-part='content']):has(.scrollArea[data-can-scroll-up='true'])
     :global(.dialog-header) {
-    box-shadow:
-        0 4px 8px 3px rgba(0, 0, 0, 0.05),
-        0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: var(--scroll-shadow-down);
 }
 
 .dialog:global([data-part='content']):has(.scrollArea[data-can-scroll-down='true']) .actionFooter {
-    box-shadow:
-        0 -4px 8px 3px rgba(0, 0, 0, 0.05),
-        0 -1px 3px 0 rgba(0, 0, 0, 0.1);
+    box-shadow: var(--scroll-shadow-up);
 }

@@ -29,6 +29,10 @@
     --default-placeholder: var(--gray-50);
     --default-input-on-card-background: var(--gray-70);
     --disabled-input-on-card-background: var(--gray-70);
+    /* Both highlights have to be lighter than the menu surface, otherwise they
+       blend into the dialog background. */
+    --hovered-input-on-card-background: var(--gray-60);
+    --pressed-input-on-card-background: var(--gray-60);
     /* Dropdown */
     --default-dropdown-menu-background: var(--gray-80);
     --hovered-dropdown-menu-background: var(--gray-70);
@@ -37,7 +41,8 @@
     --default-main-button: var(--product-primary-50);
     --hovered-main-button: var(--product-primary-60);
     --pressed-main-button: var(--product-primary-70);
-    --disabled-main-button: var(--product-primary-90);
+    /* `Fills/Buttons/Main_button:Disabled` in the dark theme. */
+    --disabled-main-button: #366642;
     --default-primary-button-text: var(--gray-0);
     --disabled-primary-button-text: var(--product-primary-20);
     --default-primary-button-icon: var(--gray-0);
@@ -58,7 +63,7 @@
     --hovered-danger-button: var(--red-60);
     --pressed-danger-button: var(--red-70);
     --disabled-danger-button: var(--red-30);
-    --hovered-secondary-danger-button: var(--red-100);
+    --hovered-secondary-danger-button: var(--red-90);
     /* Warning button */
     --default-warning-button: var(--orange-50);
     --hovered-warning-button: var(--orange-60);
@@ -69,6 +74,8 @@
     --hovered-link: var(--product-primary-60);
     --pressed-link: var(--product-primary-70);
     --visited-link: var(--product-primary-30);
+    /* `Text/Links/Link:Disabled` in the dark theme. */
+    --disabled-link: var(--product-primary-90);
     /* Attention link */
     --default-attention-link: var(--orange-50);
     --hovered-attention-link: var(--orange-60);
@@ -83,7 +90,8 @@
     --default-black-icons: var(--gray-20);
     --default-gray-icons: var(--gray-40);
     --disabled-gray-icons: var(--gray-70);
-    --disabled-product-icon: var(--product-primary-90);
+    /* `Stroke/Icons/Product_icon:Disabled` in the dark theme. */
+    --disabled-product-icon: #243e2a;
     --default-error-icon: var(--red-50);
     --stroke-icons-white-icons-default: var(--gray-0);
     --stroke-icons-secondary-icon-disabled: var(--product-secondary-100);
@@ -93,10 +101,12 @@
     /* Stat */
     --default-stats-background: var(--gray-70);
     --default-red-stat: var(--red-50);
-    --default-tertiary-stat: var(--gray-60);
+    --default-tertiary-stat: var(--gray-40);
     /* Modal */
     --modal-iframe-overlay: #00000075;
     --modal-overlay: #00000075;
+    --dialog-overlay: rgba(19, 19, 19, 0.8);
+    --backdrop-overlay: rgba(0, 0, 0, 0.5);
     /* Notifications */
     --default-notifications-attention: var(--orange-100);
     /* Logo key */
@@ -127,15 +137,15 @@
     --stroke-toplines-close-icon-default: var(--gray-0);
     --stroke-toplines-close-icon-hovered: var(--gray-10);
     --stroke-toplines-close-icon-pressed: var(--gray-20);
-    --fills-backgrounds-recent-activity: var(--product-primary-90);
+    --fills-backgrounds-recent-activity: var(--product-primary-100);
     --fills-backgrounds-recent-activity-changed: var(--orange-90);
-    --fills-backgrounds-recent-activity-blocked: var(--red-90);
+    --fills-backgrounds-recent-activity-blocked: var(--red-100);
     /* Switch */
     --fills-switch-on-default: var(--product-primary-50);
     --fills-switch-on-hovered: var(--product-primary-60);
     --fills-switch-on-disabled: var(--product-primary-90);
-    --fills-switch-off-default: var(--gray-60);
-    --fills-switch-off-hovered: var(--gray-70);
+    --fills-switch-off-default: var(--gray-70);
+    --fills-switch-off-hovered: var(--gray-60);
     --fills-switch-off-disabled: var(--gray-70);
     --fills-switch-knob: var(--gray-0);
     --fills-switch-knob-disabled: var(--gray-50);

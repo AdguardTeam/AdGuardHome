@@ -195,7 +195,7 @@
         display: flex;
         flex-direction: column;
         max-height: var(--available-height, none);
-        box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+        box-shadow: var(--card-box-shadow);
         background-color: var(--default-dropdown-menu-background);
         z-index: 3;
         border-radius: 8px;
@@ -275,17 +275,17 @@
     &.solid-select--menu-on-card {
         [data-scope='select'][data-part='content'],
         [data-scope='combobox'][data-part='content'] {
-            background-color: var(--default-page-background);
+            background-color: var(--default-input-on-card-background);
         }
 
         [data-scope='select'][data-part='item'],
         [data-scope='combobox'][data-part='item'] {
             &[data-highlighted] {
-                background-color: var(--hovered-page-background);
+                background-color: var(--hovered-input-on-card-background);
             }
 
             &[data-state='checked'] {
-                background-color: var(--pressed-page-background);
+                background-color: var(--pressed-input-on-card-background);
             }
         }
     }

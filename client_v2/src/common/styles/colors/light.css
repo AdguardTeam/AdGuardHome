@@ -29,6 +29,8 @@
     --default-placeholder: var(--gray-50);
     --default-input-on-card-background: var(--gray-10);
     --disabled-input-on-card-background: var(--gray-10);
+    --hovered-input-on-card-background: var(--gray-20);
+    --pressed-input-on-card-background: var(--gray-30);
     /* Dropdown */
     --default-dropdown-menu-background: var(--gray-0);
     --hovered-dropdown-menu-background: var(--gray-10);
@@ -69,6 +71,7 @@
     --hovered-link: var(--product-primary-60);
     --pressed-link: var(--product-primary-70);
     --visited-link: var(--product-primary-80);
+    --disabled-link: var(--product-primary-30);
     /* Attention link */
     --default-attention-link: var(--orange-50);
     --hovered-attention-link: var(--orange-60);
@@ -97,6 +100,8 @@
     /* Modal */
     --modal-iframe-overlay: #ffffff50;
     --modal-overlay: #00000050;
+    --dialog-overlay: rgba(19, 19, 19, 0.8);
+    --backdrop-overlay: rgba(0, 0, 0, 0.5);
     /* Notifications */
     --default-notifications-attention: var(--orange-10);
     /* Logo key */

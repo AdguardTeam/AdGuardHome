@@ -59,6 +59,15 @@
 
     /* BOX-SHADOW */
 
-    --main-box-shadow: rgba(166, 166, 166, 0.2);
-    --dropdown-box-shadow: rgba(23, 39, 75, 0.12);
+    --main-box-shadow: rgba(0, 0, 0, 0.1);
+    --dropdown-box-shadow: rgba(0, 0, 0, 0.1);
+    --card-box-shadow: 8px 8px 24px 0 rgba(0, 0, 0, 0.1);
+    --small-box-shadow: 4px 4px 8px 0 rgba(0, 0, 0, 0.1);
+    --menu-box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+    --scroll-shadow-down:
+        0 4px 8px 3px rgba(0, 0, 0, 0.05),
+        0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --scroll-shadow-up:
+        0 -4px 8px 3px rgba(0, 0, 0, 0.05),
+        0 -1px 3px 0 rgba(0, 0, 0, 0.1);
 }
