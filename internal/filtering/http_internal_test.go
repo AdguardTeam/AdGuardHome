@@ -468,9 +468,10 @@ func TestDNSFilter_HandleCheckHost(t *testing.T) {
 		want: &checkHostResp{
 			Reason: reasonNames[FilteredBlockList],
 			Rule:   blockedClientQTypeRule,
-			Rules: []*checkHostRespRule{{
-				Text: blockedClientQTypeRule,
-			}},
+			Rules: []*checkHostRespRule{
+				{Text: blockedClientQTypeRule},
+				{Text: blockedQTypeRule},
+			},
 		},
 	}, {
 		name: "allowed_client_qtype",
