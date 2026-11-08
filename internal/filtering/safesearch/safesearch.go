@@ -36,6 +36,7 @@ type Service string
 // Service enum members.
 const (
 	Bing       Service = "bing"
+	Brave      Service = "brave"
 	DuckDuckGo Service = "duckduckgo"
 	Ecosia     Service = "ecosia"
 	Google     Service = "google"
@@ -61,6 +62,8 @@ func isServiceProtected(s filtering.SafeSearchConfig, service Service) (ok bool)
 		return s.Yandex
 	case YouTube:
 		return s.YouTube
+	case Brave:
+		return s.Brave
 	default:
 		panic(fmt.Errorf("safesearch: invalid sources: not found service %q", service))
 	}
