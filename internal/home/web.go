@@ -663,12 +663,13 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 	}()
 
 	err = validatePorts(
+		setts.PortHTTPS,
 		tcpPort(webAPIPort),
-		tcpPort(setts.PortHTTPS),
 		tcpPort(setts.PortDNSOverTLS),
 		tcpPort(setts.PortDNSCrypt),
 		udpPort(plainDNSPort),
 		udpPort(setts.PortDNSOverQUIC),
+		web.conf.serveHTTP3,
 	)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
@@ -762,14 +763,16 @@ func checkPortAvailability(
 // validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
 // DNS protocols.
 func validatePorts(
-	bindPort, dohPort, dotPort, dnscryptTCPPort tcpPort,
+	dohPort uint16,
+	bindPort, dotPort, dnscryptTCPPort tcpPort,
 	dnsPort, doqPort udpPort,
+	serveHTTP3 bool,
 ) (err error) {
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
 	addPorts(
 		tcpPorts,
 		bindPort,
-		dohPort,
+		tcpPort(dohPort),
 		dotPort,
 		dnscryptTCPPort,
 		tcpPort(dnsPort),
@@ -782,6 +785,10 @@ func validatePorts(
 
 	udpPorts := aghalg.UniqChecker[udpPort]{}
 	addPorts(udpPorts, dnsPort, doqPort)
+
+	if serveHTTP3 {
+		addPorts(udpPorts, udpPort(dohPort))
+	}
 
 	err = udpPorts.Validate()
 	if err != nil {
