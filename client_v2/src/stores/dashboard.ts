@@ -172,13 +172,9 @@ export const getDnsStatus = async () => {
 };
 
 /**
- * Refreshes the server status fields other pages derive from — the DNS
- * addresses above all.  Unlike `getDnsStatus` it leaves the global
- * `processing` flag alone (that flag gates the whole routed content), skips
- * the version, TLS status and profile requests, and keeps the previous values
- * on failure instead of reloading the page.  Settings that change the
- * addresses (enabling encryption above all) call it so pages like the Setup
- * Guide show the new values without a full reload.
+ * Refreshes the DNS addresses and ports without touching `processing`, the
+ * version, TLS status, or the profile, and keeps the previous values on
+ * failure.  Used after settings that change the addresses, e.g. encryption.
  */
 export const refreshDnsStatus = async (): Promise<void> => {
     try {
@@ -255,8 +251,11 @@ export const getVersion = async (recheck = false) => {
             }
         }
     } catch {
-        addErrorToast({ error: 'version_request_error' });
-        setState('processingVersion', false);
+        addErrorToast({ error: intl.getMessage('version_request_error') });
+        // A failed check does not tell us whether updates are disabled, so
+        // keep the recheck button available to let the user retry without
+        // reloading the page.
+        setState({ processingVersion: false, checkUpdateFlag: true });
     }
 };
 
