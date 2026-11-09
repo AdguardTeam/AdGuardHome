@@ -21,6 +21,7 @@
     - [Markdown Formatting](#markdown-formatting)
     - [Other](#other)
         - [Accessibility](#accessibility)
+        - [Commits](#commits)
         - [Translations](#translations)
 
 # Project Overview
@@ -574,6 +575,14 @@ friendly:
 - Focusable rows acting as buttons must be keyboard-activatable: `tabindex` of
   `0` plus an `onKeyDown` handler for Enter/Space.
 - Any `id` used for labeling must be unique per rendered instance.
+
+### Commits
+
+- You MUST NOT put `#<number>` references in a commit message. The remote
+  rejects a message that matches the pattern `(?m)(^|[\s(])#\d+\b`.
+- Put the Jira key in the subject line, for example
+  `AGDNS-4717 Fix the Recheck button after a failed update check`. Put the
+  GitHub issue link in `CHANGELOG.md`, not in the commit message.
 
 ### Translations
 
