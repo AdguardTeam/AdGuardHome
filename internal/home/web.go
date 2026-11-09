@@ -663,8 +663,8 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 	}()
 
 	err = validatePorts(
-		setts.PortHTTPS,
 		tcpPort(webAPIPort),
+		tcpPort(setts.PortHTTPS),
 		tcpPort(setts.PortDNSOverTLS),
 		tcpPort(setts.PortDNSCrypt),
 		udpPort(plainDNSPort),
@@ -688,12 +688,16 @@ type bindingCheck struct {
 	newPort  uint16
 }
 
-// checkPortAvailability checks [tlsConfigSettings.PortHTTPS],
-// [tlsConfigSettings.PortDNSOverTLS], and
-// [tlsConfigSettings.PortDNSOverQUIC] are available for use.  It checks
+// checkPortAvailability checks ports, which are available for use.  It checks
 // the current configuration and, if needed, attempts to bind to the port.  The
 // function returns human-readable error messages for the frontend.  This is
-// best-effort check to prevent an "address already in use" error.
+// best-effort check to prevent an "address already in use" error.  The checked
+// ports are:
+//
+//   - [tlsConfigSettings.PortHTTPS] (TCP)
+//   - [tlsConfigSettings.PortHTTPS] (UDP, if HTTP/3 is enabled)
+//   - [tlsConfigSettings.PortDNSOverTLS]
+//   - [tlsConfigSettings.PortDNSOverQUIC]
 func checkPortAvailability(
 	currConf tlsConfigSettings,
 	newConf tlsConfigSettings,
@@ -763,8 +767,7 @@ func checkPortAvailability(
 // validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
 // DNS protocols.
 func validatePorts(
-	dohPort uint16,
-	bindPort, dotPort, dnscryptTCPPort tcpPort,
+	bindPort, dohPort, dotPort, dnscryptPort tcpPort,
 	dnsPort, doqPort udpPort,
 	serveHTTP3 bool,
 ) (err error) {
@@ -774,7 +777,7 @@ func validatePorts(
 		bindPort,
 		tcpPort(dohPort),
 		dotPort,
-		dnscryptTCPPort,
+		dnscryptPort,
 		tcpPort(dnsPort),
 	)
 
@@ -784,7 +787,7 @@ func validatePorts(
 	}
 
 	udpPorts := aghalg.UniqChecker[udpPort]{}
-	addPorts(udpPorts, dnsPort, doqPort)
+	addPorts(udpPorts, dnsPort, doqPort, udpPort(dnscryptPort))
 
 	if serveHTTP3 {
 		addPorts(udpPorts, udpPort(dohPort))
