@@ -55,7 +55,7 @@ export interface DNSConfig {
      */
     cache_enabled?: boolean;
     cache_optimistic?: boolean;
-    /** Upstream modes enumeration. The empty string value is deprecated; use `load_balance` instead. */
+    /** Upstream modes enumeration. */
     upstream_mode?: DNSConfigUpstreamMode;
     use_private_ptr_resolvers?: boolean;
     resolve_clients?: boolean;

@@ -40,10 +40,9 @@ export const findPersistentClient = (clients: Client[], identifier?: string) => 
 
 const getSafeSearchConfig = (
     config?: Partial<SafeSearchConfig>,
-    fallbackEnabled = false,
 ): SafeSearchConfig => ({
     ...(config || {}),
-    enabled: config?.enabled ?? fallbackEnabled,
+    enabled: config?.enabled ?? false,
 });
 
 export const getEffectiveClientProtectionSettings = ({
@@ -61,11 +60,7 @@ export const getEffectiveClientProtectionSettings = ({
 
     const effectiveSafeSearch = client.use_global_settings
         ? getSafeSearchConfig(settingsList?.safesearch as Partial<SafeSearchConfig> | undefined)
-        : getSafeSearchConfig(
-              client.safe_search as Partial<SafeSearchConfig> | undefined,
-              client.safesearch_enabled,
-          );
-
+        : getSafeSearchConfig(client.safe_search as Partial<SafeSearchConfig> | undefined);
     return {
         filtering_enabled: client.use_global_settings
             ? globalFilteringEnabled
@@ -77,7 +72,6 @@ export const getEffectiveClientProtectionSettings = ({
             ? Boolean(settingsList?.safebrowsing.enabled)
             : client.safebrowsing_enabled,
         safe_search: effectiveSafeSearch,
-        safesearch_enabled: effectiveSafeSearch.enabled,
     };
 };
 

@@ -3,7 +3,6 @@ import type {
     AddUrlRequest,
     AddressesInfo,
     BlockedServicesAll,
-    BlockedServicesArray,
     BlockedServicesSchedule,
     CheckConfigRequest,
     CheckConfigResponse,
@@ -11,7 +10,6 @@ import type {
     ClientDelete,
     ClientUpdate,
     Clients,
-    ClientsFindParams,
     ClientsFindResponse,
     ClientsSearchRequest,
     DHCPNetInterfaces,
@@ -33,14 +31,12 @@ import type {
     GetStatsConfigResponse,
     GetVersionRequest,
     InitialConfiguration,
-    LanguageSettings,
     Login,
     MobileConfigDoHParams,
     MobileConfigDoTParams,
     ParentalStatus200,
     ProfileInfo,
     QueryLog,
-    QueryLogConfig,
     QueryLogParams,
     RemoveUrlRequest,
     RewriteEntryBody,
@@ -54,7 +50,6 @@ import type {
     SetProtectionRequest,
     SetRulesRequest,
     Stats,
-    StatsConfig,
     StatsParams,
     TlsConfig,
     TlsConfigBody,
@@ -232,48 +227,6 @@ export const queryLog = async (
     });
 };
 
-export const getQueryLogInfoUrl = () => {
-    return `control/querylog_info`;
-};
-
-/**
- * Deprecated: Use `GET /querylog/config` instead.
- *
- * NOTE: If `interval` was configured by editing configuration file or new
- * HTTP API call `PUT /querylog/config/update` and it's not equal to
- * previous allowed enum values then it will be equal to `90` days for
- * compatibility reasons.
- * @deprecated
- * @summary Get query log parameters
- */
-export const queryLogInfo = async (options?: RequestInit): Promise<QueryLogConfig> => {
-    return customFetch<QueryLogConfig>(getQueryLogInfoUrl(), {
-        ...options,
-        method: 'GET',
-    });
-};
-
-export const getQueryLogConfigUrl = () => {
-    return `control/querylog_config`;
-};
-
-/**
- * Deprecated: Use `PUT /querylog/config/update` instead.
- * @deprecated
- * @summary Set query log parameters
- */
-export const queryLogConfig = async (
-    queryLogConfig?: QueryLogConfig,
-    options?: RequestInit,
-): Promise<void> => {
-    return customFetch<void>(getQueryLogConfigUrl(), {
-        ...options,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...options?.headers },
-        body: JSON.stringify(queryLogConfig),
-    });
-};
-
 export const getQuerylogClearUrl = () => {
     return `control/querylog_clear`;
 };
@@ -358,48 +311,6 @@ export const statsReset = async (options?: RequestInit): Promise<void> => {
     return customFetch<void>(getStatsResetUrl(), {
         ...options,
         method: 'POST',
-    });
-};
-
-export const getStatsInfoUrl = () => {
-    return `control/stats_info`;
-};
-
-/**
- * Deprecated: Use `GET /stats/config` instead.
- *
- * NOTE: If `interval` was configured by editing configuration file or new
- * HTTP API call `PUT /stats/config/update` and it's not equal to
- * previous allowed enum values then it will be equal to `90` days for
- * compatibility reasons.
- * @deprecated
- * @summary Get statistics parameters
- */
-export const statsInfo = async (options?: RequestInit): Promise<StatsConfig> => {
-    return customFetch<StatsConfig>(getStatsInfoUrl(), {
-        ...options,
-        method: 'GET',
-    });
-};
-
-export const getStatsConfigUrl = () => {
-    return `control/stats_config`;
-};
-
-/**
- * Deprecated: Use `PUT /stats/config/update` instead.
- * @deprecated
- * @summary Set statistics parameters
- */
-export const statsConfig = async (
-    statsConfig?: StatsConfig,
-    options?: RequestInit,
-): Promise<void> => {
-    return customFetch<void>(getStatsConfigUrl(), {
-        ...options,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...options?.headers },
-        body: JSON.stringify(statsConfig),
     });
 };
 
@@ -882,36 +793,6 @@ export const parentalStatus = async (options?: RequestInit): Promise<ParentalSta
     });
 };
 
-export const getSafesearchEnableUrl = () => {
-    return `control/safesearch/enable`;
-};
-
-/**
- * @deprecated
- * @summary Enable safesearch
- */
-export const safesearchEnable = async (options?: RequestInit): Promise<void> => {
-    return customFetch<void>(getSafesearchEnableUrl(), {
-        ...options,
-        method: 'POST',
-    });
-};
-
-export const getSafesearchDisableUrl = () => {
-    return `control/safesearch/disable`;
-};
-
-/**
- * @deprecated
- * @summary Disable safesearch
- */
-export const safesearchDisable = async (options?: RequestInit): Promise<void> => {
-    return customFetch<void>(getSafesearchDisableUrl(), {
-        ...options,
-        method: 'POST',
-    });
-};
-
 export const getSafesearchSettingsUrl = () => {
     return `control/safesearch/settings`;
 };
@@ -1013,38 +894,6 @@ export const clientsUpdate = async (
     });
 };
 
-export const getClientsFindUrl = (params?: ClientsFindParams) => {
-    const normalizedParams = new URLSearchParams();
-
-    Object.entries(params || {}).forEach(([key, value]) => {
-        if (value !== undefined) {
-            normalizedParams.append(key, value === null ? 'null' : String(value));
-        }
-    });
-
-    const stringifiedParams = normalizedParams.toString();
-
-    return stringifiedParams.length > 0
-        ? `control/clients/find?${stringifiedParams}`
-        : `control/clients/find`;
-};
-
-/**
- * Deprecated: Use `POST /clients/search` instead.
- * @deprecated
- * @summary Get information about clients by their IP addresses or ClientIDs.
-
- */
-export const clientsFind = async (
-    params?: ClientsFindParams,
-    options?: RequestInit,
-): Promise<ClientsFindResponse> => {
-    return customFetch<ClientsFindResponse>(getClientsFindUrl(params), {
-        ...options,
-        method: 'GET',
-    });
-};
-
 export const getClientsSearchUrl = () => {
     return `control/clients/search`;
 };
@@ -1095,24 +944,6 @@ export const accessSet = async (accessList: AccessList, options?: RequestInit): 
     });
 };
 
-export const getBlockedServicesAvailableServicesUrl = () => {
-    return `control/blocked_services/services`;
-};
-
-/**
- * Deprecated: Use `GET /blocked_services/all` instead.
- * @deprecated
- * @summary Get available services to use for blocking
- */
-export const blockedServicesAvailableServices = async (
-    options?: RequestInit,
-): Promise<BlockedServicesArray> => {
-    return customFetch<BlockedServicesArray>(getBlockedServicesAvailableServicesUrl(), {
-        ...options,
-        method: 'GET',
-    });
-};
-
 export const getBlockedServicesAllUrl = () => {
     return `control/blocked_services/all`;
 };
@@ -1124,43 +955,6 @@ export const blockedServicesAll = async (options?: RequestInit): Promise<Blocked
     return customFetch<BlockedServicesAll>(getBlockedServicesAllUrl(), {
         ...options,
         method: 'GET',
-    });
-};
-
-export const getBlockedServicesListUrl = () => {
-    return `control/blocked_services/list`;
-};
-
-/**
- * Deprecated: Use `GET /blocked_services/get` instead.
- * @deprecated
- * @summary Get blocked services list
- */
-export const blockedServicesList = async (options?: RequestInit): Promise<BlockedServicesArray> => {
-    return customFetch<BlockedServicesArray>(getBlockedServicesListUrl(), {
-        ...options,
-        method: 'GET',
-    });
-};
-
-export const getBlockedServicesSetUrl = () => {
-    return `control/blocked_services/set`;
-};
-
-/**
- * Deprecated: Use `PUT /blocked_services/update` instead.
- * @deprecated
- * @summary Set blocked services list
- */
-export const blockedServicesSet = async (
-    blockedServicesArray?: BlockedServicesArray,
-    options?: RequestInit,
-): Promise<void> => {
-    return customFetch<void>(getBlockedServicesSetUrl(), {
-        ...options,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...options?.headers },
-        body: JSON.stringify(blockedServicesArray),
     });
 };
 
@@ -1300,45 +1094,6 @@ export const rewriteUpdate = async (
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', ...options?.headers },
         body: JSON.stringify(rewriteUpdateBody),
-    });
-};
-
-export const getChangeLanguageUrl = () => {
-    return `control/i18n/change_language`;
-};
-
-/**
- * Deprecated: Use `PUT /control/profile` instead.
- * @deprecated
- * @summary Change current language.  Argument must be an ISO 639-1 two-letter code.
-
- */
-export const changeLanguage = async (
-    languageSettings?: LanguageSettings,
-    options?: RequestInit,
-): Promise<void> => {
-    return customFetch<void>(getChangeLanguageUrl(), {
-        ...options,
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...options?.headers },
-        body: JSON.stringify(languageSettings),
-    });
-};
-
-export const getCurrentLanguageUrl = () => {
-    return `control/i18n/current_language`;
-};
-
-/**
- * Deprecated: Use `GET /control/profile` instead.
- * @deprecated
- * @summary Get currently set language.  Result is ISO 639-1 two-letter code.  Empty result means default language.
-
- */
-export const currentLanguage = async (options?: RequestInit): Promise<LanguageSettings> => {
-    return customFetch<LanguageSettings>(getCurrentLanguageUrl(), {
-        ...options,
-        method: 'GET',
     });
 };
 
