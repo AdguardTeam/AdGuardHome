@@ -28,6 +28,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- DHCPv6 configuration accepting IPv4-mapped IPv6 addresses in `range_start`.
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).

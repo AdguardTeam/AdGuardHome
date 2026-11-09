@@ -53,15 +53,17 @@ func (s *v6Server) WriteDiskConfig6(dc *configmgr.DHCPv6Config) {
 }
 
 // Return TRUE if IP address is within range [start..0xff]
-func ip6InRange(start, ip net.IP) bool {
-	if len(start) != 16 {
+func ip6InRange(start, ip net.IP) (ok bool) {
+	if len(start) != 16 || len(ip) != 16 {
 		return false
 	}
+
 	//lint:ignore SA1021 TODO(e.burkov): Ignore this for now, think about
 	// using masks.
 	if !bytes.Equal(start[:15], ip[:15]) {
 		return false
 	}
+
 	return start[15] <= ip[15]
 }
 
@@ -817,7 +819,11 @@ func newV6Server(conf V6ServerConf) (srv DHCPServer, err error) {
 	}
 
 	if !conf.RangeStart.IsValid() {
-		return s, fmt.Errorf("dhcpv6: invalid range-start IP: %s", conf.RangeStart)
+		return s, fmt.Errorf("dhcpv6: invalid range-start ip: %s", conf.RangeStart)
+	}
+
+	if !isIPv6(conf.RangeStart) {
+		return s, fmt.Errorf("dhcpv6: range-start is not an ipv6 address")
 	}
 
 	ipStart := conf.RangeStart.As16()

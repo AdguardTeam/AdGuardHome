@@ -219,7 +219,21 @@ func (c *DHCPv6Config) Validate() (err error) {
 		return errors.ErrNoValue
 	}
 
-	// TODO(d.kolyshev):  Add validations.
+	err = ensureV6(c.RangeStart)
+	if err != nil {
+		// TODO(f.setrakov): !! Consider not returning error here, or handling
+		// it the other way.
+		return fmt.Errorf("range_start: %w", err)
+	}
+
+	return nil
+}
+
+// ensureV6 returns an error if ip is not a IPv6 address.
+func ensureV6(ip netip.Addr) (err error) {
+	if !ip.Is6() || ip.Is4In6() {
+		return fmt.Errorf("%v is not an IPv6 address", ip)
+	}
 
 	return nil
 }

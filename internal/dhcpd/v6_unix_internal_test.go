@@ -5,6 +5,7 @@ package dhcpd
 import (
 	"net"
 	"net/netip"
+	"slices"
 	"testing"
 	"time"
 
@@ -286,28 +287,32 @@ func TestV6GetDynamicLease(t *testing.T) {
 }
 
 func TestIP6InRange(t *testing.T) {
-	start := net.ParseIP("2001::2")
+	t.Parallel()
 
+	start := net.ParseIP("2001::2")
 	testCases := []struct {
 		ip   net.IP
-		want bool
+		want assert.BoolAssertionFunc
 	}{{
 		ip:   net.ParseIP("2001::1"),
-		want: false,
+		want: assert.False,
 	}, {
 		ip:   net.ParseIP("2002::2"),
-		want: false,
+		want: assert.False,
 	}, {
 		ip:   start,
-		want: true,
+		want: assert.True,
 	}, {
 		ip:   net.ParseIP("2001::3"),
-		want: true,
+		want: assert.True,
+	}, {
+		ip:   net.IP(slices.Repeat([]byte{1}, 17)),
+		want: assert.False,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.ip.String(), func(t *testing.T) {
-			assert.Equal(t, tc.want, ip6InRange(start, tc.ip))
+			tc.want(t, ip6InRange(start, tc.ip))
 		})
 	}
 }

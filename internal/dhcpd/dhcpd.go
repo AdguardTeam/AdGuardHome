@@ -185,7 +185,7 @@ func (s *server) setServers(
 	v6conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6conf.InterfaceName = s.conf.InterfaceName
 	v6conf.notify = s.onNotify
-	v6conf.Enabled = s.conf.Enabled && v6conf.RangeStart.IsValid()
+	v6conf.Enabled = s.conf.Enabled && v6conf.RangeStart.IsValid() && isIPv6(v6conf.RangeStart)
 
 	s.srv6, err = newV6Server(v6conf)
 	if err != nil {
@@ -193,6 +193,12 @@ func (s *server) setServers(
 	}
 
 	return v4conf.Enabled, v6conf.Enabled, nil
+}
+
+// isIPv6 returns true if addr is an actual IPv6 address.  It checks against
+// IPv4-mapped IPv6 addresses.
+func isIPv6(addr netip.Addr) (ok bool) {
+	return addr.Is6() && !addr.Is4In6()
 }
 
 // Enabled returns true when the server is enabled.

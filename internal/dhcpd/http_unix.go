@@ -286,7 +286,7 @@ func (s *server) handleDHCPSetConfigV6(
 
 	v6Conf := v6JSONToServerConf(conf.V6)
 	v6Conf.Enabled = conf.Enabled == aghalg.NBTrue
-	if !v6Conf.RangeStart.IsValid() {
+	if !v6Conf.RangeStart.IsValid() || !isIPv6(v6Conf.RangeStart) {
 		v6Conf.Enabled = false
 	}
 
