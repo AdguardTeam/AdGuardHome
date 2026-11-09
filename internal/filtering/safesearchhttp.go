@@ -7,24 +7,6 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 )
 
-// handleSafeSearchEnable is the handler for POST /control/safesearch/enable
-// HTTP API.
-//
-// Deprecated: Use handleSafeSearchSettings.
-func (d *DNSFilter) handleSafeSearchEnable(w http.ResponseWriter, r *http.Request) {
-	setProtectedBool(d.confMu, &d.conf.SafeSearchConf.Enabled, true)
-	d.conf.ConfModifier.Apply(r.Context())
-}
-
-// handleSafeSearchDisable is the handler for POST /control/safesearch/disable
-// HTTP API.
-//
-// Deprecated: Use handleSafeSearchSettings.
-func (d *DNSFilter) handleSafeSearchDisable(w http.ResponseWriter, r *http.Request) {
-	setProtectedBool(d.confMu, &d.conf.SafeSearchConf.Enabled, false)
-	d.conf.ConfModifier.Apply(r.Context())
-}
-
 // handleSafeSearchStatus is the handler for GET /control/safesearch/status
 // HTTP API.
 func (d *DNSFilter) handleSafeSearchStatus(w http.ResponseWriter, r *http.Request) {
