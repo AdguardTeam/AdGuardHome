@@ -92,6 +92,13 @@ const rmTimeout = (t: ReturnType<typeof setTimeout> | null): null => {
     return null;
 };
 
+/** Fetches the server status without redirecting to the login page on 401. */
+const fetchStatus = (): Promise<ServerStatus> =>
+    customFetch<ServerStatus>(getStatusUrl(), {
+        method: 'GET',
+        skipAuthRedirect: true,
+    });
+
 const checkStatus = async (
     handleRequestSuccess: (response: { status: number; data: ServerStatus }) => void,
     handleRequestError: () => void,
@@ -102,10 +109,7 @@ const checkStatus = async (
         return;
     }
     try {
-        const data = await customFetch<ServerStatus>(getStatusUrl(), {
-            method: 'GET',
-            skipAuthRedirect: true,
-        });
+        const data = await fetchStatus();
         statusTimeout = rmTimeout(statusTimeout);
         handleRequestSuccess({ status: 200, data });
         if (data.running === false) {
@@ -158,7 +162,8 @@ export const getDnsStatus = async () => {
             });
             getVersion();
             getTlsStatus();
-            getProfile();
+            // The store wrapper, not the raw API call: it saves name and theme.
+            getProfileData();
         } else {
             setState('isCoreRunning', runningStatus);
         }
@@ -172,20 +177,13 @@ export const getDnsStatus = async () => {
 };
 
 /**
- * Refreshes the server status fields other pages derive from — the DNS
- * addresses above all.  Unlike `getDnsStatus` it leaves the global
- * `processing` flag alone (that flag gates the whole routed content), skips
- * the version, TLS status and profile requests, and keeps the previous values
- * on failure instead of reloading the page.  Settings that change the
- * addresses (enabling encryption above all) call it so pages like the Setup
- * Guide show the new values without a full reload.
+ * Refreshes the DNS addresses and ports without touching `processing`, the
+ * version, TLS status, or the profile, and keeps the previous values on
+ * failure.  Used after settings that change the addresses, e.g. encryption.
  */
 export const refreshDnsStatus = async (): Promise<void> => {
     try {
-        const dnsStatus = await customFetch<ServerStatus>(getStatusUrl(), {
-            method: 'GET',
-            skipAuthRedirect: true,
-        });
+        const dnsStatus = await fetchStatus();
         if (!dnsStatus || dnsStatus.running !== true) {
             return;
         }

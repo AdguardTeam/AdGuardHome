@@ -68,6 +68,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
 
+- The theme selected in the new web interface not being saved to the server ([#8699]).
+
 [#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
@@ -80,6 +82,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8638]:           https://github.com/AdguardTeam/AdGuardHome/issues/8638
 [#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
 [#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
+[#8699]:           https://github.com/AdguardTeam/AdGuardHome/issues/8699
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

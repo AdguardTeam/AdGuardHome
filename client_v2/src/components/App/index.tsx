@@ -95,13 +95,9 @@ const App = () => {
         const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
         setUITheme(theme);
 
-        const handleChange = (e: MediaQueryListEvent) => {
-            if (e.matches) {
-                setUITheme(THEMES.dark);
-            } else {
-                setUITheme(THEMES.light);
-            }
-        };
+        // Re-resolve through `setUITheme` so the stored preference stays
+        // "auto" instead of being overwritten with the resolved theme.
+        const handleChange = () => setUITheme(THEMES.auto);
 
         colorSchemeMedia.addEventListener('change', handleChange);
         onCleanup(() => {
