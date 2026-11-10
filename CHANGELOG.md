@@ -24,6 +24,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The *Check the filtering* result in the new web interface showing only the
+  first matched rule ([#8677]).
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
@@ -67,9 +70,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Per-client blocked services schedules being reset when a client was saved in the new web interface ([#8638]).
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
-
-- The *Check the filtering* result in the new web interface showing only the
-  first matched rule ([#8677]).
 
 [#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
