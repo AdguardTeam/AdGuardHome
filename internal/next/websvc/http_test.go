@@ -50,7 +50,7 @@ func TestService_HandlePatchSettingsHTTP(t *testing.T) {
 	u := &url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathPatternV1SettingsHTTP,
+		Path:   websvc.PathPatternV2SettingsHTTP,
 	}
 
 	req := jobj{
