@@ -83,6 +83,9 @@ func (s *Server) isBlockedHost(
 	qt := q.Qtype
 	host := aghnet.NormalizeDomain(q.Name)
 
+	s.accessLock.RLock()
+	defer s.accessLock.RUnlock()
+
 	if s.access.isBlockedHost(host, qt) {
 		l.DebugContext(ctx, "request is in access blocklist")
 

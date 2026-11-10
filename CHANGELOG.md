@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Shutdown deadlock when looking up clients for query accounting ([#8658]).
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
@@ -108,6 +110,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8637]: https://github.com/AdguardTeam/AdGuardHome/issues/8637
 [#8638]: https://github.com/AdguardTeam/AdGuardHome/issues/8638
 [#8644]: https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8658]: https://github.com/AdguardTeam/AdGuardHome/issues/8658
 [#8661]: https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [#8670]: https://github.com/AdguardTeam/AdGuardHome/issues/8670
 

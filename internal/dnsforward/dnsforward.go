@@ -182,6 +182,12 @@ type Server struct {
 	// serverLock protects Server.
 	serverLock sync.RWMutex
 
+	// accessLock protects access.
+	//
+	// NOTE: If both serverLock and accessLock are required, serverLock must be
+	// acquired first.
+	accessLock sync.RWMutex
+
 	// protectionUpdateInProgress is used to make sure that only one goroutine
 	// updating the protection configuration after a pause is running at a time.
 	protectionUpdateInProgress atomic.Bool
@@ -536,7 +542,7 @@ func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 
 	s.setupDNS64()
 
-	s.access, err = newAccessCtx(
+	a, err := newAccessManager(
 		s.conf.AllowedClients,
 		s.conf.DisallowedClients,
 		s.conf.BlockedHosts,
@@ -544,6 +550,13 @@ func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 	if err != nil {
 		return fmt.Errorf("preparing access: %w", err)
 	}
+
+	func() {
+		s.accessLock.Lock()
+		defer s.accessLock.Unlock()
+
+		s.access = a
+	}()
 
 	proxyConfig.Fallbacks, err = s.setupFallbackDNS()
 	if err != nil {
@@ -926,8 +939,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // IsBlockedClient returns true if the client is blocked by the current access
 // settings.
 func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, rule string) {
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
+	s.accessLock.RLock()
+	defer s.accessLock.RUnlock()
 
 	blockedByIP := false
 	if ip != (netip.Addr{}) {

@@ -14,19 +14,19 @@ func TestIsBlockedClientID(t *testing.T) {
 	clientID := "client-1"
 	clients := []string{clientID}
 
-	a, err := newAccessCtx(clients, nil, nil)
+	a, err := newAccessManager(clients, nil, nil)
 	require.NoError(t, err)
 
 	assert.False(t, a.isBlockedClientID(clientID))
 
-	a, err = newAccessCtx(nil, clients, nil)
+	a, err = newAccessManager(nil, clients, nil)
 	require.NoError(t, err)
 
 	assert.True(t, a.isBlockedClientID(clientID))
 }
 
 func TestIsBlockedHost(t *testing.T) {
-	a, err := newAccessCtx(nil, nil, []string{
+	a, err := newAccessManager(nil, nil, []string{
 		"host1",
 		"*.host.com",
 		"||host3.com^",
@@ -115,10 +115,10 @@ func TestIsBlockedIP(t *testing.T) {
 		"5.6.7.8/24",
 	}
 
-	allowCtx, err := newAccessCtx(clients, nil, nil)
+	allowCtx, err := newAccessManager(clients, nil, nil)
 	require.NoError(t, err)
 
-	blockCtx, err := newAccessCtx(nil, clients, nil)
+	blockCtx, err := newAccessManager(nil, clients, nil)
 	require.NoError(t, err)
 
 	testCases := []struct {
