@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/ossvc"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
@@ -34,20 +33,20 @@ const svcLogPrefix = "service_manager"
 // constructing a service instance and running it.  Perhaps, deprecate the
 // action.
 type program struct {
-	ctx             context.Context
-	clock           timeutil.Clock
-	clientBuildFS   fs.FS
-	signals         chan os.Signal
-	done            chan struct{}
-	opts            options
-	baseLogger      *slog.Logger
-	logger          *slog.Logger
-	sigHdlr         *signalHandler
-	hostsContainer  *aghnet.HostsContainer
-	gliNetTokenRoot *os.Root
-	workDir         string
-	confPath        string
-	pidFilePath     string
+	ctx              context.Context
+	clock            timeutil.Clock
+	clientBuildFS    fs.FS
+	signals          chan os.Signal
+	done             chan struct{}
+	opts             options
+	baseLogger       *slog.Logger
+	logger           *slog.Logger
+	sigHdlr          *signalHandler
+	gliNetTokenRoot  *os.Root
+	workDir          string
+	confPath         string
+	pidFilePath      string
+	legacyNoEtcHosts bool
 }
 
 // type check
@@ -70,7 +69,7 @@ func (p *program) Start(_ service.Service) (err error) {
 		p.workDir,
 		p.confPath,
 		p.pidFilePath,
-		p.hostsContainer,
+		p.legacyNoEtcHosts,
 	)
 
 	return nil
@@ -167,7 +166,7 @@ func handleServiceControlAction(
 	workDir string,
 	confPath string,
 	pidFilePath string,
-	hc *aghnet.HostsContainer,
+	legacyNoEtcHosts bool,
 ) (err error) {
 	actionName := opts.serviceControlAction
 	l.InfoContext(ctx, version.Full())
@@ -191,20 +190,20 @@ func handleServiceControlAction(
 		runOpts.serviceControlAction = "run"
 
 		p := &program{
-			ctx:             ctx,
-			clock:           clock,
-			clientBuildFS:   clientBuildFS,
-			signals:         signals,
-			done:            done,
-			opts:            runOpts,
-			baseLogger:      baseLogger,
-			logger:          baseLogger.With(slogutil.KeyPrefix, "service"),
-			sigHdlr:         sigHdlr,
-			gliNetTokenRoot: gliNetTokenRoot,
-			workDir:         workDir,
-			confPath:        confPath,
-			pidFilePath:     pidFilePath,
-			hostsContainer:  hc,
+			ctx:              ctx,
+			clock:            clock,
+			clientBuildFS:    clientBuildFS,
+			signals:          signals,
+			done:             done,
+			opts:             runOpts,
+			baseLogger:       baseLogger,
+			logger:           baseLogger.With(slogutil.KeyPrefix, "service"),
+			sigHdlr:          sigHdlr,
+			gliNetTokenRoot:  gliNetTokenRoot,
+			workDir:          workDir,
+			confPath:         confPath,
+			pidFilePath:      pidFilePath,
+			legacyNoEtcHosts: legacyNoEtcHosts,
 		}
 
 		return p.handleRun(ctx, baseLogger, runOpts)

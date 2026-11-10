@@ -40,10 +40,6 @@ var strToSVCBKey = map[string]dns.SVCBKey{
 	"mandatory":       dns.SVCB_MANDATORY,
 	"no-default-alpn": dns.SVCB_NO_DEFAULT_ALPN,
 	"port":            dns.SVCB_PORT,
-
-	// TODO(a.garipov): This is the previous name for the parameter that has
-	// since been changed.  Remove this in v0.109.0.
-	"echconfig": dns.SVCB_ECHCONFIG,
 }
 
 // svcbKeyHandler is a handler for one SVCB parameter key.  l must not be nil.
@@ -127,27 +123,6 @@ var svcbKeyHandlers = map[string]svcbKeyHandler{
 
 		return &dns.SVCBPort{
 			Port: uint16(port64),
-		}
-	},
-
-	// TODO(a.garipov): This is the previous name for the parameter that has
-	// since been changed.  Remove this in v0.109.0.
-	"echconfig": func(ctx context.Context, l *slog.Logger, valStr string) (val dns.SVCBKeyValue) {
-		l.WarnContext(
-			ctx,
-			`svcb/https record parameter name "echconfig" is deprecated; `+
-				`use "ech" instead`,
-		)
-
-		ech, err := base64.StdEncoding.DecodeString(valStr)
-		if err != nil {
-			l.DebugContext(ctx, "can't parse svcb/https ech; ignoring", slogutil.KeyError, err)
-
-			return nil
-		}
-
-		return &dns.SVCBECHConfig{
-			ECH: ech,
 		}
 	},
 

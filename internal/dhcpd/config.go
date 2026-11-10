@@ -52,11 +52,6 @@ type ServerConfig struct {
 	// [Interface.Enabled].
 	LocalDomainName string
 
-	// WorkDir is used to store DHCP leases.
-	//
-	// Deprecated:  Remove it when migration of DHCP leases will not be needed.
-	WorkDir string
-
 	// DataDir is used to store DHCP leases.
 	DataDir string
 

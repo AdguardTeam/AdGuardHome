@@ -77,6 +77,7 @@ type Config struct {
 	FallbackDNS []string `yaml:"fallback_dns"`
 
 	// UpstreamMode determines the logic through which upstreams will be used.
+	// It must be valid.
 	UpstreamMode proxy.UpstreamMode `yaml:"upstream_mode"`
 
 	// FastestTimeout replaces the default timeout for dialing IP addresses

@@ -70,19 +70,49 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The *Check for updates* button disappearing and an untranslated error being shown when the update check failed in the new web interface ([#8681]).
 
-[#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
-[#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
-[#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
-[#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608
-[#8609]:           https://github.com/AdguardTeam/AdGuardHome/issues/8609
-[#8610]:           https://github.com/AdguardTeam/AdGuardHome/issues/8610
-[#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
-[#8636]:           https://github.com/AdguardTeam/AdGuardHome/issues/8636
-[#8637]:           https://github.com/AdguardTeam/AdGuardHome/issues/8637
-[#8638]:           https://github.com/AdguardTeam/AdGuardHome/issues/8638
-[#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
-[#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
-[#8681]:           https://github.com/AdguardTeam/AdGuardHome/issues/8681
+### Removed
+
+- The following deprecated HTTP APIs:
+    - `GET /control/blocked_services/list`
+    - `GET /control/blocked_services/services`
+    - `GET /control/clients/find`
+    - `GET /control/i18n/current_language`
+    - `GET /control/querylog_info`
+    - `GET /control/stats_info`
+    - `POST /control/blocked_services/set`
+    - `POST /control/i18n/change_language`
+    - `POST /control/querylog_config`
+    - `POST /control/safesearch/disable`
+    - `POST /control/safesearch/enable`
+    - `POST /control/stats_config`
+
+- The following deprecated properties and query parameters in HTTP APIs:
+    - Properties `"filterId"` and `"rule"` in the response of the `GET /control/querylog` HTTP API.
+    - Properties `"filter_id"` and `"rule"` in the response of the `GET /control/filtering/check_host` HTTP API.
+    - Property `"safesearch_enabled"` in the client APIs.
+    - Query parameter `response_status` in the `GET /control/querylog` HTTP API.
+
+- The deprecated usage of an empty value for the `"upstream_mode"` property in the `GET /control/dns_info` and `POST /control/dns_config` HTTP APIs.
+
+- The following deprecated command-line flags:
+    - `--host`/`-h` for the bind host; now it is only used to show the help message along with `--help`.
+    - `--no-mem-optimization`.
+    - `--no-etc-hosts`.
+    - `--port`/`-p`.
+
+[#8565]: https://github.com/AdguardTeam/AdGuardHome/issues/8565
+[#8572]: https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8608]: https://github.com/AdguardTeam/AdGuardHome/issues/8608
+[#8609]: https://github.com/AdguardTeam/AdGuardHome/issues/8609
+[#8610]: https://github.com/AdguardTeam/AdGuardHome/issues/8610
+[#8613]: https://github.com/AdguardTeam/AdGuardHome/issues/8613
+[#8636]: https://github.com/AdguardTeam/AdGuardHome/issues/8636
+[#8637]: https://github.com/AdguardTeam/AdGuardHome/issues/8637
+[#8638]: https://github.com/AdguardTeam/AdGuardHome/issues/8638
+[#8644]: https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8661]: https://github.com/AdguardTeam/AdGuardHome/issues/8661
+[#8670]: https://github.com/AdguardTeam/AdGuardHome/issues/8670
+[#8681]: https://github.com/AdguardTeam/AdGuardHome/issues/8681
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -97,6 +127,8 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 - Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
 
 - Support for Multipath TCP has been disabled to mitigate the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
+
+    **NOTE:** This is merely a mitigation.  Users are encouraged to update their Linux systems as soon as possible.
 
 ### Removed
 

@@ -22,7 +22,9 @@ func newClientsContainer(tb testing.TB) (c *clientsContainer) {
 	err := c.Init(
 		ctx,
 		testLogger,
-		nil,
+		&clientsConfig{
+			Sources: &clientSourcesConfig{},
+		},
 		client.EmptyDHCP{},
 		nil,
 		nil,
