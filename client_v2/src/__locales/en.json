@@ -930,7 +930,7 @@
   "username_placeholder": "Enter username",
   "validated_with_dnssec": "Validated with DNSSEC",
   "version_number": "Version %value%",
-  "version_request_error": "Update check failed. Please check your Internet connection.",
+  "version_request_error": "Failed to check for updates. Please try again",
   "wednesday": "Wednesday",
   "whois": "WHOIS",
   "yes": "Yes",
