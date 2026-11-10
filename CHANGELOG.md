@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- CLI update failing when an upstream is specified by a hostname defined only in `/etc/hosts`.
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
