@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The theme selected in the new web interface not being saved to the server ([#8699]).
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
@@ -68,8 +70,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
 
-- The theme selected in the new web interface not being saved to the server ([#8699]).
-
 ### Removed
 
 - The following deprecated HTTP APIs:
@@ -100,19 +100,19 @@ NOTE: Add new changes BELOW THIS COMMENT.
     - `--no-etc-hosts`.
     - `--port`/`-p`.
 
-[#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
-[#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
-[#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608
-[#8609]:           https://github.com/AdguardTeam/AdGuardHome/issues/8609
-[#8610]:           https://github.com/AdguardTeam/AdGuardHome/issues/8610
-[#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
-[#8636]:           https://github.com/AdguardTeam/AdGuardHome/issues/8636
-[#8637]:           https://github.com/AdguardTeam/AdGuardHome/issues/8637
-[#8638]:           https://github.com/AdguardTeam/AdGuardHome/issues/8638
-[#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
-[#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
-[#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
-[#8699]:           https://github.com/AdguardTeam/AdGuardHome/issues/8699
+[#8565]: https://github.com/AdguardTeam/AdGuardHome/issues/8565
+[#8572]: https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8608]: https://github.com/AdguardTeam/AdGuardHome/issues/8608
+[#8609]: https://github.com/AdguardTeam/AdGuardHome/issues/8609
+[#8610]: https://github.com/AdguardTeam/AdGuardHome/issues/8610
+[#8613]: https://github.com/AdguardTeam/AdGuardHome/issues/8613
+[#8636]: https://github.com/AdguardTeam/AdGuardHome/issues/8636
+[#8637]: https://github.com/AdguardTeam/AdGuardHome/issues/8637
+[#8638]: https://github.com/AdguardTeam/AdGuardHome/issues/8638
+[#8644]: https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8661]: https://github.com/AdguardTeam/AdGuardHome/issues/8661
+[#8670]: https://github.com/AdguardTeam/AdGuardHome/issues/8670
+[#8699]: https://github.com/AdguardTeam/AdGuardHome/issues/8699
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
