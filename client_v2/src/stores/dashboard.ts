@@ -333,7 +333,12 @@ export const getProfileData = async () => {
         const profile: ProfileInfo = await getProfile();
         setState({
             name: profile.name,
-            theme: profile.theme,
+            // A userless install (auth disabled or GL-iNet) has no operator
+            // theme: the profile only echoes the server config default, which
+            // would overwrite the guest's choice stored in `localStorage` on
+            // every load.  Keep the store theme unset for guests so that `App`
+            // falls back to `getTheme()`.
+            theme: profile.name ? profile.theme : undefined,
             processingProfile: false,
         });
     } catch (error) {

@@ -90,6 +90,39 @@ describe('getDnsStatus', () => {
         expect(dashboardState.theme).toBe('dark');
         expect(dashboardState.processingProfile).toBe(false);
     });
+
+    it('keeps the server theme out of the store for a userless install', async () => {
+
+        mocks.getVersionJson.mockResolvedValue({
+            disabled: true,
+            new_version: 'x',
+        });
+        // A userless install returns the config default for the theme, not a
+        // preference of the guest.
+        mocks.getProfile.mockResolvedValue({ name: '', theme: 'auto' });
+        mocks.tlsStatus.mockResolvedValue({ enabled: false });
+
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+            new Response(
+                JSON.stringify({
+                    running: true,
+                    version: 'v',
+                    dns_port: 53,
+                    dns_addresses: [],
+                    protection_enabled: true,
+                    http_port: 80,
+                }),
+                { status: 200 },
+            ),
+        );
+
+        await getDnsStatus();
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(dashboardState.name).toBe('');
+        expect(dashboardState.theme).toBeUndefined();
+        expect(dashboardState.processingProfile).toBe(false);
+    });
 });
 
 describe('refreshDnsStatus', () => {

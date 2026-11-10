@@ -21,7 +21,7 @@ import { LeasesPage } from 'panel/components/Dhcp/LeasesPage';
 import { QueryLog } from 'panel/components/QueryLog';
 import { Toasts } from 'panel/components/Toasts';
 import { THEMES } from '../../helpers/constants';
-import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
+import { getTheme, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashboard';
 
 import s from './styles.module.pcss';
@@ -81,9 +81,11 @@ const App = () => {
         }
     });
 
-    // React to theme changes
+    // React to theme changes.  The profile theme is authoritative for the
+    // signed-in operator; a userless install (auth disabled or GL-iNet) has no
+    // operator theme in the profile and keeps it in `localStorage` only.
     createEffect(() => {
-        const theme = dashboardState.theme;
+        const theme = dashboardState.name ? dashboardState.theme : getTheme();
 
         if (!theme) return;
 

@@ -62,7 +62,10 @@ Playwright (e2e).
   Playwright 1.56 (e2e against a real backend)
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
   `eslint-plugin-prettier`), Prettier 3
-- **Storage**: Browser `localStorage` (language, theme); no database
+- **Storage**: Browser `localStorage` (language, theme); no database.  The theme
+  of a signed-in operator lives in the server profile and is mirrored to
+  `localStorage['account_theme']` for the pre-paint scripts; a userless
+  (auth-disabled or GL-iNet) install keeps the theme only in `localStorage`
 - **Target Platform**: Modern evergreen browsers (see `browserslist` in
   `package.json`); output is static assets served by the Go backend
 - **Project Type**: Website (single, browser-resident SPA)
@@ -274,7 +277,15 @@ no server process of its own. Design for the browser environment:
 - **Theme via attributes, not JS state.** Theming is driven by the
   `data-theme` attribute on `<html>` and CSS custom properties; switch themes
   through `setUITheme` in `src/helpers/helpers.tsx`, not by toggling
-  component-level classes.
+  component-level classes.  The server profile is authoritative for the
+  signed-in operator: `getProfileData` in `src/stores/dashboard.ts` feeds its
+  theme into the `App` effect, and `setUITheme` persists the *requested* value
+  (including `"auto"`) to `localStorage['account_theme']`.  The inline
+  bootstrap scripts in `public/*.html` read that key before the first paint, so
+  the key and its encoding must stay in sync with them
+  (`src/__tests__/theme-bootstrap.spec.ts` guards this).  A userless install
+  ignores the profile theme, since the API only echoes the config default
+  there, and falls back to `getTheme()`.
 - **Static asset output.** The production build emits static files into
   `../build/static/` which the Go binary embeds. Do not introduce runtime
   server requirements (Node, databases, etc.) — the built output must be
