@@ -580,7 +580,7 @@ friendly:
 
 - You MUST NOT put `#<number>` references in a commit message. The remote
   rejects a message that matches the pattern `(?m)(^|[\s(])#\d+\b`.
-- Put the Jira key in the subject line, for example
+- Put the Jira key in the subject line of code commits, for example
   `AGDNS-4717 Fix the Recheck button after a failed update check`. Put the
   GitHub issue link in `CHANGELOG.md`, not in the commit message.
 
