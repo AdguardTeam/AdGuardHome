@@ -24,6 +24,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The *Check for updates* button disappearing and raw or untranslated error messages being shown when the update check or the DNS server status check failed in the new web interface ([#8681]).
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
@@ -67,10 +69,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Per-client blocked services schedules being reset when a client was saved in the new web interface ([#8638]).
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
-
-- The *Check for updates* button disappearing and an untranslated error being shown when the update check failed in the new web interface ([#8681]).
-
-- The raw `dns_status_error` key being shown instead of an error message when the DNS server status check failed in the new web interface.
 
 ### Removed
 
