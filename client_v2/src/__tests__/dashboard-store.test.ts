@@ -160,7 +160,7 @@ describe('getVersion — update check failures', () => {
         });
     });
 
-    it('keeps the recheck button available and shows a localized error after a failure', async () => {
+    it('keeps the retry control available and shows a localized error after a failure', async () => {
         mocks.getVersionJson.mockRejectedValue(new Error('network'));
 
         await getVersion(true);
@@ -169,7 +169,8 @@ describe('getVersion — update check failures', () => {
             error: copy('version_request_error'),
         });
         expect(dashboardState.processingVersion).toBe(false);
-        expect(dashboardState.checkUpdateFlag).toBe(true);
+        expect(dashboardState.versionCheckFailed).toBe(true);
+        expect(dashboardState.checkUpdateFlag).toBe(false);
     });
 
     it('hides the recheck button when updates are disabled', async () => {
@@ -180,6 +181,17 @@ describe('getVersion — update check failures', () => {
         expect(mocks.addErrorToast).not.toHaveBeenCalled();
         expect(dashboardState.processingVersion).toBe(false);
         expect(dashboardState.checkUpdateFlag).toBe(false);
+        expect(dashboardState.versionCheckFailed).toBe(false);
+    });
+
+    it('shows no success toast on a recheck when updates are disabled', async () => {
+        mocks.getVersionJson.mockResolvedValue({ disabled: true });
+
+        await getVersion(true);
+
+        expect(mocks.addSuccessToast).not.toHaveBeenCalled();
+        expect(dashboardState.checkUpdateFlag).toBe(false);
+        expect(dashboardState.versionCheckFailed).toBe(false);
     });
 
     it('shows a success toast on a successful recheck', async () => {

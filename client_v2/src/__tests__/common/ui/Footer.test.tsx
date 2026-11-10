@@ -11,6 +11,7 @@ const mockDashboardState = {
     language: 'en',
     name: '',
     checkUpdateFlag: true,
+    versionCheckFailed: false,
 };
 
 vi.mock('panel/stores/dashboard', () => ({
@@ -64,6 +65,7 @@ describe('Footer', () => {
         mockDashboardState.dnsVersion = '';
         mockDashboardState.processingVersion = true;
         mockDashboardState.checkUpdateFlag = true;
+        mockDashboardState.versionCheckFailed = false;
     });
 
     it('hides version badge when dnsVersion is empty', () => {
@@ -138,6 +140,17 @@ describe('Footer', () => {
         expect(
             screen.getByText(copy('version_number', { value: 'v1.0.0' })),
         ).toBeInTheDocument();
+    });
+
+    it('shows check-updates button after a failed check even when updates are disabled', () => {
+        mockDashboardState.dnsVersion = 'v1.0.0';
+        mockDashboardState.processingVersion = false;
+        mockDashboardState.checkUpdateFlag = false;
+        mockDashboardState.versionCheckFailed = true;
+
+        render(() => <Footer />);
+
+        expect(screen.getByTestId('footer-check-updates')).toBeInTheDocument();
     });
 
     it('highlights the current theme item instead of always System when not logged in', async () => {

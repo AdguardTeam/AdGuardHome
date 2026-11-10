@@ -46,6 +46,7 @@ type DashboardState = {
     name: string;
     theme: string | undefined;
     checkUpdateFlag: boolean;
+    versionCheckFailed: boolean;
     announcementUrl: string;
     newVersion: string;
     canAutoUpdate: boolean;
@@ -75,6 +76,7 @@ const initialState: DashboardState = {
     name: '',
     theme: undefined,
     checkUpdateFlag: false,
+    versionCheckFailed: false,
     announcementUrl: '',
     newVersion: '',
     canAutoUpdate: false,
@@ -239,12 +241,17 @@ export const getVersion = async (recheck = false) => {
                 isUpdateAvailable: true,
                 processingVersion: false,
                 checkUpdateFlag: !data.disabled,
+                versionCheckFailed: false,
             });
         } else {
-            setState({ processingVersion: false, checkUpdateFlag: data ? !data.disabled : false });
+            setState({
+                processingVersion: false,
+                checkUpdateFlag: data ? !data.disabled : false,
+                versionCheckFailed: false,
+            });
         }
-        if (recheck) {
-            if (data && !areEqualVersions(currentVersion, data.new_version)) {
+        if (recheck && data && !data.disabled) {
+            if (!areEqualVersions(currentVersion, data.new_version)) {
                 addSuccessToast(intl.getMessage('updates_checked'));
             } else {
                 addSuccessToast(intl.getMessage('updates_version_equal'));
@@ -252,10 +259,9 @@ export const getVersion = async (recheck = false) => {
         }
     } catch {
         addErrorToast({ error: intl.getMessage('version_request_error') });
-        // A failed check does not tell us whether updates are disabled, so
-        // keep the recheck button available to let the user retry without
-        // reloading the page.
-        setState({ processingVersion: false, checkUpdateFlag: true });
+        // A failed check does not tell us whether updates are disabled, so keep
+        // the retry control available and leave `checkUpdateFlag` unchanged.
+        setState({ processingVersion: false, versionCheckFailed: true });
     }
 };
 
