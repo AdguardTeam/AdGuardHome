@@ -87,19 +87,22 @@ const App = () => {
     createEffect(() => {
         const theme = dashboardState.name ? dashboardState.theme : getTheme();
 
-        if (!theme) return;
+        if (theme) setUITheme(theme);
 
-        if (theme !== THEMES.auto) {
-            setUITheme(theme);
-            return;
-        }
-
+        // The OS-scheme listener is registered for every preference: a guest's
+        // choice lives in `localStorage` (written by `Footer`) rather than in
+        // `dashboardState`, so it does not re-run this effect.  Re-checking the
+        // preference here keeps an explicit choice intact while still applying
+        // OS changes as soon as "auto" is selected.
         const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
-        setUITheme(theme);
 
-        // Re-resolve through `setUITheme` so the stored preference stays
-        // "auto" instead of being overwritten with the resolved theme.
-        const handleChange = () => setUITheme(THEMES.auto);
+        const handleChange = () => {
+            const current = dashboardState.name ? dashboardState.theme : getTheme();
+
+            // Re-resolve through `setUITheme` so the stored preference stays
+            // "auto" instead of being overwritten with the resolved theme.
+            if (current === THEMES.auto) setUITheme(THEMES.auto);
+        };
 
         colorSchemeMedia.addEventListener('change', handleChange);
         onCleanup(() => {
