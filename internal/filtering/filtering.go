@@ -101,7 +101,8 @@ type Config struct {
 	BlockedServices *BlockedServices `yaml:"blocked_services"`
 
 	// EtcHosts is a container of IP-hostname pairs taken from the operating
-	// system configuration files (e.g. /etc/hosts).
+	// system configuration files (e.g. /etc/hosts).  If nil, no matching for
+	// hostnames from hosts files is performed, e.g. in rDNS and rewrites.
 	//
 	// TODO(e.burkov):  Move it to dnsforward entirely.
 	EtcHosts hostsfile.Storage `yaml:"-"`

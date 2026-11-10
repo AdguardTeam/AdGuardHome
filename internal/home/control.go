@@ -190,16 +190,6 @@ func (web *webAPI) registerControlHandlers() {
 	web.httpReg.Register(http.MethodPost, "/control/update", web.handleUpdate)
 
 	web.httpReg.Register(http.MethodGet, "/control/status", web.handleStatus)
-	web.httpReg.Register(
-		http.MethodPost,
-		"/control/i18n/change_language",
-		web.handleI18nChangeLanguage,
-	)
-	web.httpReg.Register(
-		http.MethodGet,
-		"/control/i18n/current_language",
-		web.handleI18nCurrentLanguage,
-	)
 	web.httpReg.Register(http.MethodGet, "/control/profile", web.handleGetProfile)
 	web.httpReg.Register(http.MethodPut, "/control/profile/update", web.handlePutProfile)
 
