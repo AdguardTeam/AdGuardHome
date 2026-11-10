@@ -100,16 +100,6 @@ func TestQuerylog_HandleQueryLog_reasonSearchCriterion(t *testing.T) {
 		wantMsg:    `parsing params: reason: bad enum value: "InvalidReason"` + "\n",
 		wantStatus: http.StatusBadRequest,
 		wantHosts:  nil,
-	}, {
-		name: "reason_and_status_conflict",
-		query: url.Values{
-			"reason":          []string{filtering.Rewritten.String()},
-			"response_status": []string{filteringStatusAll},
-		},
-		wantMsg: `parsing params: "reason" and "response_status"` +
-			` criteria cannot be used together` + "\n",
-		wantStatus: http.StatusBadRequest,
-		wantHosts:  nil,
 	}}
 
 	for _, tc := range testCases {

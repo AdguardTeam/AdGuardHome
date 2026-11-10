@@ -35,7 +35,6 @@ func TestUpdater_Update(t *testing.T) {
   "version": "v0.103.0-beta.2",
   "announcement": "AdGuard Home v0.103.0-beta.2 is now available!",
   "announcement_url": "https://github.com/AdguardTeam/AdGuardHome/internal/releases",
-  "selfupdate_min_version": "v0.0",
   "download_linux_amd64": "%s"
 }`
 

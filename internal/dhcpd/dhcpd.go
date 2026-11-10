@@ -142,13 +142,6 @@ func Create(ctx context.Context, conf *ServerConfig) (s *server, err error) {
 		return nil, fmt.Errorf("neither dhcpv4 nor dhcpv6 srv is configured")
 	}
 
-	// Migrate leases db if needed.
-	err = migrateDB(conf)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
-
 	// Don't delay database loading until the DHCP server is started,
 	// because we need static leases functionality available beforehand.
 	err = s.dbLoad()

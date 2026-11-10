@@ -113,19 +113,6 @@ func (l *queryLog) Shutdown(ctx context.Context) (err error) {
 	return nil
 }
 
-func checkInterval(ivl time.Duration) (ok bool) {
-	// The constants for possible values of query log's rotation interval.
-	const (
-		quarterDay  = timeutil.Day / 4
-		day         = timeutil.Day
-		week        = timeutil.Day * 7
-		month       = timeutil.Day * 30
-		threeMonths = timeutil.Day * 90
-	)
-
-	return ivl == quarterDay || ivl == day || ivl == week || ivl == month || ivl == threeMonths
-}
-
 // validateIvl returns an error if ivl is less than an hour or more than a
 // year.
 func validateIvl(ivl time.Duration) (err error) {
