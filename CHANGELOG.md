@@ -70,6 +70,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The *Check for updates* button disappearing and an untranslated error being shown when the update check failed in the new web interface ([#8681]).
 
+- The raw `dns_status_error` key being shown instead of an error message when the DNS server status check failed in the new web interface.
+
 ### Removed
 
 - The following deprecated HTTP APIs:

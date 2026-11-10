@@ -312,6 +312,7 @@
   "dns_server_addresses_placeholder": "IP addresses, sdns://, quic://, https://, h3://, or tls://",
   "dns_server_addresses_title": "Server addresses",
   "dns_settings": "DNS",
+  "dns_status_error": "Error checking the DNS server status",
   "dns_subnet_placeholder": "Enter prefix length",
   "dns_subnet_prefix": "Subnet prefix length for %value% addresses",
   "dns_subnet_prefix_desc": "Sets the subnet prefix length for %value% addresses used for rate limiting",

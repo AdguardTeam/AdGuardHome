@@ -135,7 +135,7 @@ export const getDnsStatus = async () => {
     setState('processing', true);
 
     const handleRequestError = () => {
-        addErrorToast({ error: 'dns_status_error' });
+        addErrorToast({ error: intl.getMessage('dns_status_error') });
         setState('processing', false);
         window.location.reload();
     };
@@ -199,7 +199,7 @@ export const refreshDnsStatus = async (): Promise<void> => {
 
 export const getTimerStatus = async () => {
     const handleRequestError = () => {
-        addErrorToast({ error: 'dns_status_error' });
+        addErrorToast({ error: intl.getMessage('dns_status_error') });
         setState('processing', false);
         window.location.reload();
     };
