@@ -578,11 +578,15 @@ friendly:
 
 ### Commits
 
+- Follow the AdGuard Git guidelines for commit headers:
+  `pkg: lowercase description`, where `pkg` is the affected directory, or
+  `all` for cross-cutting changes. Keep headers within 80 columns. See
+  <https://github.com/AdguardTeam/CodeGuidelines/blob/master/Go/Git.md>.
 - You MUST NOT put `#<number>` references in a commit message. The remote
   rejects a message that matches the pattern `(?m)(^|[\s(])#\d+\b`.
-- Put the Jira key in the subject line of code commits, for example
-  `AGDNS-4717 Fix the Recheck button after a failed update check`. Put the
-  GitHub issue link in `CHANGELOG.md`, not in the commit message.
+- Prefix the subject of code commits with the Jira key, for example
+  `AGDNS-4717 client_v2: fix the recheck button after a failed update check`.
+  Put the GitHub issue link in `CHANGELOG.md`, not in the commit message.
 
 ### Translations
 
