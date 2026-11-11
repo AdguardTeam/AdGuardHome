@@ -41,6 +41,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Panic on binding to a busy port ([#8656]).
+
 - Expired dynamic leases are served by DNS ([#8671]).
 
 - The *Check for updates* button disappearing and raw or untranslated error messages being shown when the update check or the DNS server status check failed in the new web interface ([#8681]).
@@ -121,6 +123,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
     - `--no-etc-hosts`.
     - `--port`/`-p`.
 
+[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
 [#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:       https://github.com/AdguardTeam/AdGuardHome/issues/8608
