@@ -3,9 +3,11 @@ package querylog
 import (
 	"encoding/json"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -197,4 +199,81 @@ func testSearchAPI(
 
 	gotHosts := parseHostnamesFromEntry(tb, w.Body)
 	assert.Equal(tb, wantHosts, gotHosts)
+}
+
+func TestQuerylog_ParseSearchParams_pagination(t *testing.T) {
+	t.Parallel()
+
+	overflow := strconv.FormatUint(uint64(math.MaxInt)+1, 10)
+	sumOverflow := strconv.FormatUint(uint64(math.MaxInt)-1, 10)
+
+	l := newTestQueryLog(t)
+	testCases := []struct {
+		query                  url.Values
+		name                   string
+		wantLimit              int
+		wantOffset             int
+		wantMaxFileScanEntries int
+	}{{
+		name:                   "no_params",
+		query:                  url.Values{},
+		wantLimit:              defaultLimit,
+		wantOffset:             0,
+		wantMaxFileScanEntries: defaultMaxFileScanEntries,
+	}, {
+		name: "valid_params",
+		query: url.Values{
+			"limit":  []string{"1000"},
+			"offset": []string{"3"},
+		},
+		wantLimit:              1000,
+		wantOffset:             3,
+		wantMaxFileScanEntries: 0,
+	}, {
+		name: "negative_params",
+		query: url.Values{
+			"limit":  []string{"-1000"},
+			"offset": []string{"-1"},
+		},
+		wantLimit:              defaultLimit,
+		wantOffset:             0,
+		wantMaxFileScanEntries: defaultMaxFileScanEntries,
+	}, {
+		name: "params_overflow",
+		query: url.Values{
+			"limit":  []string{overflow},
+			"offset": []string{overflow},
+		},
+		wantLimit:              defaultLimit,
+		wantOffset:             0,
+		wantMaxFileScanEntries: defaultMaxFileScanEntries,
+	}, {
+		name: "sum_overflow",
+		query: url.Values{
+			"limit":  []string{sumOverflow},
+			"offset": []string{sumOverflow},
+		},
+		wantLimit:              defaultLimit,
+		wantOffset:             0,
+		wantMaxFileScanEntries: defaultMaxFileScanEntries,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			u := (&url.URL{
+				Path:     "/control/querylog",
+				RawQuery: tc.query.Encode(),
+			}).String()
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			p, err := l.parseSearchParams(ctx, httptest.NewRequest(http.MethodGet, u, nil))
+			require.NoError(t, err)
+
+			assert.Equal(t, tc.wantLimit, p.limit)
+			assert.Equal(t, tc.wantOffset, p.offset)
+			assert.Equal(t, tc.wantMaxFileScanEntries, p.maxFileScanEntries)
+		})
+	}
 }

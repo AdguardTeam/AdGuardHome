@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+const (
+	// defaultLimit is the default pagination limit.
+	defaultLimit = 500
+
+	// defaultMaxFileScanEntries is the default maximum number of log entries to
+	// scan from file.
+	defaultMaxFileScanEntries = 50000
+)
+
 // searchParams represent the search query sent by the client.
 type searchParams struct {
 	// olderThen represents a parameter for entries that are older than this
@@ -16,10 +25,17 @@ type searchParams struct {
 	// results.
 	searchCriteria []searchCriterion
 
-	// offset for the search.
+	// offset for the search.  It must not be negative.  Its sum with
+	// [searchParams.limit] must be less than or equal [math.MaxInt].
+	//
+	// TODO(f.setrakov): Use uint.
 	offset int
 
-	// limit the number of records returned.
+	// limit is the maximum number of records returned.  It must not be
+	// negative.  Its sum with [searchParams.offset] must be less than or equal
+	// [math.MaxInt].
+	//
+	// TODO(f.setrakov): Use uint.
 	limit int
 
 	// maxFileScanEntries is a maximum of log entries to scan in query log
@@ -30,11 +46,8 @@ type searchParams struct {
 // newSearchParams - creates an empty instance of searchParams
 func newSearchParams() *searchParams {
 	return &searchParams{
-		// default max log entries to return
-		limit: 500,
-
-		// by default, we scan up to 50k entries at once
-		maxFileScanEntries: 50000,
+		limit:              defaultLimit,
+		maxFileScanEntries: defaultMaxFileScanEntries,
 	}
 }
 

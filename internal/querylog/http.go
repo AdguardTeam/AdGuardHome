@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net"
 	"net/http"
 	"net/url"
@@ -338,26 +339,31 @@ func (l *queryLog) parseSearchParams(
 	q := r.URL.Query()
 
 	olderThan := q.Get("older_than")
-	if len(olderThan) != 0 {
+	if olderThan != "" {
 		p.olderThan, err = time.Parse(time.RFC3339Nano, olderThan)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	var limit64 int64
-	if limit64, err = strconv.ParseInt(q.Get("limit"), 10, 64); err == nil {
-		p.limit = int(limit64)
+	limit, _ := l.parseIntQueryParameter(ctx, q, "limit", p.limit)
+	offset, offsetValid := l.parseIntQueryParameter(ctx, q, "offset", p.offset)
+	if offset > math.MaxInt-limit {
+		l.logger.ErrorContext(ctx, "limit and offset sum overflows integer")
+
+		offset = p.offset
+		limit = p.limit
+		offsetValid = false
 	}
 
-	var offset64 int64
-	if offset64, err = strconv.ParseInt(q.Get("offset"), 10, 64); err == nil {
-		p.offset = int(offset64)
-
+	if offsetValid {
 		// If we don't use "olderThan" and use offset/limit instead, we should change the default behavior
 		// and scan all log records until we found enough log entries
 		p.maxFileScanEntries = 0
 	}
+
+	p.limit = limit
+	p.offset = offset
 
 	err = l.parseSearchCriterions(ctx, q, p)
 	if err != nil {
@@ -366,6 +372,47 @@ func (l *queryLog) parseSearchParams(
 	}
 
 	return p, nil
+}
+
+// parseIntQueryParameter parses the given parameter, ensures that its value is
+// not negative and is less than or equal to [math.MaxInt].  It returns the
+// defaultValue and false if the parameter is invalid or not present.  It
+// returns the parsed value and true otherwise.
+func (l *queryLog) parseIntQueryParameter(
+	ctx context.Context,
+	values url.Values,
+	name string,
+	defaultValue int,
+) (res int, valid bool) {
+	paramStr := values.Get(name)
+	if paramStr == "" {
+		return defaultValue, false
+	}
+
+	res64, err := strconv.ParseUint(paramStr, 10, 64)
+	if err != nil {
+		l.logger.ErrorContext(
+			ctx,
+			"parsing query parameter",
+			"parameter", name,
+			slogutil.KeyError, err,
+		)
+
+		return defaultValue, false
+	}
+
+	if res64 > math.MaxInt {
+		l.logger.ErrorContext(
+			ctx,
+			"parameter value is bigger than maximum integer",
+			"parameter", name,
+			"value", res64,
+		)
+
+		return defaultValue, false
+	}
+
+	return int(res64), true
 }
 
 // parseSearchCriterions parses search criterions from the URL query parameter

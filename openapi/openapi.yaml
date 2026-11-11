@@ -208,11 +208,13 @@
           choosing one of them and sticking to it.
         'schema':
           'type': 'integer'
+          'minimum': 0
       - 'name': 'limit'
         'in': 'query'
         'description': 'Limit the number of records to be returned'
         'schema':
           'type': 'integer'
+          'minimum': 0
       - 'name': 'search'
         'in': 'query'
         'description': 'Filter by domain name or client IP'
