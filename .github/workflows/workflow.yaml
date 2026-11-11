@@ -1,6 +1,6 @@
 'env':
   'CLIENT_DIR': 'client'
-  'GO_VERSION': '1.27.3'
+  'GO_VERSION': '1.27.4'
   'NODE_VERSION': '24'
 'jobs':
   'ESLint':
