@@ -64,7 +64,7 @@ Playwright (e2e).
   `eslint-plugin-prettier`), Prettier 3
 - **Storage**: Browser `localStorage` (language, theme); no database.  The theme
   of a signed-in operator lives in the server profile and is mirrored to
-  `localStorage['account_theme']` for the pre-paint scripts; a userless
+  `localStorage['account_theme']` for the inlined pre-paint script; a userless
   (auth-disabled or GL-iNet) install keeps the theme only in `localStorage`
 - **Target Platform**: Modern evergreen browsers (see `browserslist` in
   `package.json`); output is static assets served by the Go backend

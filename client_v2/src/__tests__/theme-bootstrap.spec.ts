@@ -6,6 +6,7 @@ import { LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import {
     THEME_BOOTSTRAP_PARAMETER,
     THEME_BOOTSTRAP_SOURCE,
+    THEME_BOOTSTRAP_TAG,
 } from '../../scripts/theme-bootstrap-template.js';
 
 // Every entry inlines the one pre-paint theme script from
@@ -38,6 +39,13 @@ describe('theme bootstrap', () => {
     it.each(ENTRIES)('inlines the shared script in %s', (file) => {
         // Guard against a copy being pasted back into an entry point.
         expect(entryHtml(file)).toContain(`<%= ${THEME_BOOTSTRAP_PARAMETER} %>`);
+    });
+
+    it('wraps the shared source in a raw script tag', () => {
+        // `%=` interpolates raw; `<%-` would escape the tag into visible text.
+        expect(THEME_BOOTSTRAP_TAG.startsWith('<script>')).toBe(true);
+        expect(THEME_BOOTSTRAP_TAG.endsWith('</script>')).toBe(true);
+        expect(THEME_BOOTSTRAP_TAG).not.toContain('&lt;');
     });
 
     it('restores the stored theme before paint', () => {

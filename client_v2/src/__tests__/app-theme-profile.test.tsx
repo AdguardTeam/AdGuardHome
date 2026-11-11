@@ -115,8 +115,9 @@ describe('App theme effect and the profile', () => {
 
         expect(dashboardState.theme).toBe('light');
         expect(document.documentElement.style.colorScheme).toBe('light');
-        // The server value is mirrored into localStorage so that the pre-paint
-        // scripts apply it on the next load instead of the stale theme.
+        // The server value is mirrored into localStorage so that the inlined
+        // pre-paint script applies it on the next load instead of the stale
+        // theme.
         expect(getTheme()).toBe('light');
     });
 });

@@ -885,8 +885,8 @@ export const setUITheme = (theme?: string): void => {
     }
 
     // Persist the requested theme rather than the resolved one, so that
-    // "auto" survives a reload and the pre-paint scripts in the HTML entry
-    // points can resolve it themselves.
+    // "auto" survives a reload and the inlined pre-paint script can resolve it
+    // itself.
     setTheme(requestedTheme);
     document.documentElement.dataset.theme = appliedTheme;
     document.documentElement.style.colorScheme = appliedTheme;
