@@ -58,7 +58,7 @@ func TestService_HandlePatchSettingsDNS(t *testing.T) {
 	u := &url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathPatternV1SettingsDNS,
+		Path:   websvc.PathPatternV2SettingsDNS,
 	}
 
 	req := jobj{

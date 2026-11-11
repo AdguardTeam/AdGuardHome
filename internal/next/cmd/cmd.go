@@ -1,6 +1,9 @@
 // Package cmd is the AdGuard Home entry point.  It assembles the configuration
 // file manager, sets up signal processing logic, and so on.
 //
+// NOTE:  This part of the module is a work-in-progress area, mostly here for
+// experimentation.  This version is not ready and should not be used.
+//
 // TODO(a.garipov): Move to the upper-level internal/.
 package cmd
 
