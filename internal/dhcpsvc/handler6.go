@@ -499,7 +499,7 @@ func (iface *dhcpInterfaceV6) handleDecline(
 
 	l.WarnContext(ctx, "lease is unavailable", "ip", lease.IP)
 
-	err = iface.common.blockLease(ctx, lease, iface.clock.Now())
+	err = iface.common.blockLease(ctx, lease, iface.common.clock.Now())
 	if err != nil {
 		l.ErrorContext(ctx, "blocking lease", slogutil.KeyError, err)
 

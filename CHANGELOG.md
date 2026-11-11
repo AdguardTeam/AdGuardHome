@@ -41,6 +41,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Expired dynamic leases are served by DNS ([#8671]).
+
 - The *Check for updates* button disappearing and raw or untranslated error messages being shown when the update check or the DNS server status check failed in the new web interface ([#8681]).
 
 - The theme selected in the new web interface not being saved to the server ([#8699]).
@@ -131,6 +133,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8644]:       https://github.com/AdguardTeam/AdGuardHome/issues/8644
 [#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
+[#8671]:       https://github.com/AdguardTeam/AdGuardHome/issues/8671
 [#8681]:       https://github.com/AdguardTeam/AdGuardHome/issues/8681
 [#8686]:       https://github.com/AdguardTeam/AdGuardHome/issues/8686
 [#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
