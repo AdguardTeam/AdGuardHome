@@ -2,6 +2,7 @@ package dhcpsvc_test
 
 import (
 	"context"
+	"net"
 	"net/netip"
 	"strings"
 	"testing"
@@ -125,8 +126,7 @@ func TestDHCPServer_index(t *testing.T) {
 
 		assert.Equal(t, testIPv4Static, srv.IPByHost(testLease4HostnameStatic))
 		assert.Equal(t, testIPv4Dynamic, srv.IPByHost(testLease4HostnameDynamic))
-		// TODO(e.burkov):  Consider treating expired leases as non-existent.
-		assert.Equal(t, testIPv4Expired, srv.IPByHost(testLease4HostnameExpired))
+		assert.Equal(t, netip.Addr{}, srv.IPByHost(testLease4HostnameExpired))
 		assert.Zero(t, srv.IPByHost(testLease4HostnameUnknown))
 	})
 
@@ -135,7 +135,7 @@ func TestDHCPServer_index(t *testing.T) {
 
 		assert.Equal(t, testLease4HostnameStatic, srv.HostByIP(testIPv4Static))
 		assert.Equal(t, testLease4HostnameDynamic, srv.HostByIP(testIPv4Dynamic))
-		assert.Equal(t, testLease4HostnameExpired, srv.HostByIP(testIPv4Expired))
+		assert.Equal(t, "", srv.HostByIP(testIPv4Expired))
 		assert.Zero(t, srv.HostByIP(testIPv4Unknown))
 		assert.Zero(t, srv.HostByIP(netip.Addr{}))
 	})
@@ -145,7 +145,7 @@ func TestDHCPServer_index(t *testing.T) {
 
 		assert.Equal(t, testHWStatic, srv.MACByIP(testIPv4Static))
 		assert.Equal(t, testHWDynamic, srv.MACByIP(testIPv4Dynamic))
-		assert.Equal(t, testHWExpired, srv.MACByIP(testIPv4Expired))
+		assert.Equal(t, net.HardwareAddr(nil), srv.MACByIP(testIPv4Expired))
 		assert.Zero(t, srv.MACByIP(testIPv4Unknown))
 		assert.Zero(t, srv.MACByIP(netip.Addr{}))
 	})
