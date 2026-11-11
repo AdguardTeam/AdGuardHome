@@ -46,6 +46,7 @@ type DashboardState = {
     name: string;
     theme: string | undefined;
     checkUpdateFlag: boolean;
+    versionCheckFailed: boolean;
     announcementUrl: string;
     newVersion: string;
     canAutoUpdate: boolean;
@@ -75,6 +76,7 @@ const initialState: DashboardState = {
     name: '',
     theme: undefined,
     checkUpdateFlag: false,
+    versionCheckFailed: false,
     announcementUrl: '',
     newVersion: '',
     canAutoUpdate: false,
@@ -137,7 +139,7 @@ export const getDnsStatus = async () => {
     setState('processing', true);
 
     const handleRequestError = () => {
-        addErrorToast({ error: 'dns_status_error' });
+        addErrorToast({ error: intl.getMessage('dns_status_error') });
         setState('processing', false);
         window.location.reload();
     };
@@ -199,7 +201,7 @@ export const refreshDnsStatus = async (): Promise<void> => {
 
 export const getTimerStatus = async () => {
     const handleRequestError = () => {
-        addErrorToast({ error: 'dns_status_error' });
+        addErrorToast({ error: intl.getMessage('dns_status_error') });
         setState('processing', false);
         window.location.reload();
     };
@@ -241,20 +243,27 @@ export const getVersion = async (recheck = false) => {
                 isUpdateAvailable: true,
                 processingVersion: false,
                 checkUpdateFlag: !data.disabled,
+                versionCheckFailed: false,
             });
         } else {
-            setState({ processingVersion: false, checkUpdateFlag: data ? !data.disabled : false });
+            setState({
+                processingVersion: false,
+                checkUpdateFlag: data ? !data.disabled : false,
+                versionCheckFailed: false,
+            });
         }
-        if (recheck) {
-            if (data && !areEqualVersions(currentVersion, data.new_version)) {
+        if (recheck && data && !data.disabled) {
+            if (!areEqualVersions(currentVersion, data.new_version)) {
                 addSuccessToast(intl.getMessage('updates_checked'));
             } else {
                 addSuccessToast(intl.getMessage('updates_version_equal'));
             }
         }
     } catch {
-        addErrorToast({ error: 'version_request_error' });
-        setState('processingVersion', false);
+        addErrorToast({ error: intl.getMessage('version_request_error') });
+        // A failed check does not tell us whether updates are disabled, so keep
+        // the retry control available and leave `checkUpdateFlag` unchanged.
+        setState({ processingVersion: false, versionCheckFailed: true });
     }
 };
 
