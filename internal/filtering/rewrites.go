@@ -75,6 +75,7 @@ func (rw *LegacyRewrite) normalize(ctx context.Context, l *slog.Logger) (err err
 	// use it in matchDomainWildcard instead of using strings.ToLower
 	// everywhere.
 	rw.Domain = strings.ToLower(rw.Domain)
+	rw.Domain = strings.TrimSuffix(rw.Domain, ".")
 
 	switch rw.Answer {
 	case "AAAA":
