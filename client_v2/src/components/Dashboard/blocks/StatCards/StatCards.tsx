@@ -1,6 +1,9 @@
+import { createMemo } from 'solid-js';
+
 import intl from 'panel/common/intl';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
+import { useIsDarkTheme } from 'panel/hooks/useTheme';
 
 import s from '../StatCard/StatCard.module.pcss';
 import { StatCard, CARDS_THEME } from '../StatCard';
@@ -18,18 +21,30 @@ type Props = {
 };
 
 /**
- * Chart line colors.  Chart.js paints into a canvas, which cannot consume CSS
- * custom properties, so the palette is repeated here; keep it in sync with the
- * semantic colors used by the chart UI in `StatCard.module.pcss`.
+ * Chart line colors per theme.  Chart.js paints into a canvas, which cannot
+ * consume CSS custom properties, so the palette is repeated here; keep it in
+ * sync with the semantic colors used by the chart UI in `StatCard.module.pcss`.
  */
 const CHART_COLORS = {
-    [CARDS_THEME.QUERIES]: '#67b279',
-    [CARDS_THEME.ADS]: '#e9653a',
-    [CARDS_THEME.THREATS]: '#d58500',
-    [CARDS_THEME.ADULT]: '#a870b2',
+    light: {
+        [CARDS_THEME.QUERIES]: '#67b279',
+        [CARDS_THEME.ADS]: '#e9653a',
+        [CARDS_THEME.THREATS]: '#d58500',
+        [CARDS_THEME.ADULT]: '#a870b2',
+    },
+    dark: {
+        [CARDS_THEME.QUERIES]: '#67b279',
+        [CARDS_THEME.ADS]: '#f67247',
+        [CARDS_THEME.THREATS]: '#d58500',
+        [CARDS_THEME.ADULT]: '#a870b2',
+    },
 };
 
 export const StatCards = (props: Props) => {
+    const isDark = useIsDarkTheme();
+
+    const colors = createMemo(() => (isDark() ? CHART_COLORS.dark : CHART_COLORS.light));
+
     const blockedPercent = () =>
         props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
     const threatsPercent = () =>
@@ -44,7 +59,7 @@ export const StatCards = (props: Props) => {
                 label={intl.getMessage('dns_query')}
                 data={props.dnsQueries}
                 timeUnits={props.timeUnits}
-                color={CHART_COLORS[CARDS_THEME.QUERIES]}
+                color={colors()[CARDS_THEME.QUERIES]}
                 cardTheme={CARDS_THEME.QUERIES}
                 linkTo={RoutePath.QueryLog}
             />
@@ -53,7 +68,7 @@ export const StatCards = (props: Props) => {
                 label={intl.getMessage('ads_blocked_card')}
                 data={props.blockedFiltering}
                 timeUnits={props.timeUnits}
-                color={CHART_COLORS[CARDS_THEME.ADS]}
+                color={colors()[CARDS_THEME.ADS]}
                 percentValue={blockedPercent()}
                 cardTheme={CARDS_THEME.ADS}
                 linkTo={RoutePath.QueryLog}
@@ -67,7 +82,7 @@ export const StatCards = (props: Props) => {
                 label={intl.getMessage('blocked_threats_chart')}
                 data={props.replacedSafebrowsing}
                 timeUnits={props.timeUnits}
-                color={CHART_COLORS[CARDS_THEME.THREATS]}
+                color={colors()[CARDS_THEME.THREATS]}
                 percentValue={threatsPercent()}
                 cardTheme={CARDS_THEME.THREATS}
                 linkTo={RoutePath.QueryLog}
@@ -81,7 +96,7 @@ export const StatCards = (props: Props) => {
                 label={intl.getMessage('stats_adult')}
                 data={props.replacedParental}
                 timeUnits={props.timeUnits}
-                color={CHART_COLORS[CARDS_THEME.ADULT]}
+                color={colors()[CARDS_THEME.ADULT]}
                 percentValue={parentalPercent()}
                 cardTheme={CARDS_THEME.ADULT}
                 linkTo={RoutePath.QueryLog}

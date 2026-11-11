@@ -45,6 +45,7 @@ const getButtonText = (modalId: ConfigureAllowlistModalIdType) => {
 export const ConfigureAllowlistModal = (props: Props) => {
     const [name, setName] = createSignal(untrack(() => props.filterToEdit?.name) ?? '');
     const [url, setUrl] = createSignal(untrack(() => props.filterToEdit?.url) ?? '');
+    const [nameError, setNameError] = createSignal<string | undefined>();
     const [urlError, setUrlError] = createSignal<string | undefined>();
 
     createEffect(() => {
@@ -52,10 +53,22 @@ export const ConfigureAllowlistModal = (props: Props) => {
         setUrl(props.filterToEdit?.url ?? '');
     });
 
+    const validateNameField = () => {
+        const err = validateRequiredValue(name());
+        setNameError(err || undefined);
+        return !err;
+    };
+
+    const validateUrlField = () => {
+        const err = validateRequiredValue(url()) || validatePath(url());
+        setUrlError(err || undefined);
+        return !err;
+    };
+
     const validateAndSetErrors = () => {
-        const urlErr = validateRequiredValue(url()) || validatePath(url());
-        setUrlError(urlErr || undefined);
-        return !urlErr;
+        const nameValid = validateNameField();
+        const urlValid = validateUrlField();
+        return nameValid && urlValid;
     };
 
     const handleFormSubmit = async (e: Event) => {
@@ -94,6 +107,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
     const handleCancel = () => {
         setName('');
         setUrl('');
+        setNameError(undefined);
         setUrlError(undefined);
         closeModal();
     };
@@ -111,7 +125,12 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     label={intl.getMessage('name_label')}
                                     placeholder={intl.getMessage('allowlist_placeholder_example')}
                                     value={name()}
-                                    onChange={(e) => setName((e.target as HTMLInputElement).value)}
+                                    onChange={(e) => {
+                                        setName((e.target as HTMLInputElement).value);
+                                        setNameError(undefined);
+                                    }}
+                                    onBlur={validateNameField}
+                                    errorMessage={nameError()}
                                     onCard
                                 />
                             </div>
@@ -124,7 +143,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     placeholder={intl.getMessage('blocklist_url_file_path')}
                                     value={url()}
                                     onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
-                                    onBlur={validateAndSetErrors}
+                                    onBlur={validateUrlField}
                                     errorMessage={urlError()}
                                     onCard
                                 />

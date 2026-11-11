@@ -66,3 +66,11 @@
     --red-90: #a13612;
     --red-100: #77280d;
 }
+
+[data-theme='dark'] {
+    --product-primary-60: #589968;
+    --red-50: #f67247;
+    --red-60: #df6740;
+    --red-90: #7b3923;
+    --red-100: #5b2a1a;
+}

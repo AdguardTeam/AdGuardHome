@@ -43,7 +43,7 @@
     margin: 0 auto;
     max-width: 720px;
     max-height: calc(100vh - 32px);
-    background-color: var(--default-cards-background);
+    background-color: var(--default-page-background);
     border: none;
     border-radius: 16px;
     background-clip: border-box;
@@ -56,6 +56,20 @@
         border-radius: 16px;
         padding: 24px 16px;
     }
+}
+
+/*
+ * Modals use the page surface in the dark theme, so "on card" controls inside
+ * a dialog must resolve to the page surface as well.
+ */
+[data-theme='dark'] .dialog-content {
+    --page-background-additional: var(--default-page-background);
+    --page-background-additional-hovered: var(--hovered-page-background);
+    --page-background-additional-pressed: var(--pressed-page-background);
+    --default-secondary-card-button: var(--default-secondary-button);
+    --hovered-secondary-card-button: var(--hovered-secondary-button);
+    --pressed-secondary-card-button: var(--pressed-secondary-button);
+    --disabled-secondary-card-button: var(--disabled-secondary-button);
 }
 
 .dialog-content-no-overflow {

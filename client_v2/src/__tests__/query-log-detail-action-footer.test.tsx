@@ -63,7 +63,7 @@ describe('ActionFooter', () => {
         vi.restoreAllMocks();
     });
 
-    it('processed entry → Add to allowlist (primary) + Block (danger), in order', () => {
+    it('processed entry → Add to allowlist (primary) + Block (secondary), in order', () => {
         render(() => (
             <ActionFooter {...defaultProps} entry={makeEntry({ reason: 'NotFilteredNotFound' })} />
         ));
@@ -71,7 +71,11 @@ describe('ActionFooter', () => {
         const buttons = footer.querySelectorAll('button');
         expect(buttons).toHaveLength(2);
         expect(buttons[0]).toHaveAttribute('data-action', 'allowlist');
+        expect(buttons[0].className).toContain('primary');
         expect(buttons[1]).toHaveAttribute('data-action', 'block');
+        expect(buttons[1].className).toContain('secondary');
+        expect(buttons[1].className).not.toContain('secondary-danger');
+        expect(buttons[1].className).toContain('onCard');
     });
 
     it('clicking Block calls onBlock with the domain and onClose', () => {

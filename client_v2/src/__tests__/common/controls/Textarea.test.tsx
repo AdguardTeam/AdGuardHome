@@ -80,6 +80,41 @@ describe('Textarea — comment highlight', () => {
         expect(spans?.[0].className).toContain('commentLine');
     });
 
+    it('groups consecutive comment lines into a single span', () => {
+        const value = `# first\n# second\n# third`;
+        const { container } = render(() => (
+            <Textarea
+                value={value}
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+            />
+        ));
+
+        const overlay = container.querySelector('[aria-hidden="true"]');
+        const spans = overlay?.querySelectorAll('span');
+        expect(spans).toHaveLength(1);
+        expect(spans?.[0].className).toContain('commentLine');
+        expect(spans?.[0].textContent).toBe(value);
+    });
+
+    it('groups alternating comment and rule blocks', () => {
+        const value = `# first\n# second\n||a.com^\n||b.com^\n# third`;
+        const { container } = render(() => (
+            <Textarea
+                value={value}
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+            />
+        ));
+
+        const overlay = container.querySelector('[aria-hidden="true"]');
+        const spans = overlay?.querySelectorAll('span');
+        expect(spans).toHaveLength(3);
+        expect(spans?.[0].textContent).toBe('# first\n# second');
+        expect(spans?.[1].textContent).toBe('||a.com^\n||b.com^');
+        expect(spans?.[2].textContent).toBe('# third');
+    });
+
     it('applies transparentText class to textarea when highlightComments enabled', () => {
         const { container } = render(() => (
             <Textarea

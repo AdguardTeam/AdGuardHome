@@ -269,23 +269,33 @@
                     background-color: var(--page-background-additional-hovered);
                 }
             }
+
+            /* Keep the field on the card surface while its menu is open and
+               show the active border, even though focus moves to the listbox. */
+            &:not([data-disabled]):has([data-state='open']) {
+                background-color: var(--page-background-additional);
+                border-color: var(--hovered-main-button);
+            }
         }
     }
 
     &.solid-select--menu-on-card {
         [data-scope='select'][data-part='content'],
         [data-scope='combobox'][data-part='content'] {
-            background-color: var(--default-input-on-card-background);
+            background-color: var(--default-page-background);
         }
 
         [data-scope='select'][data-part='item'],
         [data-scope='combobox'][data-part='item'] {
             &[data-highlighted] {
-                background-color: var(--hovered-input-on-card-background);
+                background-color: var(--default-input-on-card-background);
             }
+        }
 
-            &[data-state='checked'] {
-                background-color: var(--pressed-input-on-card-background);
+        [data-scope='select'][data-part='group'],
+        [data-scope='combobox'][data-part='group'] {
+            &::-webkit-scrollbar-thumb {
+                background-color: var(--default-item-divider);
             }
         }
     }
@@ -414,10 +424,6 @@
 
         &[data-highlighted] {
             background-color: var(--hovered-dropdown-menu-background);
-        }
-
-        &[data-state='checked'] {
-            background-color: var(--pressed-dropdown-menu-background);
         }
 
         &[data-disabled] {
