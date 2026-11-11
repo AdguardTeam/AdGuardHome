@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/netip"
-	"net/url"
 	"slices"
 	"testing"
 
@@ -83,7 +82,15 @@ func assertClients(tb testing.TB, want, got []*client.Persistent) {
 
 	for i, a := range want {
 		b := got[i]
-		assert.Truef(tb, a.EqualIDs(b), "%q doesn't have the same ids as %q", a.Name, b.Name)
+		assert.Truef(
+			tb,
+			a.EqualIDs(b),
+			"%q doesn't have the same ids as %q:\nwant: %+v\ngot: %+v",
+			a.Name,
+			b.Name,
+			a,
+			b,
+		)
 	}
 }
 
@@ -104,7 +111,7 @@ func assertPersistentClients(tb testing.TB, clients *clientsContainer, want []*c
 	ctx := testutil.ContextWithTimeout(tb, testTimeout)
 	for _, cj := range clientList.Clients {
 		var c *client.Persistent
-		c, err = clients.jsonToClient(ctx, *cj, nil)
+		c, err = clients.jsonToClient(ctx, *cj)
 		require.NoError(tb, err)
 
 		got = append(got, c)
@@ -128,7 +135,7 @@ func assertPersistentClientsData(
 	for _, cm := range data {
 		for _, cj := range cm {
 			var c *client.Persistent
-			c, err := clients.jsonToClient(ctx, *cj, nil)
+			c, err := clients.jsonToClient(ctx, *cj)
 			require.NoError(tb, err)
 
 			got = append(got, c)
@@ -335,73 +342,6 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	}
 }
 
-func TestClientsContainer_HandleFindClient(t *testing.T) {
-	clients := newClientsContainer(t)
-	clients.clientChecker = &testBlockedClientChecker{
-		onIsBlockedClient: func(ip netip.Addr, clientID string) (ok bool, rule string) {
-			return false, ""
-		},
-	}
-
-	ctx := testutil.ContextWithTimeout(t, testTimeout)
-
-	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
-	err := clients.storage.Add(ctx, clientOne)
-	require.NoError(t, err)
-
-	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
-	err = clients.storage.Add(ctx, clientTwo)
-	require.NoError(t, err)
-
-	assertPersistentClients(t, clients, []*client.Persistent{clientOne, clientTwo})
-
-	testCases := []struct {
-		name       string
-		query      url.Values
-		wantCode   int
-		wantClient []*client.Persistent
-	}{{
-		name: "single",
-		query: url.Values{
-			"ip0": []string{testClientIP1},
-		},
-		wantCode:   http.StatusOK,
-		wantClient: []*client.Persistent{clientOne},
-	}, {
-		name: "multiple",
-		query: url.Values{
-			"ip0": []string{testClientIP1},
-			"ip1": []string{testClientIP2},
-		},
-		wantCode:   http.StatusOK,
-		wantClient: []*client.Persistent{clientOne, clientTwo},
-	}}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var r *http.Request
-			r, err = http.NewRequest(http.MethodGet, "", nil)
-			require.NoError(t, err)
-
-			r.URL.RawQuery = tc.query.Encode()
-			rw := httptest.NewRecorder()
-			clients.handleFindClient(rw, r)
-			require.NoError(t, err)
-			require.Equal(t, tc.wantCode, rw.Code)
-
-			var body []byte
-			body, err = io.ReadAll(rw.Body)
-			require.NoError(t, err)
-
-			clientData := []map[string]*clientJSON{}
-			err = json.Unmarshal(body, &clientData)
-			require.NoError(t, err)
-
-			assertPersistentClientsData(t, clients, clientData, tc.wantClient)
-		})
-	}
-}
-
 func TestClientsContainer_HandleSearchClient(t *testing.T) {
 	var (
 		runtimeCli = "runtime_client1"
@@ -410,8 +350,8 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 		blockedCliIP     = "4.4.4.4"
 		nonExistentCliIP = "5.5.5.5"
 
-		allowed     = false
-		dissallowed = true
+		allowed    = false
+		disallowed = true
 
 		disallowedRule = "disallowed_rule"
 	)
@@ -486,7 +426,7 @@ func TestClientsContainer_HandleSearchClient(t *testing.T) {
 		},
 		wantRuntime: &clientJSON{
 			IDs:            []string{blockedCliIP},
-			Disallowed:     &dissallowed,
+			Disallowed:     &disallowed,
 			DisallowedRule: &disallowedRule,
 			WHOIS:          &whois.Info{},
 		},
