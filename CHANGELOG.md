@@ -41,8 +41,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- The *Check the filtering* result in the new web interface showing only the
-  first matched rule ([#8677]).
+- The *Check the filtering* result in the new web interface showing only the first matched rule ([#8677]).
 
 - Invalid SVCB record from DDR when DoH routes are empty.
 
