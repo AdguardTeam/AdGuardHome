@@ -458,8 +458,13 @@ func validateBindHosts(
 
 // parseConfig loads configuration from the YAML file, upgrading it if
 // necessary.  l must not be nil.
-func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) (err error) {
-	// Do the upgrade if necessary.
+func parseConfig(
+	ctx context.Context,
+	l *slog.Logger,
+	workDir string,
+	confPath string,
+	legacyNoEtcHosts bool,
+) (err error) {
 	config.fileData, err = readConfigFile(ctx, l, workDir, confPath)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.
@@ -467,9 +472,10 @@ func parseConfig(ctx context.Context, l *slog.Logger, workDir, confPath string) 
 	}
 
 	migrator := configmigrate.New(&configmigrate.Config{
-		Logger:     l.With(slogutil.KeyPrefix, "config_migrator"),
-		WorkingDir: workDir,
-		DataDir:    filepath.Join(workDir, dataDir),
+		Logger:           l.With(slogutil.KeyPrefix, "config_migrator"),
+		WorkingDir:       workDir,
+		DataDir:          filepath.Join(workDir, dataDir),
+		LegacyNoEtcHosts: legacyNoEtcHosts,
 	})
 
 	var upgraded bool

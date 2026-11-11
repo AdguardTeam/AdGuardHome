@@ -6,7 +6,7 @@
   'CLIENT_DIR': |-
     ${{ inputs.client_dir || 'client_v2' }}
   'FRONTEND_BASE_IMAGE': |-
-    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.0' }}
+    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.1' }}
 'jobs':
   'TestFrontend':
     'if': |
@@ -67,26 +67,15 @@
           readonly exit_code
 
           exit "$exit_code"
-  'ResolveMacOSRunner':
-    'runs-on': 'team-go'
-    'outputs':
-      'image': ${{ steps.kv.outputs.value }}
-    'steps':
-      - 'uses': 'AdGuardSoftwareLimited/actions/actions/kv-get@master'
-        'id': 'kv'
-        'with':
-          'key': 'build-images/macos'
   'LintAndTestJobMacOS':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
-    'needs':
-      - 'ResolveMacOSRunner'
     'permissions':
       'contents': 'read'
     'runs-on':
       - 'ephemeral'
       - 'ephemeral-mac'
-      - '${{ needs.ResolveMacOSRunner.outputs.image }}'
+      - 'registry.int.agrd.dev/macos/tahoe-github-xcode26.4.1-26.11:@edge'
       - 'ephemeral-job-key-${{ github.run_id }}-${{ github.job }}-${{ strategy.job-index || 0 }}'
     'steps':
       - 'uses': 'actions/checkout@v6'
@@ -111,26 +100,15 @@
               go-bench \
               go-fuzz \
               ;
-  'ResolveWindowsRunner':
-    'runs-on': 'team-go'
-    'outputs':
-      'image': ${{ steps.kv.outputs.value }}
-    'steps':
-      - 'uses': 'AdGuardSoftwareLimited/actions/actions/kv-get@master'
-        'id': 'kv'
-        'with':
-          'key': 'build-images/windows2022-go'
   'LintAndTestJobWindows':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
-    'needs':
-      - 'ResolveWindowsRunner'
     'permissions':
       'contents': 'read'
     'runs-on':
       - 'ephemeral'
       - 'ephemeral-vmwin'
-      - '${{ needs.ResolveWindowsRunner.outputs.image }}'
+      - 'registry.int.agrd.dev/windows/windows2022-go:@edge'
       - 'ephemeral-limit-memory-8192'
       - 'ephemeral-limit-cpu-4'
       - 'ephemeral-job-key-${{ github.run_id }}-${{ github.job }}-${{ strategy.job-index || 0 }}'

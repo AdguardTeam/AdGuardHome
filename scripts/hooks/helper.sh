@@ -72,6 +72,10 @@ lint_staged_changes() {
 	verbose="${VERBOSE:-0}"
 	readonly verbose
 
+	if [ "$(git diff --cached --name-only -- '*.ts' '*.tsx' || :)" != '' ]; then
+		make VERBOSE="$verbose" js-lint js-typecheck js-test
+	fi
+
 	if [ "$(git diff --cached --name-only -- '*.md' || :)" != '' ]; then
 		make VERBOSE="$verbose" md-lint
 	fi

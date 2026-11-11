@@ -61,7 +61,7 @@ export default {
         "IRN_unwanted_iranian_domains": {
             "name": "IRN: PersianBlocker list",
             "categoryId": "regional",
-            "homepage": "https://github.com/MasterKia/PersianBlocker",
+            "homepage": "https://github.com/PersianBlocker/PersianBlocker",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_19.txt"
         },
         "ISR_easyList_hebrew": {
@@ -231,6 +231,18 @@ export default {
             "categoryId": "other",
             "homepage": "https://github.com/hagezi/dns-blocklists#gambling",
             "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_47.txt"
+        },
+        "hagezi_huawei_tracker_blocklist": {
+            "name": "HaGeZi's Huawei Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_73.txt"
+        },
+        "hagezi_lg_webos_tracker_blocklist": {
+            "name": "HaGeZi's LG webOS Tracker Blocklist",
+            "categoryId": "other",
+            "homepage": "https://github.com/hagezi/dns-blocklists",
+            "source": "https://adguardteam.github.io/HostlistsRegistry/assets/filter_72.txt"
         },
         "hagezi_multinormal": {
             "name": "HaGeZi's Normal Blocklist",

@@ -35,8 +35,6 @@ REVISION = $${REVISION:-$$(git rev-parse --short HEAD)}
 SIGN = 1
 VERSION = v0.0.0
 
-NEXTAPI = 0
-
 # Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the default,
 # the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands into
 # BUILD_RELEASE_DEPS_0, and so both frontend and backend dependencies are
@@ -62,7 +60,6 @@ ENV = env \
 	GOTOOLCHAIN='$(GOTOOLCHAIN)' \
 	GPG_KEY='$(GPG_KEY)' \
 	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)' \
-	NEXTAPI='$(NEXTAPI)' \
 	PATH="$${PWD}/bin:$$("$(GO.MACRO)" env GOPATH)/bin:$${PATH}" \
 	RACE='$(RACE)' \
 	REVISION="$(REVISION)" \
