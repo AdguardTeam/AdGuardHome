@@ -656,7 +656,7 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 		config.Lock()
 		defer config.Unlock()
 
-		tlsConf = config.TLS
+		tlsConf = confToTLSSettings(web.tlsManager.ExtendedTLSConfig())
 		webAPIAddr = config.HTTPConfig.Address.Addr()
 		webAPIPort = config.HTTPConfig.Address.Port()
 		plainDNSPort = config.DNS.Port
@@ -698,6 +698,10 @@ type bindingCheck struct {
 //   - [tlsConfigSettings.PortHTTPS] (UDP, if HTTP/3 is enabled)
 //   - [tlsConfigSettings.PortDNSOverTLS]
 //   - [tlsConfigSettings.PortDNSOverQUIC]
+//
+// TODO(m.kazantsev):  Base the port check on the ports actually held by the
+// DoH, DoT, and DoQ servers instead of comparing the current and the new
+// settings.
 func checkPortAvailability(
 	currConf tlsConfigSettings,
 	newConf tlsConfigSettings,
