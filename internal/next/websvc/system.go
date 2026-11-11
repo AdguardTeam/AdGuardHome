@@ -10,9 +10,9 @@ import (
 
 // System Handlers
 
-// RespGetV1SystemInfo describes the response of the GET /api/v1/system/info
+// RespGetV2SystemInfo describes the response of the GET /api/v2/system/info
 // HTTP API.
-type RespGetV1SystemInfo struct {
+type RespGetV2SystemInfo struct {
 	Arch       string           `json:"arch"`
 	Channel    string           `json:"channel"`
 	OS         string           `json:"os"`
@@ -21,10 +21,10 @@ type RespGetV1SystemInfo struct {
 	Version    string           `json:"version"`
 }
 
-// handleGetV1SystemInfo is the handler for the GET /api/v1/system/info HTTP
+// handleGetV2SystemInfo is the handler for the GET /api/v2/system/info HTTP
 // API.
-func (svc *Service) handleGetV1SystemInfo(w http.ResponseWriter, r *http.Request) {
-	aghhttp.WriteJSONResponseOK(r.Context(), svc.logger, w, r, &RespGetV1SystemInfo{
+func (svc *Service) handleGetV2SystemInfo(w http.ResponseWriter, r *http.Request) {
+	aghhttp.WriteJSONResponseOK(r.Context(), svc.logger, w, r, &RespGetV2SystemInfo{
 		Arch:    runtime.GOARCH,
 		Channel: version.Channel(),
 		OS:      runtime.GOOS,

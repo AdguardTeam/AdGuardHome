@@ -57,7 +57,7 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 	u := &url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathPatternV1SettingsAll,
+		Path:   websvc.PathPatternV2SettingsAll,
 	}
 
 	confMgr.onWeb = func() (s agh.ServiceWithConfig[*websvc.Config]) {
@@ -72,7 +72,7 @@ func TestService_HandleGetSettingsAll(t *testing.T) {
 	}
 
 	body := httpGet(t, u, http.StatusOK)
-	resp := &websvc.RespGetV1SettingsAll{}
+	resp := &websvc.RespGetV2SettingsAll{}
 	err := json.Unmarshal(body, resp)
 	require.NoError(t, err)
 
