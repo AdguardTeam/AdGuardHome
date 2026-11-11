@@ -41,6 +41,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The theme selected in the new web interface not being saved to the server ([#8699]).
+
 - Invalid SVCB record from DDR when DoH routes are empty.
 
 - Schedule shift on clock change cases ([#8670]).
@@ -128,6 +130,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8686]:       https://github.com/AdguardTeam/AdGuardHome/issues/8686
+[#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
 [dns-kb-list]: https://adguard-dns.io/kb/general/dns-providers/
 
 <!--
