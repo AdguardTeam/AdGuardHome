@@ -94,6 +94,13 @@ const rmTimeout = (t: ReturnType<typeof setTimeout> | null): null => {
     return null;
 };
 
+/** Fetches the server status without redirecting to the login page on 401. */
+const fetchStatus = (): Promise<ServerStatus> =>
+    customFetch<ServerStatus>(getStatusUrl(), {
+        method: 'GET',
+        skipAuthRedirect: true,
+    });
+
 const checkStatus = async (
     handleRequestSuccess: (response: { status: number; data: ServerStatus }) => void,
     handleRequestError: () => void,
@@ -104,10 +111,7 @@ const checkStatus = async (
         return;
     }
     try {
-        const data = await customFetch<ServerStatus>(getStatusUrl(), {
-            method: 'GET',
-            skipAuthRedirect: true,
-        });
+        const data = await fetchStatus();
         statusTimeout = rmTimeout(statusTimeout);
         handleRequestSuccess({ status: 200, data });
         if (data.running === false) {
@@ -160,7 +164,8 @@ export const getDnsStatus = async () => {
             });
             getVersion();
             getTlsStatus();
-            getProfile();
+            // The store wrapper, not the raw API call: it saves name and theme.
+            getProfileData();
         } else {
             setState('isCoreRunning', runningStatus);
         }
@@ -180,10 +185,7 @@ export const getDnsStatus = async () => {
  */
 export const refreshDnsStatus = async (): Promise<void> => {
     try {
-        const dnsStatus = await customFetch<ServerStatus>(getStatusUrl(), {
-            method: 'GET',
-            skipAuthRedirect: true,
-        });
+        const dnsStatus = await fetchStatus();
         if (!dnsStatus || dnsStatus.running !== true) {
             return;
         }
@@ -340,7 +342,12 @@ export const getProfileData = async () => {
         const profile: ProfileInfo = await getProfile();
         setState({
             name: profile.name,
-            theme: profile.theme,
+            // A userless install (auth disabled or GL-iNet) has no operator
+            // theme: the profile only echoes the server config default, which
+            // would overwrite the guest's choice stored in `localStorage` on
+            // every load.  Keep the store theme unset for guests so that `App`
+            // falls back to `getTheme()`.
+            theme: profile.name ? profile.theme : undefined,
             processingProfile: false,
         });
     } catch (error) {
