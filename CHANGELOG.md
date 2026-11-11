@@ -29,6 +29,10 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.4][go-1.27.4].
+
 ### Changed
 
 - The default upstream and bootstrap addresses have been changed from Quad9 to Cloudflare DNS, since Quad9 is adding geography-based restrictions ([#8686]).
@@ -141,6 +145,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8686]:       https://github.com/AdguardTeam/AdGuardHome/issues/8686
 [#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
 [dns-kb-list]: https://adguard-dns.io/kb/general/dns-providers/
+[go-1.27.4]:   https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
