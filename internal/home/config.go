@@ -635,9 +635,11 @@ func validateConfigPorts(conf *configuration) (err error) {
 			tcpPort(conf.TLS.PortDNSCrypt),
 		)
 
-		// TODO(e.burkov):  Consider adding a udpPort with the same value when
-		// we add support for HTTP/3 for web admin interface.
-		addPorts(udpPorts, udpPort(conf.TLS.PortDNSOverQUIC))
+		addPorts(udpPorts, udpPort(conf.TLS.PortDNSOverQUIC), udpPort(conf.TLS.PortDNSCrypt))
+
+		if conf.DNS.ServeHTTP3 {
+			addPorts(udpPorts, udpPort(conf.TLS.PortHTTPS))
+		}
 	}
 
 	var errs []error
