@@ -129,6 +129,14 @@ func TestV4Server_badRange(t *testing.T) {
 	}
 }
 
+func TestV4Server_Create_disabled(t *testing.T) {
+	s, err := v4Create(&V4ServerConf{})
+
+	require.NoError(t, err)
+	assert.NotNil(t, s)
+	assert.False(t, s.enabled())
+}
+
 // cloneUDPAddr returns a deep copy of a.
 func cloneUDPAddr(a *net.UDPAddr) (clone *net.UDPAddr) {
 	return &net.UDPAddr{
