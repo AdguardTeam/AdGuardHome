@@ -31,6 +31,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
+
 - The default upstream and bootstrap addresses have been changed from Quad9 to Cloudflare DNS, since Quad9 is adding geography-based restrictions ([#8686]).
 
     **NOTE:**  If you live in the affected area (France) and still have not changed your upstream, bootstrap, and possibly fallback addresses, it is recommended that you do so.
@@ -38,10 +40,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
     See our [list of known DNS providers][dns-kb-list].
 
 - Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
-
-- Dark theme colors in the new web interface have been aligned with the
-  design system, including dashboard charts, notifications, dropdowns, and
-  tooltips.
 
 ### Fixed
 
