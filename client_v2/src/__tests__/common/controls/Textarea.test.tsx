@@ -1,5 +1,5 @@
 import { render } from '@solidjs/testing-library';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { Textarea } from 'panel/common/controls/Textarea';
 import { COMMENT_LINE_TOKENS } from 'panel/helpers/constants';
 
@@ -34,6 +34,25 @@ describe('Textarea — comment highlight', () => {
 
         const overlay = container.querySelector('[aria-hidden="true"]');
         expect(overlay).not.toBeInTheDocument();
+    });
+
+    it('applies the shared scrollbar styles to the native textarea', () => {
+        const { container } = render(() => <Textarea value={multilineValue} />);
+
+        expect(container.querySelector('textarea')?.className).toContain('scrollable');
+    });
+
+    it('applies the shared scrollbar styles to the highlighted scroll container', () => {
+        const { container } = render(() => (
+            <Textarea
+                value={multilineValue}
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+            />
+        ));
+
+        const scrollArea = container.querySelector('textarea')?.closest('[class*="scrollArea"]');
+        expect(scrollArea?.className).toContain('scrollable');
     });
 
     it('applies commentLine class to lines starting with #', () => {
@@ -148,6 +167,35 @@ describe('Textarea — comment highlight', () => {
         const overlay = container.querySelector('[aria-hidden="true"]');
         const textarea = container.querySelector('textarea');
         expect(overlay?.parentElement).toBe(textarea?.parentElement);
+    });
+
+    it('bounds the scroll container to the size when rows are not provided', () => {
+        const { container } = render(() => (
+            <Textarea
+                value={multilineValue}
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+                size="large"
+            />
+        ));
+
+        const scrollArea = container.querySelector('textarea')?.closest('[class*="scrollArea"]');
+        expect(scrollArea?.className).toContain('bounded');
+    });
+
+    it('does not bound the scroll container when rows are provided', () => {
+        const { container } = render(() => (
+            <Textarea
+                value={multilineValue}
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+                size="large"
+                rows={12}
+            />
+        ));
+
+        const scrollArea = container.querySelector('textarea')?.closest('[class*="scrollArea"]');
+        expect(scrollArea?.className).not.toContain('bounded');
     });
 });
 
