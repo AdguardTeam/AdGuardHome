@@ -87,7 +87,9 @@ export const Footer = () => {
 
                     <Show when={dashboardState.dnsVersion}>
                         <Show
-                            when={dashboardState.checkUpdateFlag}
+                            when={
+                                dashboardState.checkUpdateFlag || dashboardState.versionCheckFailed
+                            }
                             fallback={<div class={s.version}>{versionLabel()}</div>}
                         >
                             <button

@@ -1,11 +1,11 @@
 module github.com/AdguardTeam/AdGuardHome
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/AdguardTeam/dnscrypt v0.0.3
 	github.com/AdguardTeam/dnsproxy v0.86.0
-	github.com/AdguardTeam/golibs v0.35.16
+	github.com/AdguardTeam/golibs v0.35.18
 	github.com/AdguardTeam/urlfilter v0.23.4
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/bluele/gcache v0.0.2
@@ -19,27 +19,27 @@ require (
 	// TODO(e.burkov): Remove this dependency along with the dhcpd package.
 	github.com/google/gopacket v1.1.19
 	github.com/google/renameio/v2 v2.0.2
-	github.com/gopacket/gopacket v1.7.3
-	github.com/insomniacslk/dhcp v0.0.0-20260728151720-c308df0fdcef
+	github.com/gopacket/gopacket v1.7.7
+	github.com/insomniacslk/dhcp v0.0.0-20261014062924-c6bb46ad3f3a
 	// TODO(e.burkov):  Get rid of this dependency.  At least, don't update
 	// it, unless all custom templates will be migrated to the new format,
 	// see https://github.com/kardianos/service/issues/418.
-	github.com/kardianos/service v1.2.4
+	github.com/kardianos/service v1.3.0
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.11.2
-	github.com/mdlayher/packet v1.1.2
+	github.com/mdlayher/packet v1.2.0
 	// TODO(a.garipov): This package is deprecated; Use gopacket.
 	github.com/mdlayher/raw v0.1.0
 	github.com/miekg/dns v1.1.73
-	github.com/quic-go/quic-go v0.63.0
+	github.com/quic-go/quic-go v0.65.0
 	github.com/stretchr/testify v1.12.1
 	github.com/ti-mo/netfilter v0.5.3
 	go.etcd.io/bbolt v1.5.0
 	// TODO(e.burkov): Update to a stable tag.
-	go.yaml.in/yaml/v4 v4.0.0-rc.6
+	go.yaml.in/yaml/v4 v4.0.0
 	golang.org/x/crypto v0.58.0
-	golang.org/x/net v0.61.0
-	golang.org/x/sys v0.49.0
+	golang.org/x/net v0.62.0
+	golang.org/x/sys v0.50.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	howett.net/plist v1.0.1
 )
@@ -72,16 +72,15 @@ require (
 	github.com/gordonklaus/ineffassign v0.2.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/invopop/jsonschema v0.14.0 // indirect
-	github.com/josharian/native v1.2.0 // indirect
 	github.com/jstemmer/go-junit-report/v2 v2.1.0 // indirect
 	github.com/kisielk/errcheck v1.30.0 // indirect
-	github.com/mdlayher/socket v0.7.0 // indirect
+	github.com/mdlayher/socket v0.8.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/openai/openai-go/v3 v3.86.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pb33f/go-yaml v0.1.1 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.2 // indirect
-	github.com/pierrec/lz4/v4 v4.1.31 // indirect
+	github.com/pierrec/lz4/v4 v4.1.33 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
@@ -102,15 +101,15 @@ require (
 	go.opentelemetry.io/otel/log v1.47.0 // indirect
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
+	golang.org/x/exp v0.0.0-20261109185158-a52e3aef5920 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/mod v0.42.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/telemetry v0.0.0-20261021172232-6cd571d43fbb // indirect
 	golang.org/x/term v0.47.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
-	golang.org/x/tools v0.52.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
+	golang.org/x/tools v0.52.1-0.20261106145633-d407941a339a // indirect
 	golang.org/x/vuln v1.9.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
 	google.golang.org/api v0.308.0 // indirect

@@ -1,6 +1,6 @@
 'env':
   'BASE_IMAGE': |-
-    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.27.3--1' }}
+    ${{ vars.BASE_IMAGE || 'adguard/go-builder:1.27.4--1' }}
   'BUILD_DIR': |-
     build
   'CHANNEL': |-
@@ -10,7 +10,7 @@
   'DIST_DIR': |-
     dist
   'FRONTEND_BASE_IMAGE': |-
-    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.0' }}
+    ${{ vars.FRONTEND_BASE_IMAGE || 'adguard/home-js-builder:4.1' }}
 'jobs':
   'Build':
     'if': |
