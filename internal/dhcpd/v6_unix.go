@@ -67,11 +67,13 @@ func ip6InRange(start, ip net.IP) bool {
 
 // HostByIP implements the [Interface] interface for *v6Server.
 func (s *v6Server) HostByIP(ip netip.Addr) (host string) {
+	now := time.Now()
+
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
 	for _, l := range s.leases {
-		if l.IP == ip {
+		if l.IP == ip && (l.IsStatic || l.Expiry.After(now)) {
 			return l.Hostname
 		}
 	}
@@ -81,11 +83,13 @@ func (s *v6Server) HostByIP(ip netip.Addr) (host string) {
 
 // IPByHost implements the [Interface] interface for *v6Server.
 func (s *v6Server) IPByHost(host string) (ip netip.Addr) {
+	now := time.Now()
+
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
 	for _, l := range s.leases {
-		if l.Hostname == host {
+		if l.Hostname == host && (l.IsStatic || l.Expiry.After(now)) {
 			return l.IP
 		}
 	}
@@ -400,9 +404,8 @@ func (s *v6Server) reserveLease(mac net.HardwareAddr) *dhcpsvc.Lease {
 }
 
 func (s *v6Server) commitDynamicLease(l *dhcpsvc.Lease) {
-	l.Expiry = time.Now().Add(s.conf.leaseTime)
-
 	s.leasesLock.Lock()
+	l.Expiry = time.Now().Add(s.conf.leaseTime)
 	s.conf.notify(LeaseChangedDBStore)
 	s.leasesLock.Unlock()
 	s.conf.notify(LeaseChangedAdded)
