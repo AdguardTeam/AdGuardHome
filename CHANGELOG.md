@@ -24,7 +24,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Query log HTTP API panics on invalid `limit` and `offset` query parameter values.
+- Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
 
 - Invalid SVCB record from DDR when DoH routes are empty.
 
