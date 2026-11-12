@@ -170,10 +170,10 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		wantBody: "only content-type application/json is allowed\n",
 		wantCode: http.StatusUnsupportedMediaType,
 	}, {
-		req:      newProfileUpdateRequest(http.MethodPut, nil, false),
+		req:      newProfileUpdateRequest(http.MethodPut, nil, true),
 		name:     "empty_body",
-		wantBody: "reading req: EOF\n",
-		wantCode: http.StatusBadRequest,
+		wantBody: `empty body with content-type "application/json" not allowed` + "\n",
+		wantCode: http.StatusUnsupportedMediaType,
 	}, {
 		req:      newProfileUpdateRequest(http.MethodPut, dataInvalidLang, true),
 		name:     "invalid_language",

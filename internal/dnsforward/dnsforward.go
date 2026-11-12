@@ -45,10 +45,20 @@ const DefaultTimeout = 10 * time.Second
 // faster than ordinary upstreams.
 const defaultLocalTimeout = 1 * time.Second
 
-var defaultDNS = []string{
-	"https://dns10.quad9.net/dns-query",
+// defaultDNSUpstream is the default DNS upstream URL.
+var defaultDNSUpstream = []string{
+	"https://cloudflare-dns.com/dns-query",
 }
-var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"}
+
+// defaultDNSBootstrap are the default DNS servers for bootstrapping.
+//
+// TODO(ameshkov, a.garipov):  Consider using TLS.
+var defaultDNSBootstrap = []string{
+	"1.0.0.1",
+	"1.1.1.1",
+	"2606:4700:4700::1001",
+	"2606:4700:4700::1111",
+}
 
 // Often requested by all kinds of DNS probes
 var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
@@ -207,7 +217,10 @@ type DNSCreateParams struct {
 	PrivateNets netutil.SubnetSet
 
 	Anonymizer *aghnet.IPMut
-	EtcHosts   *aghnet.HostsContainer
+
+	// EtcHosts, if not nil, is used along with the bootstrap addresses to
+	// initialize upstream configuration.
+	EtcHosts *aghnet.HostsContainer
 
 	// TLSManager provides a TLS configuration for the server.  It must
 	// not be nil.
@@ -271,7 +284,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
-		defaultDNS = defaultBootstrap
+		defaultDNSUpstream = defaultDNSBootstrap
 	}
 
 	return s, nil
@@ -570,7 +583,7 @@ func (s *Server) prepareUpstreamSettings(ctx context.Context, boot upstream.Reso
 		return fmt.Errorf("loading upstreams: %w", err)
 	}
 
-	uc, err := newUpstreamConfig(ctx, s.logger, upstreams, defaultDNS, &upstream.Options{
+	uc, err := newUpstreamConfig(ctx, s.logger, upstreams, defaultDNSUpstream, &upstream.Options{
 		Logger:       aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeMain),
 		Bootstrap:    boot,
 		Timeout:      s.conf.UpstreamTimeout,

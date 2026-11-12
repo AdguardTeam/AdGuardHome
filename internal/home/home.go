@@ -46,7 +46,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
-	"github.com/AdguardTeam/golibs/service"
 )
 
 // Global context
@@ -82,7 +81,11 @@ func Main(clientBuildFS fs.FS) {
 	//
 	// TODO(a.garipov): The comment above is most likely false.  Replace with
 	// package flag.
-	opts := loadCmdLineOpts()
+	//
+	// TODO(a.garipov):  Remove the legacy --no-etc-hosts flag migration and
+	// other legacy option handling in a future version.
+	args, legacyNoEtcHosts := filterNoOpOpts(os.Args, os.Stdout, os.Stderr)
+	opts := loadCmdLineOpts(args)
 
 	// TODO(s.chzhen):  Construct logger from command-line options.
 	l := slog.Default()
@@ -106,6 +109,7 @@ func Main(clientBuildFS fs.FS) {
 
 	// Print the first message after logger is configured.
 	baseLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
+	baseLogger.DebugContext(ctx, "filtered arguments", "before", os.Args, "after", args)
 	baseLogger.DebugContext(ctx, "current working directory", "path", workDir)
 	if opts.runningAsService {
 		baseLogger.InfoContext(ctx, "adguard home is running as a service")
@@ -122,22 +126,11 @@ func Main(clientBuildFS fs.FS) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
-	var (
-		hc        *aghnet.HostsContainer
-		hcWatcher service.Interface = service.Empty{}
-	)
-	if !opts.noEtcHosts {
-		hc, hcWatcher, err = newHostsContainer(ctx, baseLogger)
-		fatalOnError(ctx, baseLogger, err)
-	}
-
 	pidFilePath := setPIDFilePath(ctx, baseLogger, opts)
 	sigHdlrLogger := baseLogger.With(slogutil.KeyPrefix, "signalhdlr")
 	sigHdlrCleanup := &signalHandlerCleanup{
 		logger:          sigHdlrLogger,
-		hostsContainer:  hc,
 		glTokenFileRoot: glTokenFileRoot,
-		hcWatcher:       hcWatcher,
 		done:            done,
 		pidFilePath:     pidFilePath,
 		glinetMode:      opts.glinetMode,
@@ -162,7 +155,7 @@ func Main(clientBuildFS fs.FS) {
 			workDir,
 			confPath,
 			pidFilePath,
-			hc,
+			legacyNoEtcHosts,
 		)
 		if err != nil {
 			svcLogger.ErrorContext(ctx, "action failed", slogutil.KeyError, err)
@@ -172,7 +165,6 @@ func Main(clientBuildFS fs.FS) {
 		return
 	}
 
-	// run the protection
 	run(
 		ctx,
 		baseLogger,
@@ -184,7 +176,7 @@ func Main(clientBuildFS fs.FS) {
 		workDir,
 		confPath,
 		pidFilePath,
-		hc,
+		legacyNoEtcHosts,
 	)
 }
 
@@ -197,6 +189,7 @@ func setupContext(
 	workDir string,
 	confPath string,
 	isFirstRun bool,
+	legacyNoEtcHosts bool,
 ) {
 	if isFirstRun {
 		baseLogger.InfoContext(ctx, "this is the first time adguard home has been launched")
@@ -206,7 +199,7 @@ func setupContext(
 	confFileExists := false
 
 	// TODO(s.chzhen):  Consider adding a key prefix.
-	err := parseConfig(ctx, baseLogger, workDir, confPath)
+	err := parseConfig(ctx, baseLogger, workDir, confPath, legacyNoEtcHosts)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) || !isFirstRun {
 			baseLogger.ErrorContext(
@@ -292,11 +285,18 @@ func configureOS(ctx context.Context, l *slog.Logger, conf *configuration) (err 
 }
 
 // newHostsContainer initializes the structures to keep up-to-date the hosts
-// provided by the OS.  baseLogger must not be nil.
+// provided by the OS.  watcher is never nil.  baseLogger must not be nil.
 func newHostsContainer(
 	ctx context.Context,
 	baseLogger *slog.Logger,
+	enabled bool,
 ) (etcHosts *aghnet.HostsContainer, watcher aghos.FSWatcher, err error) {
+	watcher = aghos.EmptyFSWatcher{}
+
+	if !enabled {
+		return nil, watcher, nil
+	}
+
 	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
 
 	watcher, err = aghos.NewOSWatcher(&aghos.OSWatcherConfig{
@@ -315,7 +315,7 @@ func newHostsContainer(
 
 	paths, err := hostsfile.DefaultHostsPaths()
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting default system hosts paths: %w", err)
+		return nil, watcher, fmt.Errorf("getting default system hosts paths: %w", err)
 	}
 
 	etcHosts, err = aghnet.NewHostsContainer(
@@ -330,12 +330,12 @@ func newHostsContainer(
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {
 			l.WarnContext(ctx, "initializing hosts container", slogutil.KeyError, err)
 
-			return nil, nil, closeErr
+			return nil, watcher, closeErr
 		}
 
 		err = fmt.Errorf("initializing hosts container: %w", err)
 
-		return nil, nil, errors.WithDeferred(err, closeErr)
+		return nil, watcher, errors.WithDeferred(err, closeErr)
 	}
 
 	return etcHosts, watcher, watcher.Start(ctx)
@@ -358,12 +358,9 @@ func dhcpConfigToInternal(
 		Logger:             baseLogger.With(slogutil.KeyPrefix, "dhcpd"),
 		InterfaceName:      c.InterfaceName,
 		LocalDomainName:    c.LocalDomainName,
-		//lint:ignore SA1019 Remove it when migration of DHCP leases will be not
-		// needed.
-		WorkDir: workDir,
-		DataDir: filepath.Join(workDir, dataDir),
-		Conf4:   dhcpV4ConfigToInternal(c.Conf4),
-		Enabled: c.Enabled,
+		DataDir:            filepath.Join(workDir, dataDir),
+		Conf4:              dhcpV4ConfigToInternal(c.Conf4),
+		Enabled:            c.Enabled,
 	}
 }
 
@@ -420,13 +417,13 @@ func initContextClients(
 
 	var arpDB arpdb.Interface
 	if config.Clients.Sources.ARP {
-		arpDB = arpdb.New(logger.With(slogutil.KeyError, "arpdb"))
+		arpDB = arpdb.New(logger.With(slogutil.KeyPrefix, "arpdb"))
 	}
 
 	return globalContext.clients.Init(
 		ctx,
 		logger,
-		config.Clients.Persistent,
+		config.Clients,
 		globalContext.dhcpServer,
 		hc,
 		arpDB,
@@ -456,41 +453,20 @@ func pidFileRequired(opts options) (ok bool) {
 			opts.serviceControlAction == "run")
 }
 
-// setupBindOpts overrides bind host/port from the opts.
+// setupBindOpts overrides the bind address from opts, if any.
 func setupBindOpts(opts options) (err error) {
 	bindAddr := opts.bindAddr
-	if bindAddr != (netip.AddrPort{}) {
-		config.HTTPConfig.Address = bindAddr
-
-		if config.HTTPConfig.Address.Port() != 0 {
-			err = validateConfigPorts(config)
-			if err != nil {
-				// Don't wrap the error, because it's informative enough as is.
-				return err
-			}
-		}
-
+	if bindAddr == (netip.AddrPort{}) {
 		return nil
 	}
 
-	if opts.bindPort != 0 {
-		config.HTTPConfig.Address = netip.AddrPortFrom(
-			config.HTTPConfig.Address.Addr(),
-			opts.bindPort,
-		)
-
+	config.HTTPConfig.Address = bindAddr
+	if config.HTTPConfig.Address.Port() != 0 {
 		err = validateConfigPorts(config)
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
 		}
-	}
-
-	if opts.bindHost.IsValid() {
-		config.HTTPConfig.Address = netip.AddrPortFrom(
-			opts.bindHost,
-			config.HTTPConfig.Address.Port(),
-		)
 	}
 
 	return nil
@@ -827,7 +803,7 @@ func run(
 	workDir string,
 	confPath string,
 	pidFilePath string,
-	hc *aghnet.HostsContainer,
+	legacyNoEtcHosts bool,
 ) {
 	aghtls.Init(ctx, baseLogger.With(slogutil.KeyPrefix, "aghtls"))
 
@@ -837,9 +813,15 @@ func run(
 	mux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
-	setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun)
+	setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun, legacyNoEtcHosts)
 
-	err := configureOS(ctx, baseLogger, config)
+	hcEnabled := config.DNS.HostsFileEnabled || config.Clients.Sources.HostsFile
+	hc, hcWatcher, err := newHostsContainer(ctx, baseLogger, hcEnabled)
+	fatalOnError(ctx, baseLogger, err)
+
+	sigHdlr.addHostsContainer(hc, hcWatcher)
+
+	err = configureOS(ctx, baseLogger, config)
 	fatalOnError(ctx, baseLogger, err)
 
 	// Clients package uses filtering package's static data
@@ -1325,13 +1307,13 @@ func exitWithError() {
 // from them.  If there is an error or an effect, loadCmdLineOpts processes them
 // and exits.
 //
-// TODO(m.kazantsev):  Consider refactoring the logs so that it
-// resembles AdGuard DNS CLI.
-func loadCmdLineOpts() (opts options) {
-	opts, eff, err := parseCmdOpts(os.Args[0], os.Args[1:])
+// TODO(m.kazantsev):  Consider refactoring the logs so that it resembles
+// AdGuard DNS CLI.
+func loadCmdLineOpts(args []string) (opts options) {
+	opts, eff, err := parseCmdOpts(args[0], args[1:])
 	if err != nil {
 		log.Printf("error: %s\n", err)
-		printHelp(os.Args[0])
+		printHelp(args[0])
 
 		exitWithError()
 	}
@@ -1340,6 +1322,7 @@ func loadCmdLineOpts() (opts options) {
 		err = eff()
 		if err != nil {
 			log.Printf("error: %s\n", err)
+
 			exitWithError()
 		}
 

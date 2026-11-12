@@ -77,6 +77,7 @@ type Config struct {
 	FallbackDNS []string `yaml:"fallback_dns"`
 
 	// UpstreamMode determines the logic through which upstreams will be used.
+	// It must be valid.
 	UpstreamMode proxy.UpstreamMode `yaml:"upstream_mode"`
 
 	// FastestTimeout replaces the default timeout for dialing IP addresses
@@ -467,11 +468,11 @@ func parseBogusNXDOMAIN(confBogusNXDOMAIN []string) (subnets []netip.Prefix, err
 // is configured
 func (s *Server) initDefaultSettings() {
 	if len(s.conf.UpstreamDNS) == 0 {
-		s.conf.UpstreamDNS = defaultDNS
+		s.conf.UpstreamDNS = defaultDNSUpstream
 	}
 
 	if len(s.conf.BootstrapDNS) == 0 {
-		s.conf.BootstrapDNS = defaultBootstrap
+		s.conf.BootstrapDNS = defaultDNSBootstrap
 	}
 
 	if s.conf.UDPListenAddrs == nil {

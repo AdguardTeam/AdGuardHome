@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.1.0/).
+
+This project adhered to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) before version 1.0.0.  After that, the versioning scheme is roughly as follows:
+
+- The patch version is incremented whenever there are bug fixes, security updates, and other minor changes.  These updates should mostly never break things, but see the security exception below.
+- The minor version is incremented whenever a feature has been added or significantly reworked.  APIs may be marked as deprecated and/or removed in a minor-version update.  We strive to always deprecate first and to always document these changes here and in the [API changelog][api-chlog].
+- The major version is incremented whenever a large-scale rewrite has been finished.  Just as with the minor version updates, we strive to update the APIs in a way that minimizes surprises regarding breaking changes.
+- Security concerns may force us to break compatibility in any of these releases.  We will document all such breakages.
+
+The information about older versions may be migrated into a separate document in the future.
+
+[api-chlog]: openapi/CHANGELOG.md
 
 ## [Unreleased]
 
@@ -18,11 +29,29 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.4][go-1.27.4].
+
 ### Changed
+
+- The default upstream and bootstrap addresses have been changed from Quad9 to Cloudflare DNS, since Quad9 is adding geography-based restrictions ([#8686]).
+
+    **NOTE:**  If you live in the affected area (France) and still have not changed your upstream, bootstrap, and possibly fallback addresses, it is recommended that you do so.
+
+    See our [list of known DNS providers][dns-kb-list].
 
 - Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
 
 ### Fixed
+
+- Panic on binding to a busy port ([#8656]).
+
+- Expired dynamic leases are served by DNS ([#8671]).
+
+- The *Check for updates* button disappearing and raw or untranslated error messages being shown when the update check or the DNS server status check failed in the new web interface ([#8681]).
+
+- The theme selected in the new web interface not being saved to the server ([#8699]).
 
 - Invalid SVCB record from DDR when DoH routes are empty.
 
@@ -68,18 +97,55 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
 
-[#8670]:           https://github.com/AdguardTeam/AdGuardHome/issues/8670
-[#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
-[#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
-[#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608
-[#8609]:           https://github.com/AdguardTeam/AdGuardHome/issues/8609
-[#8610]:           https://github.com/AdguardTeam/AdGuardHome/issues/8610
-[#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
-[#8636]:           https://github.com/AdguardTeam/AdGuardHome/issues/8636
-[#8637]:           https://github.com/AdguardTeam/AdGuardHome/issues/8637
-[#8638]:           https://github.com/AdguardTeam/AdGuardHome/issues/8638
-[#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
-[#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
+### Removed
+
+- The following deprecated HTTP APIs:
+    - `GET /control/blocked_services/list`
+    - `GET /control/blocked_services/services`
+    - `GET /control/clients/find`
+    - `GET /control/i18n/current_language`
+    - `GET /control/querylog_info`
+    - `GET /control/stats_info`
+    - `POST /control/blocked_services/set`
+    - `POST /control/i18n/change_language`
+    - `POST /control/querylog_config`
+    - `POST /control/safesearch/disable`
+    - `POST /control/safesearch/enable`
+    - `POST /control/stats_config`
+
+- The following deprecated properties and query parameters in HTTP APIs:
+    - Properties `"filterId"` and `"rule"` in the response of the `GET /control/querylog` HTTP API.
+    - Properties `"filter_id"` and `"rule"` in the response of the `GET /control/filtering/check_host` HTTP API.
+    - Property `"safesearch_enabled"` in the client APIs.
+    - Query parameter `response_status` in the `GET /control/querylog` HTTP API.
+
+- The deprecated usage of an empty value for the `"upstream_mode"` property in the `GET /control/dns_info` and `POST /control/dns_config` HTTP APIs.
+
+- The following deprecated command-line flags:
+    - `--host`/`-h` for the bind host; now it is only used to show the help message along with `--help`.
+    - `--no-mem-optimization`.
+    - `--no-etc-hosts`.
+    - `--port`/`-p`.
+
+[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
+[#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
+[#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8608]:       https://github.com/AdguardTeam/AdGuardHome/issues/8608
+[#8609]:       https://github.com/AdguardTeam/AdGuardHome/issues/8609
+[#8610]:       https://github.com/AdguardTeam/AdGuardHome/issues/8610
+[#8613]:       https://github.com/AdguardTeam/AdGuardHome/issues/8613
+[#8636]:       https://github.com/AdguardTeam/AdGuardHome/issues/8636
+[#8637]:       https://github.com/AdguardTeam/AdGuardHome/issues/8637
+[#8638]:       https://github.com/AdguardTeam/AdGuardHome/issues/8638
+[#8644]:       https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
+[#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
+[#8671]:       https://github.com/AdguardTeam/AdGuardHome/issues/8671
+[#8681]:       https://github.com/AdguardTeam/AdGuardHome/issues/8681
+[#8686]:       https://github.com/AdguardTeam/AdGuardHome/issues/8686
+[#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
+[dns-kb-list]: https://adguard-dns.io/kb/general/dns-providers/
+[go-1.27.4]:   https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -94,6 +160,8 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 - Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
 
 - Support for Multipath TCP has been disabled to mitigate the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
+
+    **NOTE:** This is merely a mitigation.  Users are encouraged to update their Linux systems as soon as possible.
 
 ### Removed
 
