@@ -348,7 +348,7 @@ func (l *queryLog) parseSearchParams(
 
 	limit, _ := l.parseIntQueryParameter(ctx, q, "limit", p.limit)
 	offset, offsetValid := l.parseIntQueryParameter(ctx, q, "offset", p.offset)
-	if offset > math.MaxInt-limit {
+	if offset > math.MaxInt32-limit {
 		l.logger.ErrorContext(ctx, "limit and offset sum overflows integer")
 
 		offset = p.offset
@@ -357,8 +357,9 @@ func (l *queryLog) parseSearchParams(
 	}
 
 	if offsetValid {
-		// If we don't use "olderThan" and use offset/limit instead, we should change the default behavior
-		// and scan all log records until we found enough log entries
+		// If we don't use "olderThan" and use offset/limit instead, we should
+		// change the default behavior and scan all log records until we found
+		// enough log entries
 		p.maxFileScanEntries = 0
 	}
 
@@ -375,7 +376,7 @@ func (l *queryLog) parseSearchParams(
 }
 
 // parseIntQueryParameter parses the given parameter, ensures that its value is
-// not negative and is less than or equal to [math.MaxInt].  It returns the
+// not negative and is less than or equal to [math.MaxInt32].  It returns the
 // defaultValue and false if the parameter is invalid or not present.  It
 // returns the parsed value and true otherwise.
 func (l *queryLog) parseIntQueryParameter(
@@ -401,7 +402,7 @@ func (l *queryLog) parseIntQueryParameter(
 		return defaultValue, false
 	}
 
-	if res64 > math.MaxInt {
+	if res64 > math.MaxInt32 {
 		l.logger.ErrorContext(
 			ctx,
 			"parameter value is bigger than maximum integer",

@@ -12,7 +12,7 @@ const (
 
 	// defaultMaxFileScanEntries is the default maximum number of log entries to
 	// scan from file.
-	defaultMaxFileScanEntries = 50000
+	defaultMaxFileScanEntries = 50_000
 )
 
 // searchParams represent the search query sent by the client.
@@ -26,16 +26,16 @@ type searchParams struct {
 	searchCriteria []searchCriterion
 
 	// offset for the search.  It must not be negative.  Its sum with
-	// [searchParams.limit] must be less than or equal [math.MaxInt].
+	// [searchParams.limit] must be less than or equal [math.MaxInt32].
 	//
-	// TODO(f.setrakov): Use uint.
+	// TODO(f.setrakov): Use uint64.
 	offset int
 
 	// limit is the maximum number of records returned.  It must not be
 	// negative.  Its sum with [searchParams.offset] must be less than or equal
-	// [math.MaxInt].
+	// [math.MaxInt32].
 	//
-	// TODO(f.setrakov): Use uint.
+	// TODO(f.setrakov): Use uint64.
 	limit int
 
 	// maxFileScanEntries is a maximum of log entries to scan in query log
@@ -43,8 +43,8 @@ type searchParams struct {
 	maxFileScanEntries int
 }
 
-// newSearchParams - creates an empty instance of searchParams
-func newSearchParams() *searchParams {
+// newSearchParams creates an empty instance of searchParams.
+func newSearchParams() (sp *searchParams) {
 	return &searchParams{
 		limit:              defaultLimit,
 		maxFileScanEntries: defaultMaxFileScanEntries,
@@ -76,7 +76,8 @@ func (s *searchParams) quickMatch(
 	return true
 }
 
-// match - checks if the logEntry matches the searchParams
+// match checks if the logEntry matches the searchParams.  entry must not be
+// nil.
 func (s *searchParams) match(entry *logEntry) bool {
 	if !s.olderThan.IsZero() && !entry.Time.Before(s.olderThan) {
 		// Ignore entries newer than what was requested

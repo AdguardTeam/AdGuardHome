@@ -4,6 +4,8 @@
 
 ## v1.0.0: API changes (NOTE: Not released yet)
 
+- Requirements are clarified for `GET /control/querylog`. Minimum, maximum, and default values for `offset` and `limit` query parameters were added.
+
 - The following deprecated HTTP APIs:
 
     - `GET /control/blocked_services/list`

@@ -203,18 +203,25 @@
       - 'name': 'offset'
         'in': 'query'
         'description': >
-          Specify the ranking number of the first item on the page.  Even
-          though it is possible to use "offset" and "older_than", we recommend
-          choosing one of them and sticking to it.
+          Specify the ranking number of the first item on the page.  Even though
+          it is possible to use "offset" and "older_than", we recommend choosing
+          one of them and sticking to it.  If the given offset is invalid, the
+          default value will be used instead.
         'schema':
           'type': 'integer'
           'minimum': 0
+          'maximum': 2147483647
+          'default': 0
       - 'name': 'limit'
         'in': 'query'
-        'description': 'Limit the number of records to be returned'
+        'description': >
+          Limit the number of records to be returned.  If the given limit is
+          invalid, the default value will be used instead.
         'schema':
           'type': 'integer'
           'minimum': 0
+          'maximum': 2147483647
+          'default': 500
       - 'name': 'search'
         'in': 'query'
         'description': 'Filter by domain name or client IP'

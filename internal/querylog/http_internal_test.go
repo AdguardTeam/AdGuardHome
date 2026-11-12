@@ -204,8 +204,8 @@ func testSearchAPI(
 func TestQuerylog_ParseSearchParams_pagination(t *testing.T) {
 	t.Parallel()
 
-	overflow := strconv.FormatUint(uint64(math.MaxInt)+1, 10)
-	sumOverflow := strconv.FormatUint(uint64(math.MaxInt)-1, 10)
+	overflow := strconv.FormatUint(math.MaxInt32+1, 10)
+	sumOverflow := strconv.FormatUint(math.MaxInt32-1, 10)
 
 	l := newTestQueryLog(t)
 	testCases := []struct {
@@ -256,6 +256,24 @@ func TestQuerylog_ParseSearchParams_pagination(t *testing.T) {
 		wantLimit:              defaultLimit,
 		wantOffset:             0,
 		wantMaxFileScanEntries: defaultMaxFileScanEntries,
+	}, {
+		name: "invalid_limit",
+		query: url.Values{
+			"limit":  []string{"-1"},
+			"offset": []string{"2"},
+		},
+		wantLimit:              defaultLimit,
+		wantOffset:             2,
+		wantMaxFileScanEntries: 0,
+	}, {
+		name: "invalid_offset",
+		query: url.Values{
+			"limit":  []string{"100"},
+			"offset": []string{"-1"},
+		},
+		wantLimit:              100,
+		wantOffset:             0,
+		wantMaxFileScanEntries: defaultMaxFileScanEntries,
 	}}
 
 	for _, tc := range testCases {
@@ -268,7 +286,9 @@ func TestQuerylog_ParseSearchParams_pagination(t *testing.T) {
 			}).String()
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			p, err := l.parseSearchParams(ctx, httptest.NewRequest(http.MethodGet, u, nil))
+
+			req := httptest.NewRequestWithContext(ctx, http.MethodGet, u, nil)
+			p, err := l.parseSearchParams(ctx, req)
 			require.NoError(t, err)
 
 			assert.Equal(t, tc.wantLimit, p.limit)
