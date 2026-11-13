@@ -151,6 +151,7 @@ func (m *upstreamManager) customUpstreamConfig(
 	cliConf.proxyConf = proxyConf
 	cliConf.commonConfUpdate = m.confUpdate
 	cliConf.isChanged = false
+	cliConf.commonConfUpdate = m.confUpdate
 
 	return proxyConf
 }
