@@ -310,6 +310,7 @@ func dnsConfigToInternal(
 		ednsClientSubnet.CustomIP = c.EDNSClientSubnet.CustomIP
 		ednsClientSubnet.Enabled = c.EDNSClientSubnet.Enabled
 		ednsClientSubnet.UseCustom = c.EDNSClientSubnet.UseCustom
+		ednsClientSubnet.UseClientAddrFromECS = c.EDNSClientSubnet.UseClientAddrFromECS
 	}
 
 	return dnsforward.Config{
