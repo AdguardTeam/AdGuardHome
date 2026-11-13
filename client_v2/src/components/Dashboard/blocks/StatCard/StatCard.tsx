@@ -49,6 +49,7 @@ export type StatCardProps = {
     data: number[];
     timeUnits: string;
     color: string;
+    fillColor?: string;
     percentValue?: number;
     cardTheme: (typeof CARDS_THEME)[keyof typeof CARDS_THEME];
     linkTo: RoutePathKey;
@@ -62,6 +63,7 @@ export const StatCard = (props: StatCardProps) => {
     const chartData = createMemo(() => {
         const data = paddedData();
         const labels = data.map((_, i) => formatHistoryLabel(i, data.length, props.timeUnits));
+        const fillColor = props.fillColor ?? props.color;
         return {
             labels,
             datasets: [
@@ -77,8 +79,8 @@ export const StatCard = (props: StatCardProps) => {
                             0,
                             context.chart.height || 100,
                         );
-                        gradient.addColorStop(0, withAlpha(props.color, 0.3));
-                        gradient.addColorStop(1, withAlpha(props.color, 0));
+                        gradient.addColorStop(0, withAlpha(fillColor, 0.3));
+                        gradient.addColorStop(1, withAlpha(fillColor, 0));
                         return gradient;
                     },
                     fill: true,

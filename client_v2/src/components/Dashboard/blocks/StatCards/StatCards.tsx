@@ -25,15 +25,18 @@ type Props = {
  * consume CSS custom properties, so the palette is repeated here; keep it in
  * sync with the semantic colors used by the chart UI in `StatCard.module.pcss`.
  */
+const QUERIES_LINE_COLOR = '#5b5b5b';
+const QUERIES_FILL_COLOR = '#7f7f7f';
+
 const CHART_COLORS = {
     light: {
-        [CARDS_THEME.QUERIES]: '#67b279',
+        [CARDS_THEME.QUERIES]: QUERIES_LINE_COLOR,
         [CARDS_THEME.ADS]: '#e9653a',
         [CARDS_THEME.THREATS]: '#d58500',
         [CARDS_THEME.ADULT]: '#a870b2',
     },
     dark: {
-        [CARDS_THEME.QUERIES]: '#67b279',
+        [CARDS_THEME.QUERIES]: QUERIES_LINE_COLOR,
         [CARDS_THEME.ADS]: '#f67247',
         [CARDS_THEME.THREATS]: '#d58500',
         [CARDS_THEME.ADULT]: '#a870b2',
@@ -60,6 +63,7 @@ export const StatCards = (props: Props) => {
                 data={props.dnsQueries}
                 timeUnits={props.timeUnits}
                 color={colors()[CARDS_THEME.QUERIES]}
+                fillColor={QUERIES_FILL_COLOR}
                 cardTheme={CARDS_THEME.QUERIES}
                 linkTo={RoutePath.QueryLog}
             />
