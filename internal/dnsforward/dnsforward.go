@@ -141,8 +141,9 @@ type Server struct {
 	// be nil.
 	tlsManager aghtls.Manager
 
-	// access drops disallowed clients.
-	access *accessManager
+	// access drops disallowed clients.  It is an atomic pointer to avoid
+	// reacquiring serverLock during client lookups in query accounting.
+	access atomic.Pointer[accessManager]
 
 	// anonymizer masks the client's IP addresses if needed.
 	anonymizer *aghnet.IPMut
@@ -546,7 +547,7 @@ func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 
 	s.setupDNS64()
 
-	s.access, err = newAccessCtx(
+	a, err := newAccessManager(
 		s.conf.AllowedClients,
 		s.conf.DisallowedClients,
 		s.conf.BlockedHosts,
@@ -554,6 +555,8 @@ func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 	if err != nil {
 		return fmt.Errorf("preparing access: %w", err)
 	}
+
+	s.access.Store(a)
 
 	proxyConfig.Fallbacks, err = s.setupFallbackDNS()
 	if err != nil {
@@ -936,16 +939,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // IsBlockedClient returns true if the client is blocked by the current access
 // settings.
 func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, rule string) {
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
+	a := s.access.Load()
 
 	blockedByIP := false
 	if ip != (netip.Addr{}) {
-		blockedByIP, rule = s.access.isBlockedIP(ip)
+		blockedByIP, rule = a.isBlockedIP(ip)
 	}
 
-	allowlistMode := s.access.allowlistMode()
-	blockedByClientID := s.access.isBlockedClientID(clientID)
+	allowlistMode := a.allowlistMode()
+	blockedByClientID := a.isBlockedClientID(clientID)
 
 	// TODO(s.chzhen):  Pass context.
 	ctx := context.TODO()

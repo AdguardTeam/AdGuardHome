@@ -14,19 +14,19 @@ func TestIsBlockedClientID(t *testing.T) {
 	clientID := "client-1"
 	clients := []string{clientID}
 
-	a, err := newAccessCtx(clients, nil, nil)
+	a, err := newAccessManager(clients, nil, nil)
 	require.NoError(t, err)
 
 	assert.False(t, a.isBlockedClientID(clientID))
 
-	a, err = newAccessCtx(nil, clients, nil)
+	a, err = newAccessManager(nil, clients, nil)
 	require.NoError(t, err)
 
 	assert.True(t, a.isBlockedClientID(clientID))
 }
 
 func TestIsBlockedHost(t *testing.T) {
-	a, err := newAccessCtx(nil, nil, []string{
+	a, err := newAccessManager(nil, nil, []string{
 		"host1",
 		"*.host.com",
 		"||host3.com^",
@@ -115,10 +115,10 @@ func TestIsBlockedIP(t *testing.T) {
 		"5.6.7.8/24",
 	}
 
-	allowCtx, err := newAccessCtx(clients, nil, nil)
+	allowManager, err := newAccessManager(clients, nil, nil)
 	require.NoError(t, err)
 
-	blockCtx, err := newAccessCtx(nil, clients, nil)
+	blockManager, err := newAccessManager(nil, clients, nil)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -150,7 +150,7 @@ func TestIsBlockedIP(t *testing.T) {
 
 	t.Run("allow", func(t *testing.T) {
 		for _, tc := range testCases {
-			blocked, rule := allowCtx.isBlockedIP(tc.ip)
+			blocked, rule := allowManager.isBlockedIP(tc.ip)
 			assert.Equal(t, !tc.wantBlocked, blocked)
 			assert.Equal(t, tc.wantRule, rule)
 		}
@@ -158,7 +158,7 @@ func TestIsBlockedIP(t *testing.T) {
 
 	t.Run("block", func(t *testing.T) {
 		for _, tc := range testCases {
-			blocked, rule := blockCtx.isBlockedIP(tc.ip)
+			blocked, rule := blockManager.isBlockedIP(tc.ip)
 			assert.Equal(t, tc.wantBlocked, blocked)
 			assert.Equal(t, tc.wantRule, rule)
 		}
