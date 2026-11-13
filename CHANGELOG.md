@@ -47,6 +47,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- CLI update failing when an upstream is specified by a hostname defined only in `/etc/hosts`.
+
 - The *Check the filtering* result in the new web interface showing only the first matched rule ([#8677]).
 
 - Panic on binding to a busy port ([#8656]).
