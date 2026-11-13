@@ -27,6 +27,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/AdguardTeam/golibs/validate"
 	"github.com/google/renameio/v2/maybe"
 	yaml "go.yaml.in/yaml/v4"
 )
@@ -566,16 +567,13 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 		config.Filtering.FiltersUpdateIntervalHours = 24
 	}
 
-	if err = config.DHCP.Validate(); err != nil {
-		return fmt.Errorf("validating dhcp config: %w", err)
-	}
+	var errs []error
+	errs = validate.Append(errs, "dhcp", config.DHCP)
+	errs = validate.Append(errs, "http", &config.HTTPConfig)
+	errs = validate.Append(errs, "clients", config.Clients)
 
-	if err = config.HTTPConfig.Validate(); err != nil {
-		return fmt.Errorf("validating http config: %w", err)
-	}
-
-	if err = config.Clients.Validate(); err != nil {
-		return fmt.Errorf("validating clients config: %w", err)
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 
 	if config.TLS.Enabled && config.TLS.PortHTTPS != 0 && len(config.HTTPConfig.DoH.Routes) == 0 {
