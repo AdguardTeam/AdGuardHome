@@ -57,12 +57,13 @@ func initBlockedServices(ctx context.Context, l *slog.Logger) {
 //
 // TODO(s.chzhen):  Move to a higher-level package to allow importing the client
 // package into the filtering package.
+// TODO(d.kolyshev):  Introduce JSON transfer struct.
 type BlockedServices struct {
 	// Schedule is blocked services schedule for every day of the week.
-	Schedule *schedule.Weekly `json:"schedule" yaml:"schedule"`
+	Schedule *schedule.Weekly `json:"schedule"`
 
 	// IDs is the names of blocked services.
-	IDs []string `json:"ids" yaml:"ids"`
+	IDs []string `json:"ids"`
 }
 
 // Clone returns a deep copy of blocked services.

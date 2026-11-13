@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/safesearch"
 	"github.com/AdguardTeam/AdGuardHome/internal/querylog"
@@ -22,6 +23,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/c2h5oh/datasize"
 )
 
 // clientsContainer is the storage of all runtime and persistent clients.
@@ -78,7 +80,7 @@ type BlockedClientChecker interface {
 func (clients *clientsContainer) Init(
 	ctx context.Context,
 	baseLogger *slog.Logger,
-	conf *clientsConfig,
+	conf *configmgr.ClientsConfig,
 	dhcpServer client.DHCP,
 	etcHosts *aghnet.HostsContainer,
 	arpDB arpdb.Interface,
@@ -101,8 +103,18 @@ func (clients *clientsContainer) Init(
 
 	confClients := make([]*client.Persistent, 0, len(conf.Persistent))
 	for i, o := range conf.Persistent {
+		if o == nil {
+			return fmt.Errorf("init persistent client at index %d: %w", i, errors.ErrNoValue)
+		}
+
 		var p *client.Persistent
-		p, err = o.toPersistent(ctx, baseLogger, clients.safeSearchCacheSize, clients.safeSearchCacheTTL)
+		p, err = newPersistentClient(
+			ctx,
+			o,
+			baseLogger,
+			clients.safeSearchCacheSize,
+			clients.safeSearchCacheTTL,
+		)
 		if err != nil {
 			return fmt.Errorf("init persistent client at index %d: %w", i, err)
 		}
@@ -154,67 +166,48 @@ func (clients *clientsContainer) Start(ctx context.Context) (err error) {
 	return clients.storage.Start(ctx)
 }
 
-// clientObject is the YAML representation of a persistent client.
-type clientObject struct {
-	SafeSearchConf filtering.SafeSearchConfig `yaml:"safe_search"`
-
-	// BlockedServices is the configuration of blocked services of a client.
-	BlockedServices *filtering.BlockedServices `yaml:"blocked_services"`
-
-	Name string `yaml:"name"`
-
-	IDs       []string `yaml:"ids"`
-	Tags      []string `yaml:"tags"`
-	Upstreams []string `yaml:"upstreams"`
-
-	// UID is the unique identifier of the persistent client.
-	UID client.UID `yaml:"uid"`
-
-	// UpstreamsCacheSize is the DNS cache size (in bytes).
-	//
-	// TODO(d.kolyshev): Use [datasize.Bytesize].
-	UpstreamsCacheSize uint32 `yaml:"upstreams_cache_size"`
-
-	// UpstreamsCacheEnabled indicates if the DNS cache is enabled.
-	UpstreamsCacheEnabled bool `yaml:"upstreams_cache_enabled"`
-
-	UseGlobalSettings        bool `yaml:"use_global_settings"`
-	FilteringEnabled         bool `yaml:"filtering_enabled"`
-	ParentalEnabled          bool `yaml:"parental_enabled"`
-	SafeBrowsingEnabled      bool `yaml:"safebrowsing_enabled"`
-	UseGlobalBlockedServices bool `yaml:"use_global_blocked_services"`
-
-	IgnoreQueryLog   bool `yaml:"ignore_querylog"`
-	IgnoreStatistics bool `yaml:"ignore_statistics"`
-}
-
-// toPersistent returns an initialized persistent client if there are no errors.
-func (o *clientObject) toPersistent(
+// newPersistentClient returns an initialized persistent client if there are no
+// errors.  baseLogger must not be nil, conf must be valid.
+func newPersistentClient(
 	ctx context.Context,
+	conf *configmgr.Client,
 	baseLogger *slog.Logger,
 	safeSearchCacheSize uint,
 	safeSearchCacheTTL time.Duration,
 ) (cli *client.Persistent, err error) {
-	cli = &client.Persistent{
-		Name: o.Name,
-
-		Upstreams: o.Upstreams,
-
-		UID: o.UID,
-
-		UseOwnSettings:        !o.UseGlobalSettings,
-		FilteringEnabled:      o.FilteringEnabled,
-		ParentalEnabled:       o.ParentalEnabled,
-		SafeSearchConf:        o.SafeSearchConf,
-		SafeBrowsingEnabled:   o.SafeBrowsingEnabled,
-		UseOwnBlockedServices: !o.UseGlobalBlockedServices,
-		IgnoreQueryLog:        o.IgnoreQueryLog,
-		IgnoreStatistics:      o.IgnoreStatistics,
-		UpstreamsCacheEnabled: o.UpstreamsCacheEnabled,
-		UpstreamsCacheSize:    o.UpstreamsCacheSize,
+	safeSearch := conf.SafeSearchConf
+	if safeSearch == nil {
+		safeSearch = &configmgr.SafeSearch{}
 	}
 
-	err = cli.SetIDs(o.IDs)
+	safeSearchConf := &filtering.SafeSearchConfig{
+		Enabled:    safeSearch.Enabled,
+		Bing:       safeSearch.Bing,
+		DuckDuckGo: safeSearch.DuckDuckGo,
+		Ecosia:     safeSearch.Ecosia,
+		Google:     safeSearch.Google,
+		Pixabay:    safeSearch.Pixabay,
+		Yandex:     safeSearch.Yandex,
+		YouTube:    safeSearch.YouTube,
+	}
+
+	cli = &client.Persistent{
+		SafeSearchConf:        safeSearchConf,
+		Name:                  conf.Name,
+		Upstreams:             conf.Upstreams,
+		UID:                   conf.UID,
+		UseOwnSettings:        !conf.UseGlobalSettings,
+		FilteringEnabled:      conf.FilteringEnabled,
+		ParentalEnabled:       conf.ParentalEnabled,
+		SafeBrowsingEnabled:   conf.SafeBrowsingEnabled,
+		UseOwnBlockedServices: !conf.UseGlobalBlockedServices,
+		IgnoreQueryLog:        conf.IgnoreQueryLog,
+		IgnoreStatistics:      conf.IgnoreStatistics,
+		UpstreamsCacheEnabled: conf.UpstreamsCacheEnabled,
+		UpstreamsCacheSize:    uint32(conf.UpstreamsCacheSize),
+	}
+
+	err = cli.SetIDs(conf.IDs)
 	if err != nil {
 		return nil, fmt.Errorf("parsing ids: %w", err)
 	}
@@ -223,57 +216,115 @@ func (o *clientObject) toPersistent(
 		cli.UID = client.NewUID()
 	}
 
-	if o.SafeSearchConf.Enabled {
-		logger := baseLogger.With(
-			slogutil.KeyPrefix, safesearch.LogPrefix,
-			safesearch.LogKeyClient, cli.Name,
+	if safeSearch.Enabled {
+		ss, sErr := newSafeSearch(
+			ctx,
+			baseLogger,
+			cli.Name,
+			safeSearchConf,
+			safeSearchCacheSize,
+			safeSearchCacheTTL,
 		)
-		var ss *safesearch.Default
-		ss, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
-			Logger:         logger,
-			ServicesConfig: o.SafeSearchConf,
-			ClientName:     cli.Name,
-			CacheSize:      safeSearchCacheSize,
-			CacheTTL:       safeSearchCacheTTL,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("init safesearch %q: %w", cli.Name, err)
+		if sErr != nil {
+			return nil, fmt.Errorf("init safesearch %q: %w", cli.Name, sErr)
 		}
 
 		cli.SafeSearch = ss
 	}
 
-	if o.BlockedServices == nil {
-		o.BlockedServices = &filtering.BlockedServices{
-			Schedule: schedule.EmptyWeekly(),
-		}
-	}
-
-	o.BlockedServices.FilterUnknownIDs(ctx, baseLogger)
-	err = o.BlockedServices.Validate()
+	bs, err := newBlockedServices(ctx, baseLogger, conf.BlockedServices)
 	if err != nil {
 		return nil, fmt.Errorf("init blocked services %q: %w", cli.Name, err)
 	}
 
-	cli.BlockedServices = o.BlockedServices.Clone()
+	cli.BlockedServices = bs
 
-	cli.Tags = slices.Clone(o.Tags)
+	cli.Tags = slices.Clone(conf.Tags)
 
 	return cli, nil
 }
 
-// forConfig returns all currently known persistent clients as objects for the
-// configuration file.
-func (clients *clientsContainer) forConfig() (objs []*clientObject) {
+// newSafeSearch returns an initialized safe search filter if there are no
+// errors.  baseLogger and conf must not be nil.
+func newSafeSearch(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	cliName string,
+	conf *filtering.SafeSearchConfig,
+	cacheSize uint,
+	cacheTTL time.Duration,
+) (ss *safesearch.Default, err error) {
+	logger := baseLogger.With(
+		slogutil.KeyPrefix, safesearch.LogPrefix,
+		safesearch.LogKeyClient, cliName,
+	)
+
+	return safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
+		Logger:         logger,
+		ServicesConfig: conf,
+		ClientName:     cliName,
+		CacheSize:      cacheSize,
+		CacheTTL:       cacheTTL,
+	})
+}
+
+// newBlockedServices returns an initialized blocked services configuration if
+// there are no errors.  baseLogger must not be nil.
+func newBlockedServices(
+	ctx context.Context,
+	baseLogger *slog.Logger,
+	conf *configmgr.BlockedServices,
+) (bs *filtering.BlockedServices, err error) {
+	bs = &filtering.BlockedServices{}
+	if conf != nil {
+		bs.IDs = conf.IDs
+		bs.Schedule = conf.Schedule
+	}
+
+	if bs.Schedule == nil {
+		bs.Schedule = schedule.EmptyWeekly()
+	}
+
+	bs.FilterUnknownIDs(ctx, baseLogger)
+	err = bs.Validate()
+	if err != nil {
+		// Don't wrap the error since it's informative enough as is.
+		return nil, err
+	}
+
+	return bs.Clone(), nil
+}
+
+// WriteDiskConfig writes the clients configuration to the given c.  c must not
+// be nil.
+func (clients *clientsContainer) WriteDiskConfig(c *configmgr.ClientsConfig) {
 	clients.lock.Lock()
 	defer clients.lock.Unlock()
 
-	objs = make([]*clientObject, 0, clients.storage.Size())
+	objs := make([]*configmgr.Client, 0, clients.storage.Size())
 	clients.storage.RangeByName(func(cli *client.Persistent) (cont bool) {
-		objs = append(objs, &clientObject{
-			Name: cli.Name,
+		var bs *configmgr.BlockedServices
+		if cli.BlockedServices != nil {
+			bs = &configmgr.BlockedServices{
+				Schedule: cli.BlockedServices.Schedule.Clone(),
+				IDs:      slices.Clone(cli.BlockedServices.IDs),
+			}
+		}
 
-			BlockedServices: cli.BlockedServices.Clone(),
+		objs = append(objs, &configmgr.Client{
+			BlockedServices: bs,
+			SafeSearchConf: &configmgr.SafeSearch{
+				Enabled:    cli.SafeSearchConf.Enabled,
+				Bing:       cli.SafeSearchConf.Bing,
+				DuckDuckGo: cli.SafeSearchConf.DuckDuckGo,
+				Ecosia:     cli.SafeSearchConf.Ecosia,
+				Google:     cli.SafeSearchConf.Google,
+				Pixabay:    cli.SafeSearchConf.Pixabay,
+				Yandex:     cli.SafeSearchConf.Yandex,
+				YouTube:    cli.SafeSearchConf.YouTube,
+			},
+
+			Name: cli.Name,
 
 			IDs:       cli.Identifiers(),
 			Tags:      slices.Clone(cli.Tags),
@@ -281,22 +332,22 @@ func (clients *clientsContainer) forConfig() (objs []*clientObject) {
 
 			UID: cli.UID,
 
-			UseGlobalSettings:        !cli.UseOwnSettings,
+			UpstreamsCacheSize: datasize.ByteSize(cli.UpstreamsCacheSize),
+
 			FilteringEnabled:         cli.FilteringEnabled,
 			ParentalEnabled:          cli.ParentalEnabled,
-			SafeSearchConf:           cli.SafeSearchConf,
 			SafeBrowsingEnabled:      cli.SafeBrowsingEnabled,
 			UseGlobalBlockedServices: !cli.UseOwnBlockedServices,
 			IgnoreQueryLog:           cli.IgnoreQueryLog,
 			IgnoreStatistics:         cli.IgnoreStatistics,
 			UpstreamsCacheEnabled:    cli.UpstreamsCacheEnabled,
-			UpstreamsCacheSize:       cli.UpstreamsCacheSize,
+			UseGlobalSettings:        !cli.UseOwnSettings,
 		})
 
 		return true
 	})
 
-	return objs
+	c.Persistent = objs
 }
 
 // arpClientsUpdatePeriod defines how often ARP clients are updated.

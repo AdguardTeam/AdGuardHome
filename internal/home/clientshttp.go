@@ -154,8 +154,9 @@ func (clients *clientsContainer) jsonToClient(
 	c.SafeBrowsingEnabled = cj.SafeBrowsingEnabled
 	c.UseOwnBlockedServices = !cj.UseGlobalBlockedServices
 
-	if ssc := cj.SafeSearchConf; ssc != nil {
-		c.SafeSearchConf = *ssc
+	c.SafeSearchConf = cj.SafeSearchConf
+	if c.SafeSearchConf == nil {
+		c.SafeSearchConf = &filtering.SafeSearchConfig{Enabled: false}
 	}
 
 	if c.SafeSearchConf.Enabled {
@@ -247,7 +248,7 @@ func clientToJSON(c *client.Persistent) (cj *clientJSON) {
 		UseGlobalSettings:   !c.UseOwnSettings,
 		FilteringEnabled:    c.FilteringEnabled,
 		ParentalEnabled:     c.ParentalEnabled,
-		SafeSearchConf:      new(c.SafeSearchConf),
+		SafeSearchConf:      c.SafeSearchConf,
 		SafeBrowsingEnabled: c.SafeBrowsingEnabled,
 
 		UseGlobalBlockedServices: !c.UseOwnBlockedServices,

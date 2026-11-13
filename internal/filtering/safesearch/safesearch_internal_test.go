@@ -26,7 +26,7 @@ const (
 // testTimeout is the common timeout for tests and contexts.
 const testTimeout = 1 * time.Second
 
-var defaultSafeSearchConf = filtering.SafeSearchConfig{
+var defaultSafeSearchConf = &filtering.SafeSearchConfig{
 	Enabled:    true,
 	Bing:       true,
 	DuckDuckGo: true,
@@ -39,7 +39,7 @@ var defaultSafeSearchConf = filtering.SafeSearchConfig{
 
 var yandexIP = netip.AddrFrom4([4]byte{213, 180, 193, 56})
 
-func newForTest(t testing.TB, ssConf filtering.SafeSearchConfig) (ss *Default) {
+func newForTest(t testing.TB, ssConf *filtering.SafeSearchConfig) (ss *Default) {
 	ss, err := NewDefault(testutil.ContextWithTimeout(t, testTimeout), &DefaultConfig{
 		Logger:         slogutil.NewDiscardLogger(),
 		ServicesConfig: ssConf,
@@ -61,7 +61,7 @@ func TestSafeSearch(t *testing.T) {
 func TestSafeSearchCacheYandex(t *testing.T) {
 	const domain = "yandex.ru"
 
-	ss := newForTest(t, filtering.SafeSearchConfig{Enabled: false})
+	ss := newForTest(t, &filtering.SafeSearchConfig{Enabled: false})
 	ctx := testutil.ContextWithTimeout(t, testTimeout)
 
 	// Check host with disabled safesearch.

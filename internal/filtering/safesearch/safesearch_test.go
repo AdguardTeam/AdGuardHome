@@ -29,7 +29,7 @@ const (
 )
 
 // testConf is the default safe search configuration for tests.
-var testConf = filtering.SafeSearchConfig{
+var testConf = &filtering.SafeSearchConfig{
 	Enabled: true,
 
 	Bing:       true,
@@ -201,7 +201,7 @@ func TestDefault_Update(t *testing.T) {
 
 	assert.True(t, res.IsFiltered)
 
-	err = ss.Update(ctx, filtering.SafeSearchConfig{
+	err = ss.Update(ctx, &filtering.SafeSearchConfig{
 		Enabled: true,
 		Google:  false,
 	})
@@ -212,7 +212,7 @@ func TestDefault_Update(t *testing.T) {
 
 	assert.False(t, res.IsFiltered)
 
-	err = ss.Update(ctx, filtering.SafeSearchConfig{
+	err = ss.Update(ctx, &filtering.SafeSearchConfig{
 		Enabled: false,
 		Google:  true,
 	})
