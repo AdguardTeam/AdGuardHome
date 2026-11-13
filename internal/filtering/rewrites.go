@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -75,10 +76,7 @@ func (rw *LegacyRewrite) normalize(ctx context.Context, l *slog.Logger) (err err
 	// TODO(a.garipov): Write a case-agnostic version of strings.HasSuffix and
 	// use it in matchDomainWildcard instead of using strings.ToLower
 	// everywhere.
-	rw.Domain = strings.ToLower(rw.Domain)
-	if rw.Domain != "." {
-		rw.Domain = strings.TrimSuffix(rw.Domain, ".")
-	}
+	rw.Domain = aghnet.NormalizeDomain(rw.Domain)
 
 	switch rw.Answer {
 	case "AAAA":

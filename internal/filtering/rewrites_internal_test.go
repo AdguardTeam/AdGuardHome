@@ -447,6 +447,8 @@ func TestRewritesExceptionIP(t *testing.T) {
 }
 
 func TestLegacyRewrite_trailingDot(t *testing.T) {
+	t.Parallel()
+
 	ip := "192.0.2.1"
 	wantAddr := netip.MustParseAddr(ip)
 
@@ -479,6 +481,8 @@ func TestLegacyRewrite_trailingDot(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			r := d.processRewrites(tc.host, dns.TypeA)
 			assert.Equal(t, Rewritten, r.Reason)
 
