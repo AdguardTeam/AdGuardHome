@@ -1,17 +1,62 @@
 package ossvc
 
 import (
+	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/fakeos/fakeexec"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/kardianos/service"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestManager_RunInitdCommand(t *testing.T) {
+	t.Parallel()
+
+	const serviceName = "AdGuardHome"
+
+	wantPath := filepath.Join("/etc", "init.d", serviceName)
+
+	actions := []string{"status", "start", "stop", "restart", "enable", "disable"}
+
+	for _, action := range actions {
+		t.Run(action, func(t *testing.T) {
+			t.Parallel()
+
+			var (
+				gotPath string
+				gotArgs []string
+			)
+			onNew := func(
+				_ context.Context,
+				conf *executil.CommandConfig,
+			) (cmd executil.Command, err error) {
+				gotPath = conf.Path
+				gotArgs = conf.Args
+
+				return executil.EmptyCommand{}, nil
+			}
+
+			m := &manager{
+				cmdCons: &fakeexec.CommandConstructor{OnNew: onNew},
+			}
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+			err := m.runInitdCommand(ctx, serviceName, action)
+			require.NoError(t, err)
+
+			assert.Equal(t, wantPath, gotPath)
+			assert.Equal(t, []string{action}, gotArgs)
+		})
+	}
+}
 
 // testClock is a test clock used for tests.
 var testClock = timeutil.SystemClock{}

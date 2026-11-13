@@ -315,13 +315,11 @@ func (m *manager) runInitdCommand(
 	action string,
 ) (err error) {
 	confPath := filepath.Join("/etc", "init.d", serviceName)
-	// Pass the script and action as a single string argument.
+	// Pass the action as the script's first argument.
 	return executil.RunWithPeek(
 		ctx,
 		m.cmdCons,
 		aghos.MaxCmdOutputSize,
-		"sh",
-		"-c",
 		confPath,
 		action,
 	)

@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Init script actions not being passed to System V and OpenWrt services.
+
 - CLI update failing when an upstream is specified by a hostname defined only in `/etc/hosts`.
 
 - The *Check the filtering* result in the new web interface showing only the first matched rule ([#8677]).
