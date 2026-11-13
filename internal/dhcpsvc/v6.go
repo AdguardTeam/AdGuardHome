@@ -118,9 +118,6 @@ type dhcpInterfaceV6 struct {
 	// server.
 	common *netInterface
 
-	// clock is used to get the current time.
-	clock timeutil.Clock
-
 	// subnetPrefix is the network prefix of the interface's IPv6 subnet.  It is
 	// used for on-link address determination.
 	subnetPrefix netip.Prefix
@@ -183,8 +180,8 @@ func (srv *DHCPServer) newDHCPInterfaceV6(
 			addrSpace:      addrSpace,
 			leasedOffsets:  newBitSet(),
 			leaseTTL:       conf.LeaseDuration,
+			clock:          conf.Clock,
 		},
-		clock:        conf.Clock,
 		subnetPrefix: netip.PrefixFrom(conf.RangeStart, v6PrefLen),
 		// Recommended values for T1 and T2 are 0.5 and 0.8 times the shortest
 		// preferred lifetime of the addresses in the IA that the server is
@@ -406,7 +403,7 @@ func (iface *dhcpInterfaceV6) allocateForSolicit(
 		return lease
 	}
 
-	lease, err := iface.common.allocateLease(ctx, mac, key, iface.clock.Now())
+	lease, err := iface.common.allocateLease(ctx, mac, key, iface.common.clock.Now())
 	if err != nil {
 		l.DebugContext(ctx, "no address available", slogutil.KeyError, err)
 
@@ -780,7 +777,7 @@ func (iface *dhcpInterfaceV6) ianaForRequest(
 	lease, ok := iface.common.leases[key]
 	if !ok {
 		var err error
-		lease, err = iface.common.allocateLease(ctx, mac, key, iface.clock.Now())
+		lease, err = iface.common.allocateLease(ctx, mac, key, iface.common.clock.Now())
 		if err != nil {
 			l.ErrorContext(ctx, "allocating lease", slogutil.KeyError, err)
 
@@ -873,7 +870,7 @@ func (iface *dhcpInterfaceV6) commit(
 	// Static leases have no expiry.
 	//
 	// See RFC 9915 Sections 18.3.4 and 18.3.5.
-	lease.setExpiry(iface.clock.Now().Add(iface.common.leaseTTL))
+	lease.setExpiry(iface.common.clock.Now().Add(iface.common.leaseTTL))
 
 	err = iface.common.index.update(ctx, lease, iface.common)
 	if err != nil {

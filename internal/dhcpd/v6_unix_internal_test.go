@@ -338,18 +338,6 @@ func TestV6_FindMACbyIP(t *testing.T) {
 		}},
 	}
 
-	s.leases = []*dhcpsvc.Lease{{
-		Hostname: staticName,
-		HWAddr:   staticMAC,
-		IP:       staticIP,
-		IsStatic: true,
-	}, {
-		Expiry:   time.Unix(10, 0),
-		Hostname: anotherName,
-		HWAddr:   anotherMAC,
-		IP:       anotherIP,
-	}}
-
 	testCases := []struct {
 		want net.HardwareAddr
 		ip   netip.Addr
@@ -377,6 +365,117 @@ func TestV6_FindMACbyIP(t *testing.T) {
 			mac := s.FindMACbyIP(tc.ip)
 
 			require.Equal(t, tc.want, mac)
+		})
+	}
+}
+
+// Common IPv6 address used for tests.
+var (
+	testIPv6  = netip.MustParseAddr("2001:db8:1::1")
+	testIPv62 = testIPv6.Next()
+	testIPv63 = testIPv62.Next()
+)
+
+func TestV6Server_HostByIP(t *testing.T) {
+	t.Parallel()
+
+	s := &v6Server{
+		leases: []*dhcpsvc.Lease{{
+			Hostname: staticName,
+			IP:       testIPv6,
+			IsStatic: true,
+		}, {
+			Hostname: dynamicNameExpired,
+			IP:       testIPv62,
+			Expiry:   time.Unix(10, 0),
+		}, {
+			Hostname: dynamicName,
+			IP:       testIPv63,
+			Expiry:   time.Now().Add(time.Minute),
+		}},
+	}
+
+	testCases := []struct {
+		name string
+		want string
+		ip   netip.Addr
+	}{{
+		name: "static_success",
+		ip:   testIPv6,
+		want: staticName,
+	}, {
+		name: "dynamic_expired",
+		ip:   testIPv62,
+		want: "",
+	}, {
+		name: "dynamic_not_expired",
+		ip:   testIPv63,
+		want: dynamicName,
+	}, {
+		name: "not_found",
+		ip:   testIPv63.Next(),
+		want: "",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := s.HostByIP(tc.ip)
+
+			require.Equal(t, tc.want, host)
+		})
+	}
+}
+
+func TestV6Server_IPByHost(t *testing.T) {
+	t.Parallel()
+
+	s := &v6Server{
+		leases: []*dhcpsvc.Lease{{
+			Hostname: staticName,
+			IP:       testIPv6,
+			IsStatic: true,
+		}, {
+			Hostname: dynamicName,
+			IP:       testIPv62,
+			Expiry:   time.Now().Add(time.Minute),
+		}, {
+			Hostname: dynamicNameExpired,
+			IP:       testIPv63,
+			Expiry:   time.Unix(10, 0),
+		}},
+	}
+
+	testCases := []struct {
+		name string
+		host string
+		want netip.Addr
+	}{{
+		name: "static_success",
+		host: staticName,
+		want: testIPv6,
+	}, {
+		name: "dynamic_not_expired",
+		host: dynamicName,
+		want: testIPv62,
+	}, {
+		name: "not_found",
+		host: "not-found",
+		want: netip.Addr{},
+	}, {
+		name: "dynamic_expired",
+		host: dynamicNameExpired,
+		want: netip.Addr{},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ip := s.IPByHost(tc.host)
+
+			require.Equal(t, tc.want, ip)
 		})
 	}
 }

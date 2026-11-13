@@ -131,7 +131,7 @@ func (iface *dhcpInterfaceV4) handleDiscover(
 	iface.common.indexMu.Lock()
 	defer iface.common.indexMu.Unlock()
 
-	now := iface.clock.Now()
+	now := iface.common.clock.Now()
 
 	lease, hasLease := iface.common.leases[mk]
 	if hasLease {
@@ -355,7 +355,7 @@ func (iface *dhcpInterfaceV4) handleRenew(
 	// get an already-expired one.
 	//
 	// See https://datatracker.ietf.org/doc/html/rfc2131#section-4.3.2.
-	lease.setExpiry(iface.clock.Now().Add(iface.common.leaseTTL))
+	lease.setExpiry(iface.common.clock.Now().Add(iface.common.leaseTTL))
 
 	iface.updateAndRespond(ctx, l, fd, req, idOpt, lease)
 }
@@ -382,7 +382,7 @@ func (iface *dhcpInterfaceV4) handleDecline(ctx context.Context, req *layers.DHC
 
 	l.WarnContext(ctx, "lease reported to be unavailable", "ip", lease.IP)
 
-	err := iface.common.blockLease(ctx, lease, iface.clock.Now())
+	err := iface.common.blockLease(ctx, lease, iface.common.clock.Now())
 	if err != nil {
 		l.ErrorContext(ctx, "blocking lease", slogutil.KeyError, err)
 	}

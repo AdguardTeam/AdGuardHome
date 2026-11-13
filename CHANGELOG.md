@@ -29,6 +29,10 @@ See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Security
+
+- Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.4][go-1.27.4].
+
 ### Changed
 
 - Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
@@ -42,6 +46,12 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
 
 ### Fixed
+
+- The *Check the filtering* result in the new web interface showing only the first matched rule ([#8677]).
+
+- Panic on binding to a busy port ([#8656]).
+
+- Expired dynamic leases are served by DNS ([#8671]).
 
 - The *Check for updates* button disappearing and raw or untranslated error messages being shown when the update check or the DNS server status check failed in the new web interface ([#8681]).
 
@@ -121,6 +131,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
     - `--no-etc-hosts`.
     - `--port`/`-p`.
 
+[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
 [#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:       https://github.com/AdguardTeam/AdGuardHome/issues/8608
@@ -133,10 +144,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8644]:       https://github.com/AdguardTeam/AdGuardHome/issues/8644
 [#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
+[#8671]:       https://github.com/AdguardTeam/AdGuardHome/issues/8671
+[#8677]:       https://github.com/AdguardTeam/AdGuardHome/issues/8677
 [#8681]:       https://github.com/AdguardTeam/AdGuardHome/issues/8681
 [#8686]:       https://github.com/AdguardTeam/AdGuardHome/issues/8686
 [#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
 [dns-kb-list]: https://adguard-dns.io/kb/general/dns-providers/
+[go-1.27.4]:   https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
