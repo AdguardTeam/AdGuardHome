@@ -112,6 +112,12 @@
 }
 
 .scrollArea {
+    /* Flex column so the content wrapper (and the transparent textarea
+       inside it) stretches to the full height of the field. Otherwise the
+       hit area only covers the text and clicks on the empty part of the
+       field do not focus the textarea. */
+    display: flex;
+    flex-direction: column;
     overflow: auto;
     border: 1px solid var(--default-item-divider);
     border-radius: 8px;
@@ -167,8 +173,11 @@
     }
 }
 
+/* Grows to fill the field while keeping the height of the overlay content
+   when it is taller (then the scroll area scrolls). */
 .contentWrapper {
     position: relative;
+    flex: 1 0 auto;
 }
 
 .overlay {
@@ -192,6 +201,9 @@
 }
 
 .transparentText {
+    /* Stretch over the whole content wrapper, not just the text, so the
+       entire field is clickable and focuses the textarea. The wrapper is
+       stretched by its own flex rule above. */
     position: absolute;
     top: 0;
     left: 0;
