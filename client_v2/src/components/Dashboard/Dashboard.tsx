@@ -223,6 +223,7 @@ export const Dashboard = () => {
 
                             <UpstreamAvgTime
                                 topUpstreamsAvgTime={statsState.topUpstreamsAvgTime}
+                                avgUpstreamResponseTime={statsState.avgUpstreamResponseTime}
                                 avgProcessingTime={statsState.avgProcessingTime}
                                 period={effectivePeriod()}
                             />
