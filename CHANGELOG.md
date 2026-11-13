@@ -41,7 +41,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- DNS rewrites with trailing dots don't match ([#8674]).
+- DNS rewrites with trailing dots not matching ([#8674]).
 
 - The *Check for updates* button disappearing and raw or untranslated error messages being shown when the update check or the DNS server status check failed in the new web interface ([#8681]).
 
