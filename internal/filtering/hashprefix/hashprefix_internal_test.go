@@ -6,13 +6,17 @@ import (
 	"encoding/hex"
 	"slices"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
+	"github.com/AdguardTeam/dnsproxy/dnsproxytest"
 	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/testutil"
+	"github.com/AdguardTeam/golibs/testutil/faketime"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -256,4 +260,213 @@ func TestChecker_Check(t *testing.T) {
 			assert.Equal(t, 1, numReq)
 		})
 	}
+}
+
+// newHashPrefixResp returns a TXT response that does not match hostname hashes.
+func newHashPrefixResp(req *dns.Msg) (resp *dns.Msg) {
+	resp = (&dns.Msg{}).SetReply(req)
+	resp.Answer = []dns.RR{&dns.TXT{
+		Hdr: dns.RR_Header{
+			Name:   req.Question[0].Name,
+			Rrtype: dns.TypeTXT,
+			Class:  dns.ClassINET,
+			Ttl:    60,
+		},
+		Txt: []string{strings.Repeat("ab", hashSize)},
+	}}
+
+	return resp
+}
+
+func TestChecker_Check_circuitBreaker(t *testing.T) {
+	const (
+		hostFail  = "fail.example"
+		hostSkip  = "skip.example"
+		hostRetry = "retry.example"
+		hostOK    = "ok.example"
+		hostNext  = "next.example"
+	)
+
+	now := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	clock := &faketime.Clock{
+		OnNow: func() (cur time.Time) { return now },
+	}
+
+	var calls atomic.Int32
+	ups := &dnsproxytest.Upstream{
+		OnAddress: func() (addr string) { return "sb.example" },
+		OnClose:   func() (err error) { return nil },
+		OnExchange: func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
+			calls.Add(1)
+
+			return nil, aghtest.ErrUpstream
+		},
+	}
+
+	c := New(&Config{
+		Logger:    testLogger,
+		Upstream:  ups,
+		Clock:     clock,
+		CacheTime: cacheTime,
+		CacheSize: cacheSize,
+		TXTSuffix: "sb.dns.adguard.com.",
+	})
+
+	blocked, err := c.Check(hostFail)
+	require.ErrorIs(t, err, aghtest.ErrUpstream)
+	assert.False(t, blocked)
+	assert.Equal(t, int32(1), calls.Load())
+
+	// The next lookup must not reach the upstream.  A slow upstream makes a
+	// missed breaker visible as a slow call.
+	ups.OnExchange = func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
+		calls.Add(1)
+		time.Sleep(200 * time.Millisecond)
+
+		return nil, aghtest.ErrUpstream
+	}
+
+	start := time.Now()
+	blocked, err = c.Check(hostSkip)
+	elapsed := time.Since(start)
+
+	require.NoError(t, err)
+	assert.False(t, blocked)
+	assert.Equal(t, int32(1), calls.Load())
+	assert.Less(t, elapsed, 50*time.Millisecond)
+
+	now = now.Add(upstreamBackoff)
+	ups.OnExchange = func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
+		calls.Add(1)
+
+		return nil, aghtest.ErrUpstream
+	}
+
+	blocked, err = c.Check(hostRetry)
+	require.ErrorIs(t, err, aghtest.ErrUpstream)
+	assert.False(t, blocked)
+	assert.Equal(t, int32(2), calls.Load())
+
+	now = now.Add(upstreamBackoff)
+	ups.OnExchange = func(_ context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
+		calls.Add(1)
+
+		return newHashPrefixResp(req), nil
+	}
+
+	blocked, err = c.Check(hostOK)
+	require.NoError(t, err)
+	assert.False(t, blocked)
+	assert.Equal(t, int32(3), calls.Load())
+	assert.Zero(t, c.openedUntilNanos.Load())
+
+	// Drop cached prefixes so the next host must use the upstream if the
+	// circuit was reset.
+	c.cache = cache.New(cache.Config{
+		EnableLRU: true,
+		MaxSize:   cacheSize,
+	})
+
+	blocked, err = c.Check(hostNext)
+	require.NoError(t, err)
+	assert.False(t, blocked)
+	assert.Equal(t, int32(4), calls.Load())
+}
+
+func TestChecker_Check_circuitBreaker_cachedBlock(t *testing.T) {
+	const (
+		blockedHost = "evil.example"
+		otherHost   = "other.example"
+	)
+
+	now := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	clock := &faketime.Clock{
+		OnNow: func() (cur time.Time) { return now },
+	}
+
+	var calls atomic.Int32
+	ups := aghtest.NewBlockUpstream(blockedHost, true)
+	onExchange := ups.OnExchange
+	ups.OnExchange = func(ctx context.Context, req *dns.Msg) (resp *dns.Msg, err error) {
+		calls.Add(1)
+
+		return onExchange(ctx, req)
+	}
+
+	c := New(&Config{
+		Logger:    testLogger,
+		Upstream:  ups,
+		Clock:     clock,
+		CacheTime: cacheTime,
+		CacheSize: cacheSize,
+		TXTSuffix: "sb.dns.adguard.com.",
+	})
+
+	blocked, err := c.Check(blockedHost)
+	require.NoError(t, err)
+	require.True(t, blocked)
+	require.Equal(t, int32(1), calls.Load())
+
+	ups.OnExchange = func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
+		calls.Add(1)
+
+		return nil, aghtest.ErrUpstream
+	}
+
+	_, err = c.Check(otherHost)
+	require.ErrorIs(t, err, aghtest.ErrUpstream)
+	require.Equal(t, int32(2), calls.Load())
+
+	// A cached blocked host stays blocked and does not hit the upstream while
+	// the circuit is open.
+	blocked, err = c.Check(blockedHost)
+	require.NoError(t, err)
+	assert.True(t, blocked)
+	assert.Equal(t, int32(2), calls.Load())
+}
+
+func TestChecker_Check_circuitBreaker_concurrent(t *testing.T) {
+	const (
+		goroutines = 32
+		host       = "example.org"
+		otherHost  = "other.example"
+	)
+
+	var calls atomic.Int32
+	ups := &dnsproxytest.Upstream{
+		OnAddress: func() (addr string) { return "sb.example" },
+		OnClose:   func() (err error) { return nil },
+		OnExchange: func(_ context.Context, _ *dns.Msg) (resp *dns.Msg, err error) {
+			calls.Add(1)
+
+			return nil, aghtest.ErrUpstream
+		},
+	}
+
+	c := New(&Config{
+		Logger:    testLogger,
+		Upstream:  ups,
+		CacheTime: cacheTime,
+		CacheSize: cacheSize,
+		TXTSuffix: "sb.dns.adguard.com.",
+	})
+
+	_, err := c.Check(host)
+	require.ErrorIs(t, err, aghtest.ErrUpstream)
+	require.Equal(t, int32(1), calls.Load())
+
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for range goroutines {
+		go func() {
+			defer wg.Done()
+
+			blocked, checkErr := c.Check(otherHost)
+			assert.NoError(t, checkErr)
+			assert.False(t, blocked)
+		}()
+	}
+	wg.Wait()
+
+	assert.Equal(t, int32(1), calls.Load())
 }
