@@ -544,6 +544,14 @@ install_service() {
 
 	log "installation failed, removing $agh_dir"
 
+	# -s install can write the service unit and then fail.  Uninstall it before
+	# deleting the directory.  Otherwise the armv7-to-armv5 retry, which no
+	# longer has this directory, cannot remove the unit and fails with
+	# "Init already exists".
+	if (cd "$agh_dir" && ! maybe_sudo ./AdGuardHome -s uninstall); then
+		log "cannot uninstall AdGuard Home from $agh_dir"
+	fi
+
 	rm -r "$agh_dir"
 
 	# Some devices detected to have armv7 CPU face the compatibility issues with

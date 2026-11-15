@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
@@ -151,7 +152,10 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 
 	err = s.Install()
 	if err != nil {
-		return fmt.Errorf("installing service: %w", err)
+		err = m.recoverFailedInstall(ctx, s, err)
+		if err != nil {
+			return err
+		}
 	}
 
 	if m.isOpenWrt {
@@ -162,6 +166,45 @@ func (m *manager) install(ctx context.Context, action *ActionInstall) (err error
 		if err != nil {
 			return fmt.Errorf("enabling service on openwrt: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// errInitAlreadyExists is the text kardianos/service uses when the service
+// file is already present.  It is not a sentinel error.
+const errInitAlreadyExists = "Init already exists"
+
+// isInitAlreadyExists reports whether err is the kardianos/service error for
+// an existing service file.
+func isInitAlreadyExists(err error) (ok bool) {
+	return err != nil && strings.Contains(err.Error(), errInitAlreadyExists)
+}
+
+// recoverFailedInstall removes a unit file left behind by a failed install.
+// When that file was already present, it installs the service again.
+// installErr must be non-nil.
+func (m *manager) recoverFailedInstall(
+	ctx context.Context,
+	s service.Service,
+	installErr error,
+) (err error) {
+	// kardianos/service creates the unit file before rendering it, so a render
+	// failure leaves the file in place.  Uninstall removes it.  See #8714.
+	unErr := s.Uninstall()
+	if unErr != nil {
+		m.logger.DebugContext(ctx, "rolling back service install", slogutil.KeyError, unErr)
+	}
+
+	if !isInitAlreadyExists(installErr) {
+		return fmt.Errorf("installing service: %w", installErr)
+	}
+
+	m.logger.InfoContext(ctx, "replacing existing service unit")
+
+	err = s.Install()
+	if err != nil {
+		return fmt.Errorf("installing service: %w", err)
 	}
 
 	return nil

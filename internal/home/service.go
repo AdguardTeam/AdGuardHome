@@ -338,7 +338,7 @@ func handleServiceInstallCmd(
 		ServiceName: serviceName,
 	})
 	if err != nil {
-		return fmt.Errorf("starting service: %w", err)
+		return rollbackInstalledService(ctx, mgr, err)
 	}
 
 	if detectFirstRun(ctx, l, workDir, confPath) {
@@ -351,4 +351,22 @@ func handleServiceInstallCmd(
 	}
 
 	return nil
+}
+
+// rollbackInstalledService uninstalls a service whose unit was installed but
+// which then failed to start, so a later install is not blocked by the unit
+// file.  startErr must be non-nil.
+func rollbackInstalledService(
+	ctx context.Context,
+	mgr ossvc.Manager,
+	startErr error,
+) (err error) {
+	unErr := mgr.Perform(ctx, &ossvc.ActionUninstall{
+		ServiceName: serviceName,
+	})
+	if unErr != nil {
+		return fmt.Errorf("starting service: %w (uninstalling: %w)", startErr, unErr)
+	}
+
+	return fmt.Errorf("starting service: %w", startErr)
 }

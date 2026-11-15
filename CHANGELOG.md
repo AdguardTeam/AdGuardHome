@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Installing AdGuard Home as a systemd service failing, and leaving `/etc/systemd/system/AdGuardHome.service` behind, because the unit template used the old text/template syntax ([#8714]).
+
 - Shutdown deadlock when looking up clients for query accounting ([#8658]).
 
 - CLI update failing when an upstream is specified by a hostname defined only in `/etc/hosts`.
@@ -133,6 +135,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
     - `--no-etc-hosts`.
     - `--port`/`-p`.
 
+[#8714]:       https://github.com/AdguardTeam/AdGuardHome/issues/8714
 [#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
 [#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
