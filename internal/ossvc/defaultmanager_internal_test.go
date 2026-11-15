@@ -11,6 +11,7 @@ import (
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/kardianos/service"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // testClock is a test clock used for tests.
@@ -167,12 +168,49 @@ func TestManager_Install(t *testing.T) {
 			svc.OnInstall = func() (err error) {
 				return tc.installErr
 			}
+			svc.OnUninstall = func() (err error) { return nil }
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			err := m.Perform(ctx, action)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 		})
 	}
+}
+
+func TestManager_Install_alreadyExists(t *testing.T) {
+	svc := newTestServiceWithSystem(t)
+
+	m := &manager{
+		clock:         testClock,
+		logger:        testLogger,
+		cmdCons:       executil.EmptyCommandConstructor{},
+		isOpenWrt:     false,
+		isUnixSystemV: false,
+	}
+
+	const existsMsg = "Init already exists: /etc/systemd/system/AdGuardHome.service"
+
+	var installs, uninstalls int
+	svc.OnInstall = func() (err error) {
+		installs++
+		if installs == 1 {
+			return errors.Error(existsMsg)
+		}
+
+		return nil
+	}
+	svc.OnUninstall = func() (err error) {
+		uninstalls++
+
+		return nil
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	err := m.Perform(ctx, &ActionInstall{ServiceName: testServiceName})
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, installs)
+	assert.Equal(t, 1, uninstalls)
 }
 
 func TestManager_Install_unixSystemV(t *testing.T) {
