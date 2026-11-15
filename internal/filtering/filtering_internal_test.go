@@ -175,6 +175,76 @@ func TestDNSFilter_CheckHost_hostRules(t *testing.T) {
 
 // Safe Browsing.
 
+func TestDNSFilter_CheckHost_safeBrowsingFailOpen(t *testing.T) {
+	logOutput := &bytes.Buffer{}
+	sbChecker := hashprefix.New(&hashprefix.Config{
+		Logger:    testLogger,
+		CacheTime: 10 * time.Minute,
+		CacheSize: 10000,
+		Upstream:  aghtest.NewErrorUpstream(),
+	})
+
+	d, setts := newForTest(t, &Config{
+		Logger: slogutil.New(&slogutil.Config{
+			Level:        slogutil.LevelDebug,
+			Output:       logOutput,
+			Format:       slogutil.FormatDefault,
+			AddTimestamp: false,
+		}),
+		SafeBrowsingEnabled:    true,
+		SafeBrowsingChecker:    sbChecker,
+		ParentalEnabled:        true,
+		ParentalControlChecker: newChecker(pcBlocked),
+	}, nil)
+	t.Cleanup(d.Close)
+
+	res, err := d.CheckHost("example.org", dns.TypeA, setts)
+	require.NoError(t, err)
+	assert.False(t, res.IsFiltered)
+	assert.Contains(t, logOutput.String(), "safe browsing lookup failed")
+
+	// The parental checker still runs after the safe-browsing lookup fails.
+	res, err = d.CheckHost(pcBlocked, dns.TypeA, setts)
+	require.NoError(t, err)
+	assert.True(t, res.IsFiltered)
+	assert.Equal(t, FilteredParental, res.Reason)
+}
+
+func TestDNSFilter_CheckHost_parentalFailOpen(t *testing.T) {
+	logOutput := &bytes.Buffer{}
+	pcChecker := hashprefix.New(&hashprefix.Config{
+		Logger:    testLogger,
+		CacheTime: 10 * time.Minute,
+		CacheSize: 10000,
+		Upstream:  aghtest.NewErrorUpstream(),
+	})
+
+	d, setts := newForTest(t, &Config{
+		Logger: slogutil.New(&slogutil.Config{
+			Level:        slogutil.LevelDebug,
+			Output:       logOutput,
+			Format:       slogutil.FormatDefault,
+			AddTimestamp: false,
+		}),
+		ParentalEnabled:        true,
+		ParentalControlChecker: pcChecker,
+		SafeBrowsingEnabled:    true,
+		SafeBrowsingChecker:    newChecker(sbBlocked),
+	}, nil)
+	t.Cleanup(d.Close)
+
+	res, err := d.CheckHost("example.org", dns.TypeA, setts)
+	require.NoError(t, err)
+	assert.False(t, res.IsFiltered)
+	assert.Contains(t, logOutput.String(), "parental lookup failed")
+
+	// Safe browsing still blocks while the parental checker is failing.
+	res, err = d.CheckHost(sbBlocked, dns.TypeA, setts)
+	require.NoError(t, err)
+	assert.True(t, res.IsFiltered)
+	assert.Equal(t, FilteredSafeBrowsing, res.Reason)
+}
+
 func TestSafeBrowsing(t *testing.T) {
 	logOutput := &bytes.Buffer{}
 	sbChecker := newChecker(sbBlocked)

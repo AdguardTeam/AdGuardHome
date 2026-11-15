@@ -1221,6 +1221,61 @@ func TestBlockedByHosts(t *testing.T) {
 	)
 }
 
+func TestServer_processFilteringBeforeRequest_safeBrowsingError(t *testing.T) {
+	const hostname = "unfiltered.example.org"
+
+	sbChecker := hashprefix.New(&hashprefix.Config{
+		Logger:    testLogger,
+		CacheTime: 10 * time.Minute,
+		CacheSize: 1000,
+		Upstream:  aghtest.NewErrorUpstream(),
+	})
+
+	s := createTestServer(
+		t,
+		&filtering.Config{
+			BlockingMode:        filtering.BlockingModeDefault,
+			ProtectionEnabled:   true,
+			SafeBrowsingEnabled: true,
+			SafeBrowsingChecker: sbChecker,
+		},
+		ServerConfig{
+			UDPListenAddrs:   []*net.UDPAddr{{}},
+			TCPListenAddrs:   []*net.TCPAddr{{}},
+			TLSConf:          &TLSConfig{},
+			UpstreamMode:     proxy.UpstreamModeLoadBalance,
+			EDNSClientSubnet: &EDNSClientSubnet{Enabled: false},
+			ClientsContainer: EmptyClientsContainer{},
+			ServePlainDNS:    true,
+		},
+		testTLSManager,
+	)
+
+	dctx := &dnsContext{
+		setts: &filtering.Settings{
+			FilteringEnabled:    true,
+			ProtectionEnabled:   true,
+			SafeBrowsingEnabled: true,
+		},
+		protectionEnabled: true,
+		result:            &filtering.Result{},
+		proxyCtx: &proxy.DNSContext{
+			Proto: proxy.ProtoUDP,
+			Req:   createTestMessage(hostname + "."),
+			Addr:  testClientAddrPort,
+		},
+	}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	rc := s.processFilteringBeforeRequest(ctx, testLogger, dctx)
+
+	// The lookup error must not abort the request.  Upstream resolution still
+	// has to run, so no filtered response is written here.
+	require.Equal(t, resultCodeSuccess, rc)
+	require.NoError(t, dctx.err)
+	assert.Nil(t, dctx.proxyCtx.Res)
+}
+
 func TestBlockedBySafeBrowsing(t *testing.T) {
 	const (
 		hostname  = "wmconvirus.narod.ru"

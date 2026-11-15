@@ -1166,8 +1166,21 @@ func (d *DNSFilter) checkSafeBrowsing(
 	}
 
 	block, err := d.safeBrowsingChecker.Check(host)
-	if !block || err != nil {
-		return Result{}, err
+	if err != nil {
+		// Lookup failures must not drop the DNS request.  Only a positive
+		// blocked result stops it.  Safe browsing is fail-open.
+		d.logger.WarnContext(
+			ctx,
+			"safe browsing lookup failed",
+			"host", host,
+			slogutil.KeyError, err,
+		)
+
+		return Result{}, nil
+	}
+
+	if !block {
+		return Result{}, nil
 	}
 
 	return res, nil
@@ -1202,8 +1215,21 @@ func (d *DNSFilter) checkParental(
 	}
 
 	block, err := d.parentalControlChecker.Check(host)
-	if !block || err != nil {
-		return Result{}, err
+	if err != nil {
+		// Lookup failures must not drop the DNS request.  Only a positive
+		// blocked result stops it.  Parental control is fail-open.
+		d.logger.WarnContext(
+			ctx,
+			"parental lookup failed",
+			"host", host,
+			slogutil.KeyError, err,
+		)
+
+		return Result{}, nil
+	}
+
+	if !block {
+		return Result{}, nil
 	}
 
 	return res, nil

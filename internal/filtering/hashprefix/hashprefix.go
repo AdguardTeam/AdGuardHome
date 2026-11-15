@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
@@ -16,6 +17,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/miekg/dns"
 	"golang.org/x/net/publicsuffix"
 )
@@ -29,6 +31,10 @@ const (
 
 	// hexSize is the size of hexadecimal representation of hashed hostname.
 	hexSize = hashSize * 2
+
+	// upstreamBackoff is how long upstream hash lookups are skipped after a
+	// transport error.
+	upstreamBackoff = 30 * time.Second
 )
 
 // prefix is the type of the SHA256 hash prefix used to match against the
@@ -60,6 +66,10 @@ type Config struct {
 	// Upstream is the upstream DNS server.
 	Upstream upstream.Upstream
 
+	// Clock is used to decide when to retry an upstream after a transport
+	// error.  If nil, [timeutil.SystemClock] is used.
+	Clock timeutil.Clock
+
 	// TXTSuffix is the TXT suffix for DNS request.
 	TXTSuffix string
 
@@ -81,15 +91,29 @@ type Checker struct {
 	// cache stores hostname hashes.
 	cache cache.Cache
 
+	// clock is used to decide when to retry an upstream after a transport
+	// error.
+	clock timeutil.Clock
+
 	// txtSuffix is the TXT suffix for DNS request.
 	txtSuffix string
 
 	// cacheTime is the time period to store hash.
 	cacheTime time.Duration
+
+	// openedUntilNanos is the Unix time in nanoseconds until which upstream
+	// lookups are skipped after a transport error.  Zero means lookups are not
+	// skipped.
+	openedUntilNanos atomic.Int64
 }
 
 // New returns Checker.
 func New(conf *Config) (c *Checker) {
+	clock := conf.Clock
+	if clock == nil {
+		clock = timeutil.SystemClock{}
+	}
+
 	return &Checker{
 		logger:   conf.Logger,
 		upstream: conf.Upstream,
@@ -97,12 +121,16 @@ func New(conf *Config) (c *Checker) {
 			EnableLRU: true,
 			MaxSize:   conf.CacheSize,
 		}),
+		clock:     clock,
 		txtSuffix: conf.TXTSuffix,
 		cacheTime: conf.CacheTime,
 	}
 }
 
-// Check returns true if request for the host should be blocked.
+// Check returns true if request for the host should be blocked.  A transport
+// error is returned to the caller.  After such an error, lookups are skipped
+// for [upstreamBackoff] and Check returns false and a nil error.  A later
+// successful lookup allows requests through again.
 func (c *Checker) Check(host string) (ok bool, err error) {
 	ctx := context.TODO()
 
@@ -117,6 +145,12 @@ func (c *Checker) Check(host string) (ok bool, err error) {
 		return blocked, nil
 	}
 
+	if c.circuitOpen() {
+		l.DebugContext(ctx, "skipping upstream lookup")
+
+		return false, nil
+	}
+
 	question := c.getQuestion(hashesToRequest)
 
 	l.DebugContext(ctx, "checking", "question", question)
@@ -124,14 +158,38 @@ func (c *Checker) Check(host string) (ok bool, err error) {
 
 	resp, err := c.upstream.Exchange(ctx, req)
 	if err != nil {
+		c.openCircuit()
+
 		return false, fmt.Errorf("getting hashes: %w", err)
 	}
+
+	c.resetCircuit()
 
 	matched, receivedHashes := c.processAnswer(ctx, l, hashesToRequest, resp)
 
 	c.storeInCache(ctx, hashesToRequest, receivedHashes)
 
 	return matched, nil
+}
+
+// circuitOpen reports whether upstream lookups are currently skipped.
+func (c *Checker) circuitOpen() (open bool) {
+	until := c.openedUntilNanos.Load()
+	if until == 0 {
+		return false
+	}
+
+	return c.clock.Now().UnixNano() < until
+}
+
+// openCircuit skips upstream lookups for [upstreamBackoff].
+func (c *Checker) openCircuit() {
+	c.openedUntilNanos.Store(c.clock.Now().Add(upstreamBackoff).UnixNano())
+}
+
+// resetCircuit allows upstream lookups after a successful response.
+func (c *Checker) resetCircuit() {
+	c.openedUntilNanos.Store(0)
 }
 
 // hostnameToHashes returns hashes that should be checked by the hash prefix
