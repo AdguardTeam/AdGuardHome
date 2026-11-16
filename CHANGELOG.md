@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The new web interface blanking out or silently reloading itself when the DNS server status check kept failing; the error notice now stays on screen.
+
 - DNS rewrites with trailing dots not matching ([#8674]).
 
 - Shutdown deadlock when looking up clients for query accounting ([#8658]).

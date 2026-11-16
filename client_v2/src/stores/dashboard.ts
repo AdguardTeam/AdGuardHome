@@ -88,12 +88,6 @@ const [state, setState] = createStore<DashboardState>(initialState);
 
 const CHECK_TIMEOUT = 1000;
 
-let statusTimeout: ReturnType<typeof setTimeout> | null = null;
-const rmTimeout = (t: ReturnType<typeof setTimeout> | null): null => {
-    if (t) clearTimeout(t);
-    return null;
-};
-
 /** Fetches the server status without redirecting to the login page on 401. */
 const fetchStatus = (): Promise<ServerStatus> =>
     customFetch<ServerStatus>(getStatusUrl(), {
@@ -101,6 +95,9 @@ const fetchStatus = (): Promise<ServerStatus> =>
         skipAuthRedirect: true,
     });
 
+// Each call owns its retry timer.  A shared one would let a concurrent chain,
+// e.g. the one started by `getTimerStatus`, cancel another chain's pending
+// retry and leave `processing` stuck at true forever.
 const checkStatus = async (
     handleRequestSuccess: (response: { status: number; data: ServerStatus }) => void,
     handleRequestError: () => void,
@@ -112,10 +109,9 @@ const checkStatus = async (
     }
     try {
         const data = await fetchStatus();
-        statusTimeout = rmTimeout(statusTimeout);
         handleRequestSuccess({ status: 200, data });
         if (data.running === false) {
-            statusTimeout = setTimeout(
+            setTimeout(
                 checkStatus,
                 CHECK_TIMEOUT,
                 handleRequestSuccess,
@@ -124,8 +120,7 @@ const checkStatus = async (
             );
         }
     } catch {
-        statusTimeout = rmTimeout(statusTimeout);
-        statusTimeout = setTimeout(
+        setTimeout(
             checkStatus,
             CHECK_TIMEOUT,
             handleRequestSuccess,
@@ -135,14 +130,19 @@ const checkStatus = async (
     }
 };
 
+/**
+ * Handles a status check that failed all of its attempts: shows the notice and
+ * unblocks the UI.  It must not reload the page: the reload would wipe the
+ * notice before it is shown and, while the backend keeps failing, restart the
+ * attempts and reload forever.
+ */
+const handleStatusRequestError = () => {
+    addErrorToast({ error: intl.getMessage('dns_status_error') });
+    setState('processing', false);
+};
+
 export const getDnsStatus = async () => {
     setState('processing', true);
-
-    const handleRequestError = () => {
-        addErrorToast({ error: intl.getMessage('dns_status_error') });
-        setState('processing', false);
-        window.location.reload();
-    };
 
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
         const dnsStatus = response.data;
@@ -172,9 +172,9 @@ export const getDnsStatus = async () => {
     };
 
     try {
-        checkStatus(handleRequestSuccess, handleRequestError);
+        checkStatus(handleRequestSuccess, handleStatusRequestError);
     } catch {
-        handleRequestError();
+        handleStatusRequestError();
     }
 };
 
@@ -200,12 +200,6 @@ export const refreshDnsStatus = async (): Promise<void> => {
 };
 
 export const getTimerStatus = async () => {
-    const handleRequestError = () => {
-        addErrorToast({ error: intl.getMessage('dns_status_error') });
-        setState('processing', false);
-        window.location.reload();
-    };
-
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
@@ -223,9 +217,9 @@ export const getTimerStatus = async () => {
     };
 
     try {
-        checkStatus(handleRequestSuccess, handleRequestError);
+        checkStatus(handleRequestSuccess, handleStatusRequestError);
     } catch {
-        handleRequestError();
+        handleStatusRequestError();
     }
 };
 

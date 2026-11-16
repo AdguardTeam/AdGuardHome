@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     tlsStatus: vi.fn(),
@@ -29,6 +29,7 @@ import { resetStore } from 'panel/__tests__/helpers/resetStore';
 import { copy } from 'panel/__tests__/helpers/copy';
 import {
     getDnsStatus,
+    getTimerStatus,
     getClients,
     getVersion,
     refreshDnsStatus,
@@ -271,5 +272,73 @@ describe('getVersion — update check failures', () => {
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(copy('updates_checked'));
         expect(dashboardState.checkUpdateFlag).toBe(true);
         expect(dashboardState.isUpdateAvailable).toBe(true);
+    });
+});
+
+const runningStatus = {
+    running: true,
+    version: 'v',
+    dns_port: 53,
+    dns_addresses: [] as string[],
+    protection_enabled: true,
+    http_port: 80,
+};
+
+describe('status checks — concurrent retries', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        resetStore(dashboardState, { processing: true, isCoreRunning: true });
+        mocks.getVersionJson.mockResolvedValue({ disabled: true, new_version: 'v' });
+        mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
+        mocks.tlsStatus.mockResolvedValue({ enabled: false });
+    });
+
+    afterEach(() => vi.useRealTimers());
+
+    it('does not let a timer check cancel the DNS status retry', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        fetchMock.mockRejectedValueOnce(new Error('network'));
+        fetchMock.mockResolvedValue(new Response(JSON.stringify(runningStatus), { status: 200 }));
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        // The tab becomes visible while the DNS check is waiting to retry, so
+        // a second chain starts and must leave the first one's timer alone.
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.isCoreRunning).toBe(true);
+    });
+});
+
+describe('status checks — all attempts failed', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        resetStore(dashboardState, { processing: true, isCoreRunning: true });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('keeps the failure notice visible instead of reloading the page', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+        // jsdom's own `location.reload` cannot be spied on, so swap the object.
+        const reload = vi.fn();
+        vi.spyOn(window, 'location', 'get').mockReturnValue({ reload } as unknown as Location);
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(60);
+        expect(mocks.addErrorToast).toHaveBeenCalledWith({ error: copy('dns_status_error') });
+        expect(dashboardState.processing).toBe(false);
+        expect(reload).not.toHaveBeenCalled();
     });
 });
