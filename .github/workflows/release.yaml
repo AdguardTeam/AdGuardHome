@@ -10,10 +10,7 @@
       'edge'
     ) }}
   'CLIENT_DIR': |-
-    ${{ case(
-      startsWith(github.ref_name, 'release-v'), 'client',
-      'client_v2'
-    ) }}
+    client_v2
   'DIST_DIR': |-
     dist
   'FRONTEND_BASE_IMAGE': |-
