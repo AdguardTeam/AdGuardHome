@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- DNS rewrites with trailing dots not matching ([#8674]).
+
 - Shutdown deadlock when looking up clients for query accounting ([#8658]).
 
 - CLI update failing when an upstream is specified by a hostname defined only in `/etc/hosts`.
@@ -148,6 +150,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
 [#8671]:       https://github.com/AdguardTeam/AdGuardHome/issues/8671
+[#8674]:       https://github.com/AdguardTeam/AdGuardHome/issues/8674
 [#8677]:       https://github.com/AdguardTeam/AdGuardHome/issues/8677
 [#8681]:       https://github.com/AdguardTeam/AdGuardHome/issues/8681
 [#8686]:       https://github.com/AdguardTeam/AdGuardHome/issues/8686
