@@ -143,14 +143,9 @@ case "$channel" in
 	# This pseudo-channel is used to set a proper versions into release
 	# candidate builds.
 
-	# last_tag is expected to be the latest release tag.
-	last_tag="$(git describe --abbrev=0)"
-	readonly last_tag
-
-	# current_branch is the name of the branch.  Prefer the BRANCH
-	# environment variable when set, since 'git rev-parse --abbrev-ref HEAD'
-	# returns 'HEAD' in detached HEAD states (e.g. after 'git checkout
-	# <commit>').
+	# current_branch is the name of the branch.  Prefer the BRANCH environment
+	# variable when set, since 'git rev-parse --abbrev-ref HEAD' returns 'HEAD'
+	# in detached HEAD states (e.g. after 'git checkout <commit>').
 	current_branch="${BRANCH:-$(git rev-parse --abbrev-ref HEAD)}"
 	readonly current_branch
 
@@ -164,7 +159,22 @@ case "$channel" in
 		exit 1
 	fi
 
-	version="${current_branch#rc-}-rc.$(git rev-list --count "$last_tag"..HEAD)"
+	# rc_version is the version being prepared, e.g. "v1.0.0" for the
+	# "rc-v1.0.0" branch.
+	rc_version="${current_branch#rc-}"
+	readonly rc_version
+
+	# Calculate the release branch name from the rc version.  For example, for
+	# "rc-v1.0.0", the release branch is "release-v1.0".
+	release_branch="release-${rc_version%.*}"
+	readonly release_branch
+
+	# num_commits is the number of commits that are only on this branch and are
+	# not in the release branch, i.e. the number of the current candidate.
+	num_commits="$(git rev-list --count HEAD --not "$release_branch")"
+	readonly num_commits
+
+	version="${rc_version}-rc.${num_commits}"
 	;;
 *)
 	echo "invalid channel '$channel', supported values are \
