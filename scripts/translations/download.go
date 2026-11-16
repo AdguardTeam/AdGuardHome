@@ -55,9 +55,11 @@ func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) {
 		for _, lang := range c.langs {
 			uri := translationURL(downloadURI, file, c.projectID, lang)
 
-			reqCh <- downloadRequest{
-				uri: uri,
-				dir: c.localesDir,
+			for _, dir := range c.localesDirs {
+				reqCh <- downloadRequest{
+					uri: uri,
+					dir: dir,
+				}
 			}
 		}
 	}

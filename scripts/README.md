@@ -218,7 +218,12 @@ Optional environment:
 
 - `go run ./scripts/translations help`: print usage.
 
-- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is optional flag where count is a number of concurrent downloads. Note, that it downloads locales for all configurations in the `.twosky.json` file.
+- `go run ./scripts/translations download [-n <count>]`: download and save
+  all translations. `n` is an optional flag; count is a number of concurrent
+  downloads. It downloads locales for the project selected by
+  `TWOSKY_PROJECT_ID` and writes them to every directory listed in that
+  project's `metadata.locales_dirs`. If `locales_dirs` is omitted, files are
+  written to `metadata.locales_dir`.
 
 - `go run ./scripts/translations upload`: upload the base `en` locale.
 
@@ -231,7 +236,10 @@ Optional environment:
 
 - `go run ./scripts/translations auto-add`: add locales with additions to the git and restore locales with deletions.
 
-After the download you’ll find the output locales in the configured directory.
+After the download you’ll find the output locales in the configured directories.
+A project with several consumers, such as `hostlists-registry`, lists all of
+them in `metadata.locales_dirs` so that the same translations are downloaded
+into both `client/` and `client_v2/`.
 
 Optional environment:
 

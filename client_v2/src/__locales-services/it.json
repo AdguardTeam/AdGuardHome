@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "Intelligenza artificiale"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "Reti dedicate alla distribuzione dei contenuti (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Servizi di incontri"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Giochi d'azzardo e scommesse"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Giochi"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Hosting web"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Servizi di messaggistica"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Strumenti per riservatezza"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Compere"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Reti sociali"
+  },
+  "servicesgroup.software.name": {
+    "message": "Sviluppo di programmi"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Servizi di streaming"
+  }
+}

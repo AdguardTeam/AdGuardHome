@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "ปัญญาประดิษฐ์"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "เครือข่ายการจัดส่งเนื้อหา (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "บริการหาคู่"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "การพนันและการเดิมพัน"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "การเล่นเกม"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "เว็บโฮสติ้ง"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "บริการส่งข้อความ"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "เครื่องมือความเป็นส่วนตัว"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "ช้อปปิ้ง"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "สังคมออนไลน์"
+  },
+  "servicesgroup.software.name": {
+    "message": "การพัฒนาซอฟต์แวร์"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "บริการสตรีมมิ่ง"
+  }
+}

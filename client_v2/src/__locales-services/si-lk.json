@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "කෘතිම බුද්ධිය"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "අන්තර්ගත බෙදාහැරීමේ ජාල (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "ආලය සේවා"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "සූදුව සහ ඔට්ටු ඇල්ලීම"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "ක්‍රීඩා කිරීම"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "වෙබ් සත්කාරකත්වය"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "පණිවිඩ සේවා"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "රහස්‍යතා මෙවලම්"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "සාප්පුයාම"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "සමාජ ජාල"
+  },
+  "servicesgroup.software.name": {
+    "message": "මෘදුකාංග සංවර්ධනය"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "ප්‍රවාහ සේවා"
+  }
+}

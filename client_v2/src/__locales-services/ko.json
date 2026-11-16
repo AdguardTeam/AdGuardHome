@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "인공지능"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "콘텐츠 전송 네트워크(CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "데이트 서비스"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "도박 및 베팅"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "게임"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "웹 호스팅"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "메시징 서비스"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "개인정보 보호 도구"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "쇼핑"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "소셜 네트워크"
+  },
+  "servicesgroup.software.name": {
+    "message": "소프트웨어 개발"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "스트리밍 서비스"
+  }
+}

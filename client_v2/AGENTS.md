@@ -58,7 +58,9 @@ Playwright (e2e).
   providers)
 - **HTTP**: Native `fetch` wrapped in a single `Api` class
 - **i18n**: `@adguard/translate` with 35 bundled locales from `src/__locales/`
-  (generated from `.twosky.json` via `npm run locales:generate`)
+  (generated from `.twosky.json` via `npm run locales:generate`) and
+  blocked-service group names from `src/__locales-services/` (the
+  Hostlists Registry `hostlists-registry` Twosky project)
 - **Testing**: Vitest 4 + `@solidjs/testing-library` (unit);
   Playwright 1.56 (e2e against a real backend)
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
@@ -104,6 +106,7 @@ client_v2/
 │   ├── install/                   # Standalone install-wizard entry
 │   ├── forgot_password/           # Standalone password-reset entry
 │   ├── __locales/                 # Translation JSON (en, ru, de, …)
+│   ├── __locales-services/        # Hostlists Registry blocked-service names
 │   └── __tests__/                 # Vitest unit/integration tests
 ├── tests/e2e/                     # Playwright e2e specs
 ├── public/                        # HTML entry points + `theme-bootstrap.js` (inlined pre-paint theme script)

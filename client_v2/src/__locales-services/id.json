@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "Kecerdasan buatan"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "Jaringan pengiriman konten (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Layanan kencan"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Perjudian dan taruhan"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Permainan"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Hosting web"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Layanan pesan"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Alat privasi"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Belanja"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Jaringan sosial"
+  },
+  "servicesgroup.software.name": {
+    "message": "Pengembangan software"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Layanan siar"
+  }
+}

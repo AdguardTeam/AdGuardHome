@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "Tekoäly"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "Sisällönjakeluverkot (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Deittipalvelut"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Uhkapelit ja vedonlyönti"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Pelaaminen"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Web-hosting"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Viestipalvelut"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Yksityisyyden työkalut"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Verkkokaupat"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Sosiaaliset verkostot"
+  },
+  "servicesgroup.software.name": {
+    "message": "Ohjelmistokehitys"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Suoratoistopalvelut"
+  }
+}

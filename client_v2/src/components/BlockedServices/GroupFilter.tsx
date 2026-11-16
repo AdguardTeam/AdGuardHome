@@ -1,6 +1,7 @@
 import { Show, For, type JSX } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
+import { SERVICE_GROUP_KEYS } from 'panel/common/intl/locales.generated';
 
 import s from './BlockedServices.module.pcss';
 
@@ -15,41 +16,14 @@ type Props = {
     children?: JSX.Element;
 };
 
+/**
+ * Returns the localized name of a blocked-service group.  The names are owned
+ * by Hostlists Registry and translated in a separate Twosky project.
+ */
 const getGroupName = (id: string): string => {
-    switch (id) {
-        case 'ai':
-            return intl.getMessage('parental_group_ai');
-        case 'cdn':
-            return intl.getMessage('parental_group_cdn');
-        case 'dating':
-            return intl.getMessage('parental_group_dating');
-        case 'gambling':
-            return intl.getMessage('parental_group_gambling');
-        case 'gaming':
-            return intl.getMessage('parental_group_gaming');
-        case 'messaging':
-            return intl.getMessage('parental_group_messaging');
-        case 'privacy':
-            return intl.getMessage('parental_group_privacy');
-        case 'shopping':
-            return intl.getMessage('parental_group_shopping');
-        case 'social':
-            return intl.getMessage('parental_group_social');
-        case 'development':
-            return intl.getMessage('parental_group_development');
-        case 'streaming':
-            return intl.getMessage('parental_group_streaming');
-        case 'hosting':
-            return intl.getMessage('parental_group_hosting');
-        case 'messenger':
-            return intl.getMessage('parental_group_messenger');
-        case 'social_network':
-            return intl.getMessage('parental_group_social_network');
-        case 'software':
-            return intl.getMessage('parental_group_software');
-        default:
-            return id;
-    }
+    const key = SERVICE_GROUP_KEYS[id];
+
+    return key ? intl.getMessage(key) : id;
 };
 
 export const GroupFilter = (props: Props) => {

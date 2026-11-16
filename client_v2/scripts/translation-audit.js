@@ -145,9 +145,12 @@ export const collectTranslationUsageFromSource = (source, filePath) => {
     };
 };
 
-export const auditTranslations = ({ localeMessages, usage }) => {
+export const auditTranslations = ({ localeMessages, usage, knownUsedKeys = [] }) => {
     const localeKeys = Object.keys(localeMessages);
-    const usedStaticKeySet = new Set(usage.staticKeys.map((entry) => entry.key));
+    const usedStaticKeySet = new Set([
+        ...usage.staticKeys.map((entry) => entry.key),
+        ...knownUsedKeys,
+    ]);
     const missingKeys = [...usedStaticKeySet]
         .filter((key) => !Object.hasOwn(localeMessages, key))
         .sort();
@@ -167,7 +170,7 @@ export const formatAuditReport = (report, { rootDir } = {}) => {
     const lines = [
         'client_v2 translation audit',
         `Static translation calls: ${report.staticKeyCount}`,
-        `Locale keys in en.json: ${report.localeKeyCount}`,
+        `Locale keys in base locales: ${report.localeKeyCount}`,
         `Dynamic translation calls: ${report.dynamicUsages.length}`,
         '',
     ];

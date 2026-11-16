@@ -204,7 +204,9 @@ repository root for this to work. E2E tests are **not** part of
 
 ### Translations
 
-The base locale is `src/__locales/en.json`. After adding or editing
+The base locale is `src/__locales/en.json`. Blocked-service group names use a
+separate source, `src/__locales-services/`, because Hostlists Registry owns and
+translates them (Twosky project `hostlists-registry`). After adding or editing
 translation keys, verify consistency:
 
 ```sh

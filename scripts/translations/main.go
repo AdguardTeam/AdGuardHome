@@ -377,7 +377,7 @@ func (c *twoskyClient) changedLocales(
 ) (adds, dels []string, err error) {
 	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
 
-	gitArgs := []string{"diff", "--numstat", c.localesDir}
+	gitArgs := append([]string{"diff", "--numstat"}, c.localesDirs...)
 	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
 	// TODO(s.chzhen):  Consider streaming the output if needed.  Using

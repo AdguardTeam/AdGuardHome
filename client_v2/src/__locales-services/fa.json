@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "هوش مصنوعی"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "شبکه‌های تحویل محتوا (CDN)"
+  },
+  "servicesgroup.dating.name": {
+    "message": "خدمات دوستیابی"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "قمار و شرط‌بندی"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "بازی"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "میزبانی وب"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "خدمات پیام رسان"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "ابزارهای حریم خصوصی"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "خرید"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "شبکه اجتماعی"
+  },
+  "servicesgroup.software.name": {
+    "message": "توسعه نرمافزار"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "خدمات استریم"
+  }
+}
