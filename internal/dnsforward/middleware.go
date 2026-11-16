@@ -60,7 +60,8 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 
 // withECSClientAddr returns the context carrying the ECS client address, if
 // any, and the address to use for client identification: the one advertised in
-// the EDNS Client Subnet option when it's enabled and valid, or the connection
+// the EDNS Client Subnet option when it's enabled, the request comes from a
+// trusted proxy, and the option carries a host address, or the connection
 // address otherwise.
 func (s *Server) withECSClientAddr(
 	ctx context.Context,
@@ -68,7 +69,7 @@ func (s *Server) withECSClientAddr(
 ) (newCtx context.Context, addr netip.Addr) {
 	addr = pctx.Addr.Addr()
 
-	if s.useClientAddrFromECS() {
+	if s.useClientAddrFromECS(addr) {
 		if ecsAddr, ok := ecsClientAddr(pctx.Req); ok {
 			addr = ecsAddr
 		}
@@ -82,12 +83,25 @@ func (s *Server) withECSClientAddr(
 }
 
 // useClientAddrFromECS returns whether the client address should be taken from
-// the EDNS Client Subnet option instead of the connection address.
-func (s *Server) useClientAddrFromECS() (ok bool) {
+// the EDNS Client Subnet option instead of the connection address.  ECS is only
+// trusted from trusted proxies, the same list that is used for the real client
+// address of DoH requests.
+func (s *Server) useClientAddrFromECS(remote netip.Addr) (ok bool) {
 	s.serverLock.RLock()
 	defer s.serverLock.RUnlock()
 
-	return s.conf.EDNSClientSubnet.UseClientAddrFromECS
+	if !s.conf.EDNSClientSubnet.UseClientAddrFromECS {
+		return false
+	}
+
+	remote = remote.Unmap()
+	for _, p := range s.conf.TrustedProxies {
+		if p.Contains(remote) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // ecsClientAddr extracts the client IP from the EDNS Client Subnet option, or
@@ -116,18 +130,20 @@ func ecsClientAddr(req *dns.Msg) (addr netip.Addr, ok bool) {
 // or the zero address and false if the option is absent or invalid.
 func ecsSubnetAddr(ecs *dns.EDNS0_SUBNET) (addr netip.Addr, ok bool) {
 	var ip net.IP
+	var hostLen uint8
 	switch ecs.Family {
 	case 1:
 		// IPv4.
-		ip = ecs.Address.To4()
+		ip, hostLen = ecs.Address.To4(), 32
 	case 2:
 		// IPv6.
-		ip = ecs.Address
+		ip, hostLen = ecs.Address, 128
 	default:
 		return netip.Addr{}, false
 	}
 
-	if ip == nil {
+	// Only a host address identifies a single client.
+	if ip == nil || ecs.SourceNetmask != hostLen {
 		return netip.Addr{}, false
 	}
 

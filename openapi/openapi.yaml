@@ -1637,7 +1637,10 @@
           'type': 'string'
         'edns_cs_use_client_addr':
           'type': 'boolean'
-          'description': 'Client address from EDNS Client Subnet instead of connection address.'
+          'description': >
+            Client address from EDNS Client Subnet instead of connection
+            address.  Only applies to requests from trusted proxies with a /32
+            or /128 subnet.
         'disable_ipv6':
           'type': 'boolean'
         'dnssec_enabled':
