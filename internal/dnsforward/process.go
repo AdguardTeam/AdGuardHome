@@ -498,7 +498,7 @@ func (s *Server) processUpstream(
 		return resultCodeFinish
 	}
 
-	s.setCustomUpstream(ctx, l, pctx, dctx.clientID)
+	s.setCustomUpstream(ctx, l, pctx, dctx.clientID, dctx.clientAddr())
 
 	// Process the request further since it wasn't filtered.
 	prx := s.proxy()
@@ -547,12 +547,12 @@ func (s *Server) setCustomUpstream(
 	l *slog.Logger,
 	pctx *proxy.DNSContext,
 	clientID string,
+	cliAddr netip.Addr,
 ) {
-	if !pctx.Addr.IsValid() || s.conf.ClientsContainer == nil {
+	if !cliAddr.IsValid() || s.conf.ClientsContainer == nil {
 		return
 	}
 
-	cliAddr := pctx.Addr.Addr()
 	upsConf := s.conf.ClientsContainer.CustomUpstreamConfig(clientID, cliAddr)
 	if upsConf != nil {
 		l.DebugContext(

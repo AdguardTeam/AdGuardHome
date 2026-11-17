@@ -207,7 +207,9 @@ type EDNSClientSubnet struct {
 	UseCustom bool `yaml:"use_custom"`
 
 	// UseClientAddrFromECS defines if the EDNS Client Subnet is used for
-	// client identification instead of the connection address.
+	// client identification instead of the connection address.  It only
+	// applies to requests from trusted proxies and to ECS options with a host
+	// prefix, that is /32 for IPv4 and /128 for IPv6.
 	UseClientAddrFromECS bool `yaml:"use_client_addr_from_ecs"`
 }
 
