@@ -62,8 +62,8 @@ func processAccessClients(
 	return nil
 }
 
-// newAccessCtx creates a new accessCtx.
-func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessManager, err error) {
+// newAccessManager creates a new *accessManager.
+func newAccessManager(allowed, blocked, blockedHosts []string) (a *accessManager, err error) {
 	a = &accessManager{
 		allowedIPs: container.NewMapSet[netip.Addr](),
 		blockedIPs: container.NewMapSet[netip.Addr](),
@@ -105,7 +105,7 @@ func newAccessCtx(allowed, blocked, blockedHosts []string) (a *accessManager, er
 	return a, nil
 }
 
-// allowlistMode returns true if this *accessCtx is in the allowlist mode.
+// allowlistMode returns true if this *accessManager is in the allowlist mode.
 func (a *accessManager) allowlistMode() (ok bool) {
 	return a.allowedIPs.Len() != 0 || a.allowedClientIDs.Len() != 0 || len(a.allowedNets) != 0
 }
@@ -260,9 +260,9 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var a *accessManager
-	a, err = newAccessCtx(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
+	a, err = newAccessManager(list.AllowedClients, list.DisallowedClients, list.BlockedHosts)
 	if err != nil {
-		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "creating access ctx: %s", err)
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "creating access manager: %s", err)
 
 		return
 	}
@@ -283,5 +283,6 @@ func (s *Server) handleAccessSet(w http.ResponseWriter, r *http.Request) {
 	s.conf.AllowedClients = list.AllowedClients
 	s.conf.DisallowedClients = list.DisallowedClients
 	s.conf.BlockedHosts = list.BlockedHosts
-	s.access = a
+
+	s.access.Store(a)
 }

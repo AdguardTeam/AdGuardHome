@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -63,9 +64,10 @@ func (rw *LegacyRewrite) matchesQType(qt uint16) (ok bool) {
 }
 
 // normalize makes sure that the new or decoded entry is normalized with regards
-// to domain name case, IP length, and so on.
-//
-// If rw is nil, it returns an errors.
+// to domain name case, IP length, and so on.  The root domain '.' is not
+// modified, while other domain names are normalized by converting to lower case
+// and trimming the trailing dot, if present.  If rw is nil, it returns an
+// error.
 func (rw *LegacyRewrite) normalize(ctx context.Context, l *slog.Logger) (err error) {
 	if rw == nil {
 		return errors.Error("nil rewrite entry")
@@ -74,7 +76,7 @@ func (rw *LegacyRewrite) normalize(ctx context.Context, l *slog.Logger) (err err
 	// TODO(a.garipov): Write a case-agnostic version of strings.HasSuffix and
 	// use it in matchDomainWildcard instead of using strings.ToLower
 	// everywhere.
-	rw.Domain = strings.ToLower(rw.Domain)
+	rw.Domain = aghnet.NormalizeDomain(rw.Domain)
 
 	switch rw.Answer {
 	case "AAAA":
