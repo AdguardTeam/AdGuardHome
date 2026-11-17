@@ -316,7 +316,7 @@ describe('status checks — ownership of retries', () => {
     it('does not let a timer check cancel the DNS status retry', async () => {
         const fetchMock = vi.spyOn(globalThis, 'fetch');
         fetchMock.mockRejectedValueOnce(new Error('network'));
-        fetchMock.mockResolvedValue(new Response(JSON.stringify(runningStatus), { status: 200 }));
+        respondWith(fetchMock, runningStatus);
 
         getDnsStatus();
         await vi.advanceTimersByTimeAsync(0);
@@ -360,18 +360,33 @@ describe('status checks — ownership of retries', () => {
     });
 });
 
+/** A `Response` body is readable only once, so serve a fresh one per call. */
+const respondWith = (
+    fetchMock: { mockImplementation: (fn: () => Promise<Response>) => unknown },
+    body: Record<string, unknown>,
+) => {
+    fetchMock.mockImplementation(
+        async () => new Response(JSON.stringify(body), { status: 200 }),
+    );
+};
+
+/** Loads a running status so each test starts from a working dashboard. */
+const loadRunningStatus = async () => {
+    respondWith(vi.spyOn(globalThis, 'fetch'), runningStatus);
+    getDnsStatus();
+    await vi.advanceTimersByTimeAsync(0);
+    vi.clearAllMocks();
+};
+
 describe('status checks — all attempts failed', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-        resetStore(dashboardState, {
-            processing: true,
-            isCoreRunning: true,
-            dnsVersion: '',
-        });
+        resetStore(dashboardState, { processing: true, isCoreRunning: true, dnsVersion: '' });
         mocks.getVersionJson.mockResolvedValue({ disabled: true, new_version: 'v' });
         mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
         mocks.tlsStatus.mockResolvedValue({ enabled: false });
+        await loadRunningStatus();
     });
 
     afterEach(() => {
@@ -389,7 +404,9 @@ describe('status checks — all attempts failed', () => {
         await vi.advanceTimersByTimeAsync(61_000);
 
         expect(fetchMock).toHaveBeenCalledTimes(60);
-        expect(mocks.addErrorToast).toHaveBeenCalledWith({ error: copy('dns_status_error') });
+        expect(mocks.addErrorToast).toHaveBeenCalledWith({
+            error: copy('dns_status_error_reload'),
+        });
         expect(dashboardState.statusFailed).toBe(false);
         expect(reload).not.toHaveBeenCalled();
 
@@ -402,10 +419,26 @@ describe('status checks — all attempts failed', () => {
         await vi.advanceTimersByTimeAsync(61_000);
 
         expect(fetchMock).toHaveBeenCalledTimes(60);
-        expect(mocks.addErrorToast).toHaveBeenCalledWith({ error: copy('dns_status_error') });
+        expect(mocks.addErrorToast).toHaveBeenCalledWith({
+            error: copy('dns_status_error_reload'),
+        });
         expect(dashboardState.processing).toBe(false);
         expect(dashboardState.statusFailed).toBe(true);
         expect(reload).not.toHaveBeenCalled();
+    });
+
+    it('reports a stopped core instead of a failed check', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        respondWith(fetchMock, { running: false });
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(60);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.isCoreRunning).toBe(false);
+        expect(dashboardState.statusFailed).toBe(false);
     });
 
     it('clears the failed flag when a retry succeeds', async () => {
@@ -415,12 +448,35 @@ describe('status checks — all attempts failed', () => {
         await vi.advanceTimersByTimeAsync(61_000);
         expect(dashboardState.statusFailed).toBe(true);
 
-        fetchMock.mockResolvedValue(new Response(JSON.stringify(runningStatus), { status: 200 }));
+        respondWith(fetchMock, runningStatus);
         getDnsStatus();
         await vi.advanceTimersByTimeAsync(0);
 
         expect(dashboardState.statusFailed).toBe(false);
         expect(dashboardState.processing).toBe(false);
         expect(dashboardState.dnsVersion).toBe('v');
+    });
+
+    it('restores the dashboard when a background check succeeds after a failure', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+
+        // The bootstrap check exhausts before the core recovers.
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+        expect(dashboardState.statusFailed).toBe(true);
+
+        // The tab becomes visible, the backend answers now, and the timer
+        // chain must escalate to the full check instead of writing partial
+        // state or leaving the retry screen up.
+        respondWith(fetchMock, runningStatus);
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(fetchMock).toHaveBeenCalledTimes(62);
+        expect(dashboardState.statusFailed).toBe(false);
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.dnsVersion).toBe('v');
+        expect(fetchMock).toHaveBeenCalledTimes(62);
     });
 });

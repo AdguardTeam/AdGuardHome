@@ -169,7 +169,7 @@ export const stopStatusChecks = () => {
  * attempts and reload forever.
  */
 const handleStatusRequestError = () => {
-    addErrorToast({ error: intl.getMessage('dns_status_error') });
+    addErrorToast({ error: intl.getMessage('dns_status_error_reload') });
     setState('processing', false);
 };
 
@@ -186,8 +186,12 @@ const handleBootstrapStatusError = () => {
 export const getDnsStatus = async () => {
     stopDnsStatus?.();
     setState('processing', true);
+    // A core that keeps answering `running: false` is a known state, not a
+    // failed check: `App` shows the not-running screen instead of the error.
+    let sawAnswer = false;
 
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
+        sawAnswer = true;
         setState('statusFailed', false);
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
@@ -211,11 +215,23 @@ export const getDnsStatus = async () => {
             // The store wrapper, not the raw API call: it saves name and theme.
             getProfileData();
         } else {
-            setState('isCoreRunning', runningStatus);
+            // The status is learned even though the core is down, so the retry
+            // loop must not keep the page blank while it polls.
+            setState({ isCoreRunning: runningStatus, processing: false });
         }
     };
 
-    stopDnsStatus = checkStatus(handleRequestSuccess, handleBootstrapStatusError);
+    const handleBootstrapError = () => {
+        if (sawAnswer) {
+            // The endpoint answers, it only reports a stopped core: the
+            // not-running screen is already up, and the toast would claim a
+            // failure that did not happen.
+            return;
+        }
+        handleBootstrapStatusError();
+    };
+
+    stopDnsStatus = checkStatus(handleRequestSuccess, handleBootstrapError);
 };
 
 /**
@@ -243,6 +259,12 @@ export const getTimerStatus = async () => {
     stopTimerStatus?.();
 
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
+        // A background check cannot rebuild the page after a failed bootstrap:
+        // escalate to the full check instead of leaving the retry screen up.
+        if (untrack(() => state.statusFailed)) {
+            getDnsStatus();
+            return;
+        }
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
             dnsStatus.protection_disabled_duration = null;

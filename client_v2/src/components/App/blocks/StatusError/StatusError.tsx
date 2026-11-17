@@ -8,6 +8,7 @@ import { Button } from 'panel/common/ui/Button';
 import s from './StatusError.module.pcss';
 
 type StatusErrorProps = {
+    message: string;
     processing: boolean;
     onRetry: () => void;
 };
@@ -16,7 +17,7 @@ export const StatusError = (props: StatusErrorProps) => {
     return (
         <div class={cn(theme.text.t2, s.root)} data-testid="status-error">
             <Icon icon="attention" class={s.icon} />
-            <div class={s.message}>{intl.getMessage('dns_status_error')}</div>
+            <div class={s.message}>{props.message}</div>
             <Button
                 variant="secondary"
                 size="small"

@@ -66,9 +66,9 @@ const App = () => {
             if (document.visibilityState !== 'visible') {
                 return;
             }
-            // A failed bootstrap left the store on `initialState` defaults, so
-            // only the full check can restore the page.
-            if (dashboardState.statusFailed) {
+            // A failed bootstrap or a stopped core left the store without a
+            // usable status, so only the full check can restore the page.
+            if (dashboardState.statusFailed || !dashboardState.isCoreRunning) {
                 getDnsStatus();
             } else {
                 getTimerStatus();
@@ -135,8 +135,13 @@ const App = () => {
                     <div class={s.wrapper}>
                         <Sidebar />
 
-                        <Show when={dashboardState.statusFailed}>
+                        <Show when={dashboardState.statusFailed || !dashboardState.isCoreRunning}>
                             <StatusError
+                                message={
+                                    dashboardState.statusFailed
+                                        ? intl.getMessage('dns_status_error')
+                                        : intl.getMessage('dns_not_running')
+                                }
                                 processing={dashboardState.processing}
                                 onRetry={() => getDnsStatus()}
                             />
