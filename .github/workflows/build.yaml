@@ -135,6 +135,7 @@
           'target': 'builder-exporter'
           'output': '.'
           'build-args': |
+            ARCH=amd64 arm64
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
@@ -161,6 +162,7 @@
           'target': 'builder-exporter'
           'output': '.'
           'build-args': |
+            ARCH=amd64 arm64
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             BRANCH=${{ github.ref_name }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
