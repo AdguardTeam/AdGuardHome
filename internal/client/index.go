@@ -63,7 +63,9 @@ func newIndex() (ci *index) {
 }
 
 // add stores information about a persistent client in the index.  c must be
-// non-nil, have a UID, and contain at least one identifier.
+// non-nil, have a UID, and contain at least one identifier.  It is not
+// concurrent safe, so the caller must lock the mutex before calling this
+// method.
 func (ci *index) add(c *Persistent) {
 	if (c.UID == UID{}) {
 		panic("client must contain uid")
@@ -92,7 +94,9 @@ func (ci *index) add(c *Persistent) {
 }
 
 // clashesUID returns existing persistent client with the same UID as c.  Note
-// that this is only possible when configuration contains duplicate fields.
+// that this is only possible when configuration contains duplicate fields.  c
+// must not be nil.  It is not concurrent safe, so the caller must lock the
+// mutex before calling this method.
 func (ci *index) clashesUID(c *Persistent) (err error) {
 	p, ok := ci.uidToClient[c.UID]
 	if ok {
@@ -103,7 +107,9 @@ func (ci *index) clashesUID(c *Persistent) (err error) {
 }
 
 // clashes returns an error if the index contains a different persistent client
-// with at least a single identifier contained by c.  c must be non-nil.
+// with at least a single identifier contained by c.  c must not be nil.  It is
+// not concurrent safe, so the caller must lock the mutex before calling this
+// method.
 func (ci *index) clashes(c *Persistent) (err error) {
 	if p := ci.clashesName(c); p != nil {
 		return fmt.Errorf("another client uses the same name %q", p.Name)
@@ -136,8 +142,8 @@ func (ci *index) clashes(c *Persistent) (err error) {
 	return nil
 }
 
-// clashesName returns existing persistent client with the same name as c or
-// nil.  c must be non-nil.
+// clashesName returns existing persistent client with the same name as c.  If
+// no such client exists, it returns nil.  c must not be nil.
 func (ci *index) clashesName(c *Persistent) (existing *Persistent) {
 	existing, ok := ci.findByName(c.Name)
 	if !ok {
@@ -151,8 +157,8 @@ func (ci *index) clashesName(c *Persistent) (existing *Persistent) {
 	return nil
 }
 
-// clashesIP returns a previous client with the same IP address as c.  c must be
-// non-nil.
+// clashesIP returns a previous client with the same IP address as c.  c must
+// not be nil.
 func (ci *index) clashesIP(c *Persistent) (p *Persistent, ip netip.Addr) {
 	for _, ip := range c.IPs {
 		existing, ok := ci.ipToUID[ip]
@@ -164,8 +170,8 @@ func (ci *index) clashesIP(c *Persistent) (p *Persistent, ip netip.Addr) {
 	return nil, netip.Addr{}
 }
 
-// clashesSubnet returns a previous client with the same subnet as c.  c must be
-// non-nil.
+// clashesSubnet returns a previous client with the same subnet as c.  c must
+// not be nil.
 func (ci *index) clashesSubnet(c *Persistent) (p *Persistent, s netip.Prefix) {
 	for _, s = range c.Subnets {
 		var existing UID
@@ -191,7 +197,7 @@ func (ci *index) clashesSubnet(c *Persistent) (p *Persistent, s netip.Prefix) {
 }
 
 // clashesMAC returns a previous client with the same MAC address as c.  c must
-// be non-nil.
+// not be nil.
 func (ci *index) clashesMAC(c *Persistent) (p *Persistent, mac net.HardwareAddr) {
 	for _, mac = range c.MACs {
 		k := macToKey(mac)
@@ -205,7 +211,8 @@ func (ci *index) clashesMAC(c *Persistent) (p *Persistent, mac net.HardwareAddr)
 }
 
 // find finds persistent client by string representation of the ClientID, IP
-// address, or MAC.
+// address, or MAC.  It is not concurrent safe, so the caller must lock the
+// mutex before calling this method.
 func (ci *index) find(id string) (c *Persistent, ok bool) {
 	c, ok = ci.findByClientID(ClientID(id))
 	if ok {
@@ -229,7 +236,8 @@ func (ci *index) find(id string) (c *Persistent, ok bool) {
 	return nil, false
 }
 
-// findByClientID finds persistent client by ClientID.
+// findByClientID finds persistent client by ClientID.  It is not concurrent
+// safe, so the caller must lock the mutex before calling this method.
 func (ci *index) findByClientID(clientID ClientID) (c *Persistent, ok bool) {
 	uid, ok := ci.clientIDToUID[clientID]
 	if ok {
@@ -239,7 +247,8 @@ func (ci *index) findByClientID(clientID ClientID) (c *Persistent, ok bool) {
 	return nil, false
 }
 
-// findByName finds persistent client by name.
+// findByName finds persistent client by name.  It is not concurrent safe, so
+// the caller must lock the mutex before calling this method.
 func (ci *index) findByName(name string) (c *Persistent, found bool) {
 	uid, found := ci.nameToUID[name]
 	if found {
@@ -249,7 +258,8 @@ func (ci *index) findByName(name string) (c *Persistent, found bool) {
 	return nil, false
 }
 
-// findByIP finds persistent client by IP address.
+// findByIP finds persistent client by IP address.  It is not concurrent safe,
+// so the caller must lock the mutex before calling this method.
 func (ci *index) findByIP(ip netip.Addr) (c *Persistent, found bool) {
 	uid, found := ci.ipToUID[ip]
 	if found {
@@ -295,7 +305,8 @@ func (ci *index) findByCIDR(subnet netip.Prefix) (c *Persistent, ok bool) {
 	return nil, false
 }
 
-// findByMAC finds persistent client by MAC.
+// findByMAC finds persistent client by MAC.  It is not concurrent safe, so the
+// caller must lock the mutex before calling this method.
 func (ci *index) findByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
 	k := macToKey(mac)
 	uid, found := ci.macToUID[k]
@@ -309,6 +320,8 @@ func (ci *index) findByMAC(mac net.HardwareAddr) (c *Persistent, found bool) {
 // findByIPWithoutZone finds a persistent client by IP address without zone.  It
 // strips the IPv6 zone index from the stored IP addresses before comparing,
 // because querylog entries don't have it.  See TODO on [querylog.logEntry.IP].
+// It is not concurrent safe, so the caller must lock the mutex before calling
+// this method.
 //
 // Note that multiple clients can have the same IP address with different zones.
 // Therefore, the result of this method is indeterminate.
@@ -326,8 +339,9 @@ func (ci *index) findByIPWithoutZone(ip netip.Addr) (c *Persistent) {
 	return nil
 }
 
-// remove removes information about persistent client from the index.  c must be
-// non-nil.
+// remove removes information about persistent client from the index.  c must
+// not be nil.  It is not concurrent safe, so the caller must lock the mutex
+// before calling this method.
 func (ci *index) remove(c *Persistent) {
 	delete(ci.nameToUID, c.Name)
 
@@ -351,13 +365,15 @@ func (ci *index) remove(c *Persistent) {
 	delete(ci.uidToClient, c.UID)
 }
 
-// size returns the number of persistent clients.
+// size returns the number of persistent clients.  It is not concurrent safe,
+// so the caller must lock the mutex before calling this method.
 func (ci *index) size() (n int) {
 	return len(ci.uidToClient)
 }
 
 // rangeByName is like [Index.Range] but sorts the persistent clients by name
-// before iterating ensuring a predictable order.
+// before iterating ensuring a predictable order.  It is not concurrent safe,
+// so the caller must lock the mutex before calling this method.
 func (ci *index) rangeByName(f func(c *Persistent) (cont bool)) {
 	clients := slices.SortedStableFunc(
 		maps.Values(ci.uidToClient),

@@ -169,7 +169,8 @@ type Storage struct {
 	runtimeSourceDHCP bool
 }
 
-// NewStorage returns initialized client storage.  conf must not be nil.
+// NewStorage returns initialized client storage.  conf must be non-nil and
+// valid.
 func NewStorage(ctx context.Context, conf *StorageConfig) (s *Storage, err error) {
 	tags := slices.Clone(allowedTags)
 	slices.Sort(tags)
@@ -308,7 +309,7 @@ func (s *Storage) handleHostsUpdates(ctx context.Context) {
 }
 
 // addFromHostsFile fills the client-hostname pairing index from the system's
-// hosts files.
+// hosts files.  hosts must not be nil.
 func (s *Storage) addFromHostsFile(ctx context.Context, hosts *hostsfile.DefaultStorage) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -386,7 +387,8 @@ func (s *Storage) UpdateDHCP(ctx context.Context) {
 	)
 }
 
-// setWHOISInfo sets the WHOIS information for a runtime client.
+// setWHOISInfo sets the WHOIS information for a runtime client.  wi must not be
+// nil.  s.mu must be locked.
 func (s *Storage) setWHOISInfo(ctx context.Context, ip netip.Addr, wi *whois.Info) {
 	_, ok := s.index.findByIP(ip)
 	if ok {
@@ -563,8 +565,7 @@ func (s *Storage) Find(params *FindParams) (p *Persistent, ok bool) {
 	}
 }
 
-// findByIP finds persistent client by IP address.  s.mu is expected to be
-// locked.
+// findByIP finds persistent client by IP address.  s.mu must be locked.
 func (s *Storage) findByIP(addr netip.Addr) (p *Persistent, ok bool) {
 	p, ok = s.index.findByIP(addr)
 	if ok {
@@ -632,7 +633,7 @@ func (s *Storage) RemoveByName(ctx context.Context, name string) (ok bool) {
 }
 
 // Update finds the stored persistent client by its name and updates its
-// information from p.
+// information from p.  p must not be nil.
 func (s *Storage) Update(ctx context.Context, name string, p *Persistent) (err error) {
 	defer func() { err = errors.Annotate(err, "updating client: %w") }()
 
@@ -687,7 +688,7 @@ func (s *Storage) Size() (n int) {
 }
 
 // ClientRuntime returns a copy of the saved runtime client by ip.  If no such
-// client exists, returns nil.
+// client exists, it returns nil.
 func (s *Storage) ClientRuntime(ip netip.Addr) (rc *Runtime) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -772,6 +773,9 @@ func (s *Storage) ClearUpstreamCache() {
 // ClientID or client IP address, and applies it to the filtering settings.
 // setts must not be nil.
 func (s *Storage) ApplyClientFiltering(id string, addr netip.Addr, setts *filtering.Settings) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	c, ok := s.index.findByClientID(ClientID(id))
 	if !ok {
 		c, ok = s.index.findByIP(addr)
