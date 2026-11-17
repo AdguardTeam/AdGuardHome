@@ -169,9 +169,23 @@ case "$channel" in
 	release_branch="release-${rc_version%.*}"
 	readonly release_branch
 
+	# The release branch may only exist as a remote-tracking ref, e.g. in CI,
+	# where the checkout action fetches all the branches but only checks out the
+	# selected one.
+	if git rev-parse --verify -q "refs/remotes/origin/${release_branch}" >/dev/null; then
+		release_ref="refs/remotes/origin/$release_branch"
+	elif git rev-parse --verify -q "refs/heads/${release_branch}" >/dev/null; then
+		release_ref="refs/heads/${release_branch}"
+	else
+		echo "cannot find base branch '$release_branch' for '$current_branch'" 1>&2
+
+		exit 1
+	fi
+	readonly release_ref
+
 	# num_commits is the number of commits that are only on this branch and are
 	# not in the release branch, i.e. the number of the current candidate.
-	num_commits="$(git rev-list --count HEAD --not "$release_branch")"
+	num_commits="$(git rev-list --count HEAD --not "$release_ref")"
 	readonly num_commits
 
 	version="${rc_version}-rc.${num_commits}"
