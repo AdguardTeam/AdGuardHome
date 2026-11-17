@@ -243,17 +243,17 @@ func (s *Storage) periodicARPUpdate(ctx context.Context) {
 
 // ReloadARP reloads runtime clients from ARP, if configured.
 func (s *Storage) ReloadARP(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	if s.arpDB != nil {
 		s.addFromSystemARP(ctx)
 	}
 }
 
 // addFromSystemARP adds the IP-hostname pairings from the output of the arp -a
-// command.
+// command.  s.mu must be locked.
 func (s *Storage) addFromSystemARP(ctx context.Context) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	if err := s.arpDB.Refresh(ctx); err != nil {
 		s.arpDB = arpdb.Empty{}
 		s.logger.ErrorContext(ctx, "refreshing arp container", slogutil.KeyError, err)
@@ -530,8 +530,8 @@ func (p *FindParams) Set(id string) (err error) {
 	return nil
 }
 
-// Find represents the parameters for searching a client.  params must not be
-// nil and must have at least one non-empty field.
+// Find searches for a persistent client based on the provided search params.
+// params must not be nil and must have at least one non-empty field.
 func (s *Storage) Find(params *FindParams) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
