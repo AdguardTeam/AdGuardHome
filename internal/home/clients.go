@@ -274,8 +274,8 @@ func newBlockedServices(
 ) (bs *filtering.BlockedServices, err error) {
 	bs = &filtering.BlockedServices{}
 	if conf != nil {
-		bs.IDs = conf.IDs
-		bs.Schedule = conf.Schedule
+		bs.IDs = slices.Clone(conf.IDs)
+		bs.Schedule = conf.Schedule.Clone()
 	}
 
 	if bs.Schedule == nil {
@@ -289,7 +289,7 @@ func newBlockedServices(
 		return nil, err
 	}
 
-	return bs.Clone(), nil
+	return bs, nil
 }
 
 // WriteDiskConfig writes the clients configuration to the given c.  c must not
