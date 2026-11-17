@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Init script actions not being passed to System V and OpenWrt services.
+
 - DNS rewrites with trailing dots not matching ([#8674]).
 
 - Shutdown deadlock when looking up clients for query accounting ([#8658]).
