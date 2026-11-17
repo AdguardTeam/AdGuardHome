@@ -1,6 +1,7 @@
 package home
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
@@ -175,20 +176,16 @@ func newPersistentClient(
 	safeSearchCacheSize uint,
 	safeSearchCacheTTL time.Duration,
 ) (cli *client.Persistent, err error) {
-	safeSearch := conf.SafeSearchConf
-	if safeSearch == nil {
-		safeSearch = &configmgr.SafeSearch{}
-	}
-
+	ssConf := cmp.Or(conf.SafeSearchConf, &configmgr.SafeSearch{})
 	safeSearchConf := &filtering.SafeSearchConfig{
-		Enabled:    safeSearch.Enabled,
-		Bing:       safeSearch.Bing,
-		DuckDuckGo: safeSearch.DuckDuckGo,
-		Ecosia:     safeSearch.Ecosia,
-		Google:     safeSearch.Google,
-		Pixabay:    safeSearch.Pixabay,
-		Yandex:     safeSearch.Yandex,
-		YouTube:    safeSearch.YouTube,
+		Enabled:    ssConf.Enabled,
+		Bing:       ssConf.Bing,
+		DuckDuckGo: ssConf.DuckDuckGo,
+		Ecosia:     ssConf.Ecosia,
+		Google:     ssConf.Google,
+		Pixabay:    ssConf.Pixabay,
+		Yandex:     ssConf.Yandex,
+		YouTube:    ssConf.YouTube,
 	}
 
 	cli = &client.Persistent{
@@ -216,7 +213,7 @@ func newPersistentClient(
 		cli.UID = client.NewUID()
 	}
 
-	if safeSearch.Enabled {
+	if safeSearchConf.Enabled {
 		ss, sErr := newSafeSearch(
 			ctx,
 			baseLogger,

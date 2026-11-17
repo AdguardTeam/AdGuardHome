@@ -1,6 +1,7 @@
 package home
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -153,11 +154,7 @@ func (clients *clientsContainer) jsonToClient(
 	c.ParentalEnabled = cj.ParentalEnabled
 	c.SafeBrowsingEnabled = cj.SafeBrowsingEnabled
 	c.UseOwnBlockedServices = !cj.UseGlobalBlockedServices
-
-	c.SafeSearchConf = cj.SafeSearchConf
-	if c.SafeSearchConf == nil {
-		c.SafeSearchConf = &filtering.SafeSearchConfig{Enabled: false}
-	}
+	c.SafeSearchConf = cmp.Or(cj.SafeSearchConf, &filtering.SafeSearchConfig{})
 
 	if c.SafeSearchConf.Enabled {
 		logger := clients.baseLogger.With(
