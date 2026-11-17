@@ -26,6 +26,8 @@ import type { ClientAuto } from 'panel/api/model/clientAuto';
 
 type DashboardState = {
     processing: boolean;
+    /** The bootstrap status check failed, so the dashboard is unknown. */
+    statusFailed: boolean;
     isCoreRunning: boolean;
     processingVersion: boolean;
     processingClients: boolean;
@@ -56,6 +58,7 @@ type DashboardState = {
 
 const initialState: DashboardState = {
     processing: true,
+    statusFailed: false,
     isCoreRunning: true,
     processingVersion: true,
     processingClients: true,
@@ -95,39 +98,68 @@ const fetchStatus = (): Promise<ServerStatus> =>
         skipAuthRedirect: true,
     });
 
-// Each call owns its retry timer.  A shared one would let a concurrent chain,
-// e.g. the one started by `getTimerStatus`, cancel another chain's pending
-// retry and leave `processing` stuck at true forever.
-const checkStatus = async (
+type StopStatusCheck = () => void;
+
+let stopDnsStatus: StopStatusCheck | null = null;
+let stopTimerStatus: StopStatusCheck | null = null;
+let stopUpdateStatus: StopStatusCheck | null = null;
+
+// Each call owns its retry timer and can be stopped.  A shared timer would let
+// a concurrent chain, e.g. the one started by `getTimerStatus`, cancel another
+// chain's pending retry and leave `processing` stuck at true forever.
+const checkStatus = (
     handleRequestSuccess: (response: { status: number; data: ServerStatus }) => void,
     handleRequestError: () => void,
     attempts = 60,
-): Promise<void> => {
-    if (attempts === 0) {
-        handleRequestError();
-        return;
-    }
-    try {
-        const data = await fetchStatus();
-        handleRequestSuccess({ status: 200, data });
-        if (data.running === false) {
-            setTimeout(
-                checkStatus,
-                CHECK_TIMEOUT,
-                handleRequestSuccess,
-                handleRequestError,
-                attempts - 1,
-            );
+): StopStatusCheck => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+
+    const check = async (remaining: number): Promise<void> => {
+        if (stopped) {
+            return;
         }
-    } catch {
-        setTimeout(
-            checkStatus,
-            CHECK_TIMEOUT,
-            handleRequestSuccess,
-            handleRequestError,
-            attempts - 1,
-        );
-    }
+        if (remaining === 0) {
+            handleRequestError();
+            return;
+        }
+        try {
+            const data = await fetchStatus();
+            // A stopped chain must not touch the state of a newer one.
+            if (stopped) {
+                return;
+            }
+            handleRequestSuccess({ status: 200, data });
+            if (data.running === false) {
+                timeout = setTimeout(check, CHECK_TIMEOUT, remaining - 1);
+            }
+        } catch {
+            if (stopped) {
+                return;
+            }
+            timeout = setTimeout(check, CHECK_TIMEOUT, remaining - 1);
+        }
+    };
+
+    void check(attempts);
+
+    return () => {
+        stopped = true;
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
+    };
+};
+
+/** Stops every pending status poll, e.g. when the app unmounts. */
+export const stopStatusChecks = () => {
+    stopDnsStatus?.();
+    stopTimerStatus?.();
+    stopUpdateStatus?.();
+    stopDnsStatus = null;
+    stopTimerStatus = null;
+    stopUpdateStatus = null;
 };
 
 /**
@@ -141,10 +173,22 @@ const handleStatusRequestError = () => {
     setState('processing', false);
 };
 
+/**
+ * Handles a bootstrap status check that failed all of its attempts.  The store
+ * still holds `initialState` defaults, so the route body must not render:
+ * `App` shows an error screen with a retry instead.
+ */
+const handleBootstrapStatusError = () => {
+    handleStatusRequestError();
+    setState('statusFailed', true);
+};
+
 export const getDnsStatus = async () => {
+    stopDnsStatus?.();
     setState('processing', true);
 
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
+        setState('statusFailed', false);
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
             dnsStatus.protection_disabled_duration = null;
@@ -171,11 +215,7 @@ export const getDnsStatus = async () => {
         }
     };
 
-    try {
-        checkStatus(handleRequestSuccess, handleStatusRequestError);
-    } catch {
-        handleStatusRequestError();
-    }
+    stopDnsStatus = checkStatus(handleRequestSuccess, handleBootstrapStatusError);
 };
 
 /**
@@ -200,6 +240,8 @@ export const refreshDnsStatus = async (): Promise<void> => {
 };
 
 export const getTimerStatus = async () => {
+    stopTimerStatus?.();
+
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
@@ -216,11 +258,7 @@ export const getTimerStatus = async () => {
         }
     };
 
-    try {
-        checkStatus(handleRequestSuccess, handleStatusRequestError);
-    } catch {
-        handleStatusRequestError();
-    }
+    stopTimerStatus = checkStatus(handleRequestSuccess, handleStatusRequestError);
 };
 
 export const getVersion = async (recheck = false) => {
@@ -276,7 +314,8 @@ export const getUpdate = async () => {
     };
     try {
         await beginUpdate();
-        checkStatus(handleRequestSuccess, handleRequestError);
+        stopUpdateStatus?.();
+        stopUpdateStatus = checkStatus(handleRequestSuccess, handleRequestError);
     } catch {
         handleRequestError();
     }

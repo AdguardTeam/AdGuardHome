@@ -1,0 +1,32 @@
+.root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    min-width: 0;
+    min-height: calc(100vh - 64px);
+    padding: 24px;
+    text-align: center;
+
+    @media (min-width: 1200px) {
+        min-height: 100vh;
+    }
+}
+
+.icon {
+    width: 64px;
+    height: 64px;
+    color: var(--default-error-icon);
+}
+
+.message {
+    max-width: 320px;
+    color: var(--default-main-text);
+}
+
+.button {
+    width: auto;
+    min-width: 120px;
+}

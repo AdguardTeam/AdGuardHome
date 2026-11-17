@@ -22,7 +22,13 @@ import { QueryLog } from 'panel/components/QueryLog';
 import { Toasts } from 'panel/components/Toasts';
 import { THEMES } from '../../helpers/constants';
 import { getTheme, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
-import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashboard';
+import {
+    getDnsStatus,
+    getTimerStatus,
+    dashboardState,
+    stopStatusChecks,
+} from '../../stores/dashboard';
+import { StatusError } from './blocks/StatusError/StatusError';
 
 import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
@@ -57,7 +63,14 @@ const App = () => {
         getDnsStatus();
 
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+            // A failed bootstrap left the store on `initialState` defaults, so
+            // only the full check can restore the page.
+            if (dashboardState.statusFailed) {
+                getDnsStatus();
+            } else {
                 getTimerStatus();
             }
         };
@@ -66,6 +79,7 @@ const App = () => {
 
         onCleanup(() => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            stopStatusChecks();
         });
     });
 
@@ -121,7 +135,20 @@ const App = () => {
                     <div class={s.wrapper}>
                         <Sidebar />
 
-                        <Show when={!dashboardState.processing && dashboardState.isCoreRunning}>
+                        <Show when={dashboardState.statusFailed}>
+                            <StatusError
+                                processing={dashboardState.processing}
+                                onRetry={() => getDnsStatus()}
+                            />
+                        </Show>
+
+                        <Show
+                            when={
+                                !dashboardState.processing &&
+                                !dashboardState.statusFailed &&
+                                dashboardState.isCoreRunning
+                            }
+                        >
                             <div class={s.bodyWrapper}>{props.children}</div>
                         </Show>
                     </div>
