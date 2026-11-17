@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -185,7 +186,19 @@ func (s *server) setServers(
 	v6conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6conf.InterfaceName = s.conf.InterfaceName
 	v6conf.notify = s.onNotify
-	v6conf.Enabled = s.conf.Enabled && v6conf.RangeStart.IsValid() && isIPv6(v6conf.RangeStart)
+
+	isIPv6 := aghnet.IsIPv6(v6conf.RangeStart)
+	v6conf.Enabled = s.conf.Enabled && isIPv6
+
+	// TODO(f.setrakov): Remove once range start is validated properly in
+	// [configmgr].
+	if s.conf.Enabled && !isIPv6 {
+		s.conf.Logger.WarnContext(
+			ctx,
+			"given range start is not a valid ipv6; disabling dhcpv6",
+			"range_start", v6conf.RangeStart,
+		)
+	}
 
 	s.srv6, err = newV6Server(v6conf)
 	if err != nil {
@@ -193,12 +206,6 @@ func (s *server) setServers(
 	}
 
 	return v4conf.Enabled, v6conf.Enabled, nil
-}
-
-// isIPv6 returns true if addr is an actual IPv6 address.  It checks against
-// IPv4-mapped IPv6 addresses.
-func isIPv6(addr netip.Addr) (ok bool) {
-	return addr.Is6() && !addr.Is4In6()
 }
 
 // Enabled returns true when the server is enabled.

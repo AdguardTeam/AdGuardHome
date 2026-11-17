@@ -425,3 +425,9 @@ func BroadcastFromPref(p netip.Prefix) (bc netip.Addr) {
 
 	return bc
 }
+
+// IsIPv6 returns true if addr is an actual IPv6 address.  It checks against
+// IPv4-mapped IPv6 addresses.
+func IsIPv6(addr netip.Addr) (ok bool) {
+	return addr.Is6() && !addr.Is4In6()
+}

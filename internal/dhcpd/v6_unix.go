@@ -52,7 +52,7 @@ func (s *v6Server) WriteDiskConfig6(dc *configmgr.DHCPv6Config) {
 	dc.RAAllowSLAAC = s.conf.RAAllowSLAAC
 }
 
-// Return TRUE if IP address is within range [start..0xff]
+// ip6InRange returns true if ip is within range [start..0xff].
 func ip6InRange(start, ip net.IP) (ok bool) {
 	if len(start) != 16 || len(ip) != 16 {
 		return false
@@ -822,7 +822,7 @@ func newV6Server(conf V6ServerConf) (srv DHCPServer, err error) {
 		return s, fmt.Errorf("dhcpv6: invalid range-start ip: %s", conf.RangeStart)
 	}
 
-	if !isIPv6(conf.RangeStart) {
+	if !aghnet.IsIPv6(conf.RangeStart) {
 		return s, fmt.Errorf("dhcpv6: range-start is not an ipv6 address")
 	}
 

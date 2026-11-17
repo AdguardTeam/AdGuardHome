@@ -105,6 +105,7 @@ func (c *IPv6Config) Validate() (err error) {
 		validate.Positive("lease duration", c.LeaseDuration),
 	}
 
+	// TODO(e.burkov): Validate using [aghnet.IsIPv6].
 	if !c.RangeStart.Is6() {
 		errs = append(errs, fmt.Errorf("range start: %s: must be a valid ipv6", c.RangeStart))
 	}
