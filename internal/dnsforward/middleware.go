@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -63,23 +64,44 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 // the EDNS Client Subnet option when it's enabled, the request comes from a
 // trusted proxy, and the option carries a host address, or the connection
 // address otherwise.
+//
+// When the client address is taken from ECS, the ECS option is removed from the
+// request.  It carries the client's full, often private, address and is only
+// meant for AdGuard Home, so it must not be passed on to the upstreams.  The
+// EDNS Client Subnet settings then apply as if the request had come without it.
 func (s *Server) withECSClientAddr(
 	ctx context.Context,
 	pctx *proxy.DNSContext,
 ) (newCtx context.Context, addr netip.Addr) {
 	addr = pctx.Addr.Addr()
 
-	if s.useClientAddrFromECS(addr) {
-		if ecsAddr, ok := ecsClientAddr(pctx.Req); ok {
-			addr = ecsAddr
-		}
-	}
-
-	if addr == pctx.Addr.Addr() {
+	if !s.useClientAddrFromECS(addr) {
 		return ctx, addr
 	}
 
-	return contextWithECSClientAddr(ctx, addr), addr
+	ecsAddr, ok := ecsClientAddr(pctx.Req)
+	if !ok {
+		return ctx, addr
+	}
+
+	removeECS(pctx.Req)
+
+	return contextWithECSClientAddr(ctx, ecsAddr), ecsAddr
+}
+
+// removeECS removes all EDNS Client Subnet options from req and keeps the rest
+// of its OPT record.  req must not be nil.
+func removeECS(req *dns.Msg) {
+	opt := req.IsEdns0()
+	if opt == nil {
+		return
+	}
+
+	opt.Option = slices.DeleteFunc(opt.Option, func(o dns.EDNS0) (isECS bool) {
+		_, isECS = o.(*dns.EDNS0_SUBNET)
+
+		return isECS
+	})
 }
 
 // useClientAddrFromECS returns whether the client address should be taken from

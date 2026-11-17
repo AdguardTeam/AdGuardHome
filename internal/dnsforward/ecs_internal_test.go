@@ -228,6 +228,8 @@ func TestServer_withECSClientAddr(t *testing.T) {
 				Addr: netip.AddrPortFrom(tc.remote, 53),
 			}
 
+			hadECS := hasECS(tc.req)
+
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			ctx, got := s.withECSClientAddr(ctx, pctx)
 			assert.Equal(t, tc.want, got)
@@ -235,12 +237,64 @@ func TestServer_withECSClientAddr(t *testing.T) {
 			ctxAddr, ok := ecsClientAddrFromContext(ctx)
 			if tc.want == tc.remote {
 				assert.False(t, ok)
+
+				// An ECS option that wasn't used is left as is.
+				assert.Equal(t, hadECS, hasECS(tc.req))
 			} else {
 				require.True(t, ok)
 				assert.Equal(t, tc.want, ctxAddr)
+
+				// The used ECS option must not reach the upstreams, the rest
+				// of the OPT record stays.
+				assert.False(t, hasECS(tc.req))
+				assert.NotNil(t, tc.req.IsEdns0())
 			}
 		})
 	}
+}
+
+// TestRemoveECS is a test for the removeECS function.
+func TestRemoveECS(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no_opt", func(t *testing.T) {
+		t.Parallel()
+
+		m := new(dns.Msg)
+		removeECS(m)
+		assert.Nil(t, m.IsEdns0())
+	})
+
+	t.Run("ecs_and_cookie", func(t *testing.T) {
+		t.Parallel()
+
+		m := newTestMsgWithECS(t, 1, 32, "192.0.2.100")
+		opt := m.IsEdns0()
+		cookie := &dns.EDNS0_COOKIE{Code: dns.EDNS0COOKIE, Cookie: "0123456789abcdef"}
+		opt.Option = append(opt.Option, cookie)
+
+		removeECS(m)
+
+		require.NotNil(t, m.IsEdns0())
+		assert.Equal(t, []dns.EDNS0{cookie}, m.IsEdns0().Option)
+		assert.Equal(t, uint16(4096), m.IsEdns0().UDPSize())
+	})
+}
+
+// hasECS returns true if m carries an EDNS Client Subnet option.
+func hasECS(m *dns.Msg) (ok bool) {
+	opt := m.IsEdns0()
+	if opt == nil {
+		return false
+	}
+
+	for _, o := range opt.Option {
+		if _, ok = o.(*dns.EDNS0_SUBNET); ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // TestServer_setCustomUpstream_ecs checks that the custom upstream
