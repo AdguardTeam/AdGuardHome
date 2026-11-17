@@ -10,7 +10,7 @@
       'edge'
     ) }}
   'CLIENT_DIR': |-
-    client_v2
+    ${{ inputs.client_dir || 'client_v2' }}
   'DIST_DIR': |-
     dist
   'FRONTEND_BASE_IMAGE': |-
