@@ -252,7 +252,7 @@
   "edns_use_custom_ip": "Use custom IP for EDNS",
   "edns_use_custom_ip_desc": "Allow to use custom IP for EDNS",
   "edns_use_client_addr": "Use client address from ECS",
-  "edns_use_client_addr_desc": "Identify clients by their EDNS Client Subnet instead of the connection address. Only applies to requests from trusted proxies with a /32 or /128 subnet. The ECS option is then not passed on to upstreams.",
+  "edns_use_client_addr_desc": "Identify clients by their EDNS Client Subnet instead of the connection address. Only applies to requests from trusted proxies with a /32 or /128 subnet. The ECS option is then not passed on to upstreams, and neither is ECS from other senders.",
   "elapsed": "Elapsed",
   "empty_response_status": "Empty",
   "enable_protection": "Enable protection",

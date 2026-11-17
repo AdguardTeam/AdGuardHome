@@ -170,41 +170,56 @@ func TestServer_withECSClientAddr(t *testing.T) {
 		want    netip.Addr
 		name    string
 		enabled bool
+		// wantECS is whether the request still carries ECS afterwards.
+		wantECS bool
 	}{{
 		remote:  proxyAddr,
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    ecsAddr,
 		name:    "trusted",
+		wantECS: false,
 		enabled: true,
 	}, {
 		remote:  netip.AddrFrom16(proxyAddr.As16()),
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    ecsAddr,
 		name:    "trusted_mapped",
+		wantECS: false,
 		enabled: true,
 	}, {
 		remote:  proxyAddr,
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    proxyAddr,
 		name:    "disabled",
+		wantECS: true,
 		enabled: false,
 	}, {
 		remote:  otherAddr,
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    otherAddr,
 		name:    "untrusted",
+		wantECS: false,
 		enabled: true,
 	}, {
 		remote:  proxyAddr,
 		req:     newTestMsgWithECS(t, 1, 24, "192.0.2.0"),
 		want:    proxyAddr,
 		name:    "trusted_subnet",
+		wantECS: true,
 		enabled: true,
 	}, {
 		remote:  proxyAddr,
 		req:     new(dns.Msg),
 		want:    proxyAddr,
 		name:    "trusted_no_ecs",
+		wantECS: false,
+		enabled: true,
+	}, {
+		remote:  otherAddr,
+		req:     newTestMsgWithECS(t, 1, 24, "192.0.2.0"),
+		want:    otherAddr,
+		name:    "untrusted_subnet",
+		wantECS: false,
 		enabled: true,
 	}}
 
@@ -228,8 +243,6 @@ func TestServer_withECSClientAddr(t *testing.T) {
 				Addr: netip.AddrPortFrom(tc.remote, 53),
 			}
 
-			hadECS := hasECS(tc.req)
-
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
 			ctx, got := s.withECSClientAddr(ctx, pctx)
 			assert.Equal(t, tc.want, got)
@@ -237,16 +250,15 @@ func TestServer_withECSClientAddr(t *testing.T) {
 			ctxAddr, ok := ecsClientAddrFromContext(ctx)
 			if tc.want == tc.remote {
 				assert.False(t, ok)
-
-				// An ECS option that wasn't used is left as is.
-				assert.Equal(t, hadECS, hasECS(tc.req))
 			} else {
 				require.True(t, ok)
 				assert.Equal(t, tc.want, ctxAddr)
+			}
 
-				// The used ECS option must not reach the upstreams, the rest
-				// of the OPT record stays.
-				assert.False(t, hasECS(tc.req))
+			// A used ECS option, and any from an untrusted sender, must not
+			// reach the upstreams; the rest of the OPT record stays.
+			assert.Equal(t, tc.wantECS, hasECS(tc.req))
+			if len(tc.req.Extra) > 0 {
 				assert.NotNil(t, tc.req.IsEdns0())
 			}
 		})
