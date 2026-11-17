@@ -346,17 +346,19 @@ func (l *queryLog) parseSearchParams(
 		}
 	}
 
-	limit, _ := l.parseIntQueryParameter(ctx, q, "limit", p.limit)
+	limit, limitValid := l.parseIntQueryParameter(ctx, q, "limit", p.limit)
 	offset, offsetValid := l.parseIntQueryParameter(ctx, q, "offset", p.offset)
 	if offset > math.MaxInt32-limit {
 		l.logger.ErrorContext(ctx, "limit and offset sum overflows integer")
 
 		offset = p.offset
 		limit = p.limit
+
 		offsetValid = false
+		limitValid = false
 	}
 
-	if offsetValid {
+	if offsetValid || limitValid {
 		// If we don't use "olderThan" and use offset/limit instead, we should
 		// change the default behavior and scan all log records until we found
 		// enough log entries
@@ -385,8 +387,14 @@ func (l *queryLog) parseIntQueryParameter(
 	name string,
 	defaultValue int,
 ) (res int, valid bool) {
+	if !values.Has(name) {
+		return defaultValue, false
+	}
+
 	paramStr := values.Get(name)
 	if paramStr == "" {
+		l.logger.ErrorContext(ctx, "empty query parameter value", "parameter", name)
+
 		return defaultValue, false
 	}
 

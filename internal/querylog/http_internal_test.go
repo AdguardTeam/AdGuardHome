@@ -273,7 +273,7 @@ func TestQuerylog_ParseSearchParams_pagination(t *testing.T) {
 		},
 		wantLimit:              100,
 		wantOffset:             0,
-		wantMaxFileScanEntries: defaultMaxFileScanEntries,
+		wantMaxFileScanEntries: 0,
 	}}
 
 	for _, tc := range testCases {

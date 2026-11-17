@@ -205,8 +205,9 @@
         'description': >
           Specify the ranking number of the first item on the page.  Even though
           it is possible to use "offset" and "older_than", we recommend choosing
-          one of them and sticking to it.  If the given offset is invalid, the
-          default value will be used instead.
+          one of them and sticking to it.  The sum of offset and limit should
+          not exceed 2147483647.  If the given offset is invalid, the default
+          value will be used instead.
         'schema':
           'type': 'integer'
           'minimum': 0
@@ -215,8 +216,9 @@
       - 'name': 'limit'
         'in': 'query'
         'description': >
-          Limit the number of records to be returned.  If the given limit is
-          invalid, the default value will be used instead.
+          Limit the number of records to be returned.  The sum of offset and
+          limit should not exceed 2147483647.  If the given limit is invalid,
+          the default value will be used instead.
         'schema':
           'type': 'integer'
           'minimum': 0
