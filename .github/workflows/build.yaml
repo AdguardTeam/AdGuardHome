@@ -193,59 +193,7 @@
       'artifact-name': 'adguardhome-candidate-win'
       'files': '**/**/AdGuardHome.exe'
       'signed-artifact-name': 'adguardhome-candidate-win'
-  'PackCandidate':
-    'name': 'Pack candidate artifacts'
-    'needs':
-      - 'Build'
-      - 'SignWindowsBuilds'
-    'if': |
-      ${{
-        github.repository_owner == 'AdGuardSoftwareLimited'
-        && startsWith(github.ref_name, 'rc-v')
-      }}
-    'permissions':
-      'contents': 'read'
-    'runs-on': 'team-go'
-    'steps':
-      - 'uses': 'actions/checkout@v6'
-        'with':
-          # Set to false to avoid GITHUB_TOKEN leaking.
-          #
-          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
-          'persist-credentials': false
-      - 'uses': 'actions/download-artifact@v8'
-        'with':
-          'name': 'adguardhome-frontend'
-          'path': |
-            ${{ env.BUILD_DIR }}
-      - 'uses': 'actions/download-artifact@v8'
-        'with':
-          'name': 'adguardhome-candidate-unix'
-          'path': |
-            ${{ env.DIST_DIR }}
-      - 'uses': 'actions/download-artifact@v8'
-        'with':
-          'name': 'adguardhome-candidate-win'
-          'path': |
-            ${{ env.DIST_DIR }}
-      - 'name': 'Pack'
-        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
-        'with':
-          'dockerfile': 'docker/ci.Dockerfile'
-          'context': '.'
-          'target': 'packer-exporter'
-          'output': '.'
-          'build-args': |
-            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
-            CHANNEL=${{ env.CHANNEL }}
-            DIST_DIR=${{ env.DIST_DIR }}
-            SOURCE_DATE_EPOCH=${{ needs.Build.outputs.source_date_epoch }}
-            VERSION=${{ needs.Build.outputs.app_version }}
-      - 'uses': 'actions/upload-artifact@v7'
-        'with':
-          'name': 'adguardhome-candidate'
-          'path': |
-            ${{ env.DIST_DIR }}/*.*
+  # TODO(e.burkov): Add a job to pack candidate artifacts.
   'TestE2E':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}

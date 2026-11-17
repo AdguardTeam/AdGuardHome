@@ -18,9 +18,6 @@
 # BUG(a.garipov): The script currently can't differentiate between beta tags and
 # release tags if they are on the same commit, so the beta tag **must** be
 # pushed and built **before** the release tag is pushed.
-#
-# TODO(a.garipov): The script currently doesn't handle release branches, so it
-# must be modified once we have those.
 
 verbose="${VERBOSE:-0}"
 readonly verbose
