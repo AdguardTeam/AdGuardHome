@@ -296,12 +296,7 @@ describe('status checks — ownership of retries', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-        resetStore(dashboardState, {
-            processing: true,
-            statusFailed: false,
-            isCoreRunning: true,
-            dnsVersion: '',
-        });
+        resetStore(dashboardState, { processing: true, isCoreRunning: true, dnsVersion: '' });
         mocks.getVersionJson.mockResolvedValue({ disabled: true, new_version: 'v' });
         mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
         mocks.tlsStatus.mockResolvedValue({ enabled: false });
@@ -382,6 +377,9 @@ describe('status checks — all attempts failed', () => {
     beforeEach(async () => {
         vi.clearAllMocks();
         vi.useFakeTimers();
+        // `loadRunningStatus` below writes `statusFailed` through the store's
+        // own setter, so it cannot leak from the test above; `resetStore`
+        // cannot do it, since a raw write bypasses Solid's signals.
         resetStore(dashboardState, { processing: true, isCoreRunning: true, dnsVersion: '' });
         mocks.getVersionJson.mockResolvedValue({ disabled: true, new_version: 'v' });
         mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
@@ -441,6 +439,40 @@ describe('status checks — all attempts failed', () => {
         expect(dashboardState.statusFailed).toBe(false);
     });
 
+    it('does not report a stopped core as a failed check from the timer chain', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        respondWith(fetchMock, { running: false });
+
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(60);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+        expect(dashboardState.isCoreRunning).toBe(false);
+        expect(dashboardState.statusFailed).toBe(false);
+    });
+
+    it('clears the not-running screen when the timer check sees the core again', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+        respondWith(fetchMock, { running: false });
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(dashboardState.isCoreRunning).toBe(false);
+
+        // The timer chain observes the recovery while it is still polling.  It
+        // cannot fill the route body itself, so it must escalate to the full
+        // check, which is the only place the real status values come from.
+        respondWith(fetchMock, { ...runningStatus, version: 'v2' });
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(dashboardState.isCoreRunning).toBe(true);
+        expect(dashboardState.dnsVersion).toBe('v2');
+    });
+
     it('clears the failed flag when a retry succeeds', async () => {
         const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
 
@@ -471,12 +503,10 @@ describe('status checks — all attempts failed', () => {
         respondWith(fetchMock, runningStatus);
         await getTimerStatus();
         await vi.advanceTimersByTimeAsync(0);
-        await vi.advanceTimersByTimeAsync(0);
 
         expect(fetchMock).toHaveBeenCalledTimes(62);
         expect(dashboardState.statusFailed).toBe(false);
         expect(dashboardState.processing).toBe(false);
         expect(dashboardState.dnsVersion).toBe('v');
-        expect(fetchMock).toHaveBeenCalledTimes(62);
     });
 });

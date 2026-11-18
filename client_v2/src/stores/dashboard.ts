@@ -109,18 +109,22 @@ let stopUpdateStatus: StopStatusCheck | null = null;
 // chain's pending retry and leave `processing` stuck at true forever.
 const checkStatus = (
     handleRequestSuccess: (response: { status: number; data: ServerStatus }) => void,
-    handleRequestError: () => void,
+    handleRequestError: (sawAnswer: boolean) => void,
     attempts = 60,
 ): StopStatusCheck => {
     let timeout: ReturnType<typeof setTimeout> | null = null;
     let stopped = false;
+
+    // A chain that only ever got `running: false` answers has learned the core
+    // state and must not report a failed check when it runs out of attempts.
+    let sawAnswer = false;
 
     const check = async (remaining: number): Promise<void> => {
         if (stopped) {
             return;
         }
         if (remaining === 0) {
-            handleRequestError();
+            handleRequestError(sawAnswer);
             return;
         }
         try {
@@ -129,6 +133,7 @@ const checkStatus = (
             if (stopped) {
                 return;
             }
+            sawAnswer = true;
             handleRequestSuccess({ status: 200, data });
             if (data.running === false) {
                 timeout = setTimeout(check, CHECK_TIMEOUT, remaining - 1);
@@ -186,12 +191,8 @@ const handleBootstrapStatusError = () => {
 export const getDnsStatus = async () => {
     stopDnsStatus?.();
     setState('processing', true);
-    // A core that keeps answering `running: false` is a known state, not a
-    // failed check: `App` shows the not-running screen instead of the error.
-    let sawAnswer = false;
 
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
-        sawAnswer = true;
         setState('statusFailed', false);
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
@@ -221,7 +222,7 @@ export const getDnsStatus = async () => {
         }
     };
 
-    const handleBootstrapError = () => {
+    const handleBootstrapError = (sawAnswer: boolean) => {
         if (sawAnswer) {
             // The endpoint answers, it only reports a stopped core: the
             // not-running screen is already up, and the toast would claim a
@@ -259,17 +260,23 @@ export const getTimerStatus = async () => {
     stopTimerStatus?.();
 
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
-        // A background check cannot rebuild the page after a failed bootstrap:
-        // escalate to the full check instead of leaving the retry screen up.
-        if (untrack(() => state.statusFailed)) {
+        const dnsStatus = response.data;
+        const runningStatus = dnsStatus && dnsStatus.running;
+
+        // A background check cannot rebuild the page: after a failed bootstrap
+        // or while the not-running screen is up, only the full check restores
+        // the status values the route body renders.
+        const needsFullCheck = untrack(
+            () => state.statusFailed || (runningStatus === true && !state.isCoreRunning),
+        );
+        if (needsFullCheck) {
             getDnsStatus();
             return;
         }
-        const dnsStatus = response.data;
+
         if (dnsStatus.protection_disabled_duration === 0) {
             dnsStatus.protection_disabled_duration = null;
         }
-        const runningStatus = dnsStatus && dnsStatus.running;
         if (runningStatus === true) {
             setState({
                 protectionEnabled: dnsStatus.protection_enabled,
@@ -280,7 +287,16 @@ export const getTimerStatus = async () => {
         }
     };
 
-    stopTimerStatus = checkStatus(handleRequestSuccess, handleStatusRequestError);
+    const handleTimerError = (sawAnswer: boolean) => {
+        if (sawAnswer) {
+            // Same as the bootstrap check: a chain that received answers has
+            // already learned the core state and must not claim a failure.
+            return;
+        }
+        handleStatusRequestError();
+    };
+
+    stopTimerStatus = checkStatus(handleRequestSuccess, handleTimerError);
 };
 
 export const getVersion = async (recheck = false) => {
