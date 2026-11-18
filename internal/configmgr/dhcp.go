@@ -128,22 +128,22 @@ func (c *DHCPv4Config) Validate() (err error) {
 	}
 
 	var errs []error
-	gatewayIP, err := validateIPv4(c.GatewayIP, "address")
+	gatewayIP, err := ensureIPv4(c.GatewayIP)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("gateway_ip: %w", err))
 	}
 
-	subnetMask, err := validateIPv4(c.SubnetMask, "subnet mask")
+	subnetMask, err := ensureIPv4(c.SubnetMask)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("subnet_mask: %w", err))
 	}
 
-	rangeStart, err := validateIPv4(c.RangeStart, "address")
+	rangeStart, err := ensureIPv4(c.RangeStart)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("range_start: %w", err))
 	}
 
-	rangeEnd, err := validateIPv4(c.RangeEnd, "address")
+	rangeEnd, err := ensureIPv4(c.RangeEnd)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("range_end: %w", err))
 	}
@@ -199,12 +199,12 @@ func (c *DHCPv4Config) validateRange(
 	return nil
 }
 
-// validateIPv4 returns an unmapped version of ip.  An error is returned if the
+// ensureIPv4 returns an unmapped version of ip.  An error is returned if the
 // passed ip is not an IPv4.
-func validateIPv4(ip netip.Addr, kind string) (ip4 netip.Addr, err error) {
+func ensureIPv4(ip netip.Addr) (ip4 netip.Addr, err error) {
 	ip4 = ip.Unmap()
 	if !ip4.IsValid() || !ip4.Is4() {
-		return netip.Addr{}, fmt.Errorf("%v is not an IPv4 %s", ip, kind)
+		return netip.Addr{}, fmt.Errorf("%q is not an IPv4", ip)
 	}
 
 	return ip4, nil

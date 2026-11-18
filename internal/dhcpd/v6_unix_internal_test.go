@@ -306,12 +306,14 @@ func TestIP6InRange(t *testing.T) {
 		ip:   net.ParseIP("2001::3"),
 		want: assert.True,
 	}, {
-		ip:   net.IP(slices.Repeat([]byte{1}, 17)),
+		ip:   slices.Repeat[net.IP]([]byte{1}, net.IPv6len+1),
 		want: assert.False,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.ip.String(), func(t *testing.T) {
+			t.Parallel()
+
 			tc.want(t, ip6InRange(start, tc.ip))
 		})
 	}
