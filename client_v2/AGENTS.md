@@ -16,6 +16,7 @@
     - [Architecture](#architecture)
     - [Code Quality](#code-quality)
     - [Testing](#testing)
+    - [Storybook](#storybook)
     - [Dependency Management](#dependency-management)
     - [Configuration \& Documentation](#configuration--documentation)
     - [Markdown Formatting](#markdown-formatting)
@@ -61,6 +62,9 @@ Playwright (e2e).
   (generated from `.twosky.json` via `npm run locales:generate`)
 - **Testing**: Vitest 4 + `@solidjs/testing-library` (unit);
   Playwright 1.56 (e2e against a real backend)
+- **Component catalog**: Storybook 10 with `storybook-solidjs-vite` on a Vite
+  builder — development/documentation only, the production build stays on
+  Webpack
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
   `eslint-plugin-prettier`), Prettier 3
 - **Storage**: Browser `localStorage` (language, theme); no database.  The theme
@@ -104,8 +108,10 @@ client_v2/
 │   ├── install/                   # Standalone install-wizard entry
 │   ├── forgot_password/           # Standalone password-reset entry
 │   ├── __locales/                 # Translation JSON (en, ru, de, …)
+│   ├── stories/                   # Storybook stories (Controls/*, UI/*)
 │   └── __tests__/                 # Vitest unit/integration tests
 ├── tests/e2e/                     # Playwright e2e specs
+├── .storybook/                    # Storybook config (Vite preview, docs)
 ├── public/                        # HTML entry points + `theme-bootstrap.js` (inlined pre-paint theme script)
 ├── scripts/                       # check-translations.js, translation-audit.js, theme-bootstrap-template.js
 ├── webpack.common.js              # 4 entry points, loaders, path aliases
@@ -131,6 +137,8 @@ never run `npm`/`npx` from the repo root.
 | Production build                     | `npm run build-prod`           |
 | Dev build (no server)                | `npm run build-dev`            |
 | Watch build                          | `npm run watch`                |
+| Storybook (component catalog)        | `npm run storybook`            |
+| Storybook static build               | `npm run build-storybook`      |
 | Type check                           | `npm run typecheck`            |
 | Lint                                 | `npm run lint`                 |
 | Lint + format fix                    | `npm run lint:fix`             |
@@ -473,6 +481,31 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   tests are not part of `npm run check`; run them explicitly with
   `npm run test:e2e`.
 - **All unit tests must pass before merge** (`npm run test`).
+
+### Storybook
+
+- Storybook is a **development and documentation** build on Vite. Webpack
+  stays the production build; never import Storybook-only code from
+  application modules.
+- Stories live in `src/stories/**/*.stories.tsx` and are grouped as
+  `Controls/*` (primitives from `src/common/controls/`) and `UI/*`
+  (`src/common/ui/`). Pages and store-backed components are out of scope.
+- Add or update a story when a common component's props or states change.
+  Stories are typechecked and linted with the rest of `src`, so a broken
+  story fails `npm run check`.
+- The preview imports `src/index.pcss`, mounts the `<Icons/>` sprite once and
+  pins the locale to English from `.storybook/preview-head.html`. Switch the
+  theme with the `Theme` toolbar, which sets `data-theme` on `<html>`.
+- CSS-module class names are exported as-is, matching webpack
+  (`s.height_xs`). Vite has no `localsConvention: 'asIs'` value and setting
+  it empties the class map; Vite's default already matches webpack.
+- `storybook-solidjs-vite` ships its own TypeScript 6 for docgen, which takes
+  over the `node_modules/.bin/tsc` link, so `npm run typecheck` runs the
+  project compiler directly
+  (`node ./node_modules/typescript/bin/tsc`). Keep it that way.
+- `npm run build-storybook` writes `storybook-static/` (git-ignored). It is a
+  local development tool: nothing from it ships and it is not run in CI.
+  Stories are still covered there by `npm run typecheck` and `npm run lint`.
 
 ## Dependency Management
 
