@@ -3,12 +3,7 @@ import { createForm, setValue, getValue } from '@modular-forms/solid';
 import { Input } from 'panel/common/controls/Input';
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
-import {
-    MAX_PASSWORD_LENGTH,
-    MIN_PASSWORD_LENGTH,
-    PRIVACY_POLICY_LINK,
-    TERMS_LINK,
-} from 'panel/helpers/constants';
+import { PRIVACY_POLICY_LINK, TERMS_LINK } from 'panel/helpers/constants';
 import cn from 'clsx';
 import { PasswordRequirements, type PasswordRequirementsState } from 'panel/install/Setup/blocks';
 import { PasswordInput } from '../../common/controls/Input/PasswordInput';
@@ -30,10 +25,7 @@ const validatePasswordLengthMsg = (value: string | undefined) => {
         case 'too_short':
             return intl.getMessage('password_requirements_characters');
         case 'too_long':
-            return intl.getMessage('form_error_range', {
-                min: MIN_PASSWORD_LENGTH,
-                max: MAX_PASSWORD_LENGTH,
-            });
+            return intl.getMessage('password_requirements_too_long');
         default:
             return undefined;
     }
@@ -65,12 +57,20 @@ export const Auth = (props: Props) => {
             confirm_password: props.initialValues?.password ?? '',
             privacy_consent: props.initialValues?.privacy_consent ?? false,
         },
-        validateOn: 'input',
+        validateOn: 'change',
     });
 
     const username = () => (getValue(authForm, 'username') as string) ?? '';
     const password = () => (getValue(authForm, 'password') as string) ?? '';
     const confirmPassword = () => (getValue(authForm, 'confirm_password') as string) ?? '';
+
+    // The checklist covers the other requirements; this one has to appear
+    // while typing, since Next is already disabled by it.
+    const tooLongError = createMemo(() =>
+        validatePasswordLength(password()) === 'too_long'
+            ? intl.getMessage('password_requirements_too_long')
+            : undefined,
+    );
 
     const validateConfirmPassword = (value: string) => {
         if (value !== password()) {
@@ -171,7 +171,7 @@ export const Auth = (props: Props) => {
                                             shouldValidate: true,
                                         })
                                     }
-                                    errorMessage={field.error as string}
+                                    errorMessage={(field.error as string) || tooLongError()}
                                     size="large"
                                 />
                             )}

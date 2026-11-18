@@ -452,7 +452,7 @@ describe('validatePasswordLength', () => {
     });
 
     it('counts UTF-8 bytes for the maximum, like bcrypt', () => {
-        // 44 code points but 84 UTF-8 bytes.
+        // 24 code points but 84 UTF-8 bytes.
         expect(validatePasswordLength(`Aa1!${'🔑'.repeat(20)}`)).toBe('too_long');
     });
 });
