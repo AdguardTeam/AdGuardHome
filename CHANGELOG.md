@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
+
 - DNS rewrites with trailing dots not matching ([#8674]).
 
 - Shutdown deadlock when looking up clients for query accounting ([#8658]).
