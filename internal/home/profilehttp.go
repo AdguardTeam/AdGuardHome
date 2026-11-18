@@ -106,15 +106,22 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 		config.Lock()
 		defer config.Unlock()
 
-		if config.Language == lang && config.Theme == theme {
+		if config.Language != lang {
+			changed = true
+			config.Language = lang
+		}
+
+		if config.Theme != theme && theme != "" {
+			changed = true
+			config.Theme = theme
+		}
+
+		if !changed {
 			l.DebugContext(ctx, "updating profile; no changes")
 
 			return
 		}
 
-		changed = true
-		config.Language = lang
-		config.Theme = theme
 		l.InfoContext(ctx, "profile updated", "lang", lang, "theme", theme)
 	}()
 
