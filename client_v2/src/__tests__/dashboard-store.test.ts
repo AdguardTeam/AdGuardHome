@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
     tlsStatus: vi.fn(),
     getVersionJson: vi.fn(),
     getProfile: vi.fn(),
+    updateProfile: vi.fn(),
     clientsStatus: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
@@ -15,6 +16,7 @@ vi.mock('panel/api/generated', () => ({
     getStatusUrl: () => 'control/status',
     getVersionJson: mocks.getVersionJson,
     getProfile: mocks.getProfile,
+    updateProfile: mocks.updateProfile,
     beginUpdate: vi.fn(),
     tlsStatus: mocks.tlsStatus,
     clientsStatus: mocks.clientsStatus,
@@ -27,11 +29,13 @@ vi.mock('panel/stores/toasts', () => ({
 
 import { resetStore } from 'panel/__tests__/helpers/resetStore';
 import { copy } from 'panel/__tests__/helpers/copy';
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import {
     getDnsStatus,
     getClients,
     getVersion,
     refreshDnsStatus,
+    changeTheme,
     dashboardState,
 } from 'panel/stores/dashboard';
 
@@ -271,5 +275,43 @@ describe('getVersion — update check failures', () => {
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(copy('updates_checked'));
         expect(dashboardState.checkUpdateFlag).toBe(true);
         expect(dashboardState.isUpdateAvailable).toBe(true);
+    });
+});
+
+describe('changeTheme', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        LocalStorageHelper.clear();
+        resetStore(dashboardState, { theme: undefined });
+    });
+
+    it('sends a supported language when the profile has none', async () => {
+        // An installation that never selected a language returns an empty one,
+        // which the profile API rejects on update.
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, 'ru');
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: '', theme: 'auto' });
+
+        await changeTheme('dark');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'ru',
+            theme: 'dark',
+        });
+        expect(dashboardState.theme).toBe('dark');
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
+    it('keeps the language already selected in the profile', async () => {
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, 'ru');
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: 'de', theme: 'auto' });
+
+        await changeTheme('light');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'de',
+            theme: 'light',
+        });
     });
 });
