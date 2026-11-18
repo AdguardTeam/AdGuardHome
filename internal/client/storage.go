@@ -130,7 +130,7 @@ type Storage struct {
 	// not be nil.
 	logger *slog.Logger
 
-	// mu protects indexes of persistent and runtime clients.
+	// mu protects index, runtimeIndex, and upstreamManager.
 	mu *sync.Mutex
 
 	// index contains information about persistent clients.
@@ -219,6 +219,9 @@ func (s *Storage) Start(ctx context.Context) (err error) {
 //
 // TODO(a.garipov):  Use context.
 func (s *Storage) Shutdown(_ context.Context) (err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	close(s.done)
 
 	return s.upstreamManager.close()
@@ -531,7 +534,8 @@ func (p *FindParams) Set(id string) (err error) {
 }
 
 // Find searches for a persistent client based on the provided search params.
-// params must not be nil and must have at least one non-empty field.
+// params must not be nil and must have at least one non-empty field.  p must
+// not be modified.
 func (s *Storage) Find(params *FindParams) (p *Persistent, ok bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -583,7 +587,7 @@ func (s *Storage) findByIP(addr netip.Addr) (p *Persistent, ok bool) {
 // FindLoose is like [Storage.Find] but it also tries to find a persistent
 // client by IP address without zone.  It strips the IPv6 zone index from the
 // stored IP addresses before comparing, because querylog entries don't have it.
-// See TODO on [querylog.logEntry.IP].
+// See TODO on [querylog.logEntry.IP].  p must not be modified.
 //
 // Note that multiple clients can have the same IP address with different zones.
 // Therefore, the result of this method is indeterminate.
