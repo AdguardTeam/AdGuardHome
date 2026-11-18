@@ -141,10 +141,9 @@ NOTE: Add new changes BELOW THIS COMMENT.
     - `--no-etc-hosts`.
     - `--port`/`-p`.
 
-[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
-[#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
 [#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
 [#8608]:       https://github.com/AdguardTeam/AdGuardHome/issues/8608
 [#8609]:       https://github.com/AdguardTeam/AdGuardHome/issues/8609
 [#8610]:       https://github.com/AdguardTeam/AdGuardHome/issues/8610
@@ -153,6 +152,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8637]:       https://github.com/AdguardTeam/AdGuardHome/issues/8637
 [#8638]:       https://github.com/AdguardTeam/AdGuardHome/issues/8638
 [#8644]:       https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
 [#8658]:       https://github.com/AdguardTeam/AdGuardHome/issues/8658
 [#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
