@@ -176,7 +176,7 @@ export const THEMES = {
     auto: 'auto',
     dark: 'dark',
     light: 'light',
-};
+} as const;
 
 export type SafeSearchProviderKey = Exclude<keyof SafeSearchConfig, 'enabled'>;
 
