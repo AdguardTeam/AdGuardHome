@@ -170,41 +170,56 @@ func TestServer_withECSClientAddr(t *testing.T) {
 		want    netip.Addr
 		name    string
 		enabled bool
+		// wantECS is whether the request still carries ECS afterwards.
+		wantECS bool
 	}{{
 		remote:  proxyAddr,
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    ecsAddr,
 		name:    "trusted",
+		wantECS: false,
 		enabled: true,
 	}, {
 		remote:  netip.AddrFrom16(proxyAddr.As16()),
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    ecsAddr,
 		name:    "trusted_mapped",
+		wantECS: false,
 		enabled: true,
 	}, {
 		remote:  proxyAddr,
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    proxyAddr,
 		name:    "disabled",
+		wantECS: true,
 		enabled: false,
 	}, {
 		remote:  otherAddr,
 		req:     newTestMsgWithECS(t, 1, 32, ecsAddr.String()),
 		want:    otherAddr,
 		name:    "untrusted",
+		wantECS: false,
 		enabled: true,
 	}, {
 		remote:  proxyAddr,
 		req:     newTestMsgWithECS(t, 1, 24, "192.0.2.0"),
 		want:    proxyAddr,
 		name:    "trusted_subnet",
+		wantECS: true,
 		enabled: true,
 	}, {
 		remote:  proxyAddr,
 		req:     new(dns.Msg),
 		want:    proxyAddr,
 		name:    "trusted_no_ecs",
+		wantECS: false,
+		enabled: true,
+	}, {
+		remote:  otherAddr,
+		req:     newTestMsgWithECS(t, 1, 24, "192.0.2.0"),
+		want:    otherAddr,
+		name:    "untrusted_subnet",
+		wantECS: false,
 		enabled: true,
 	}}
 
@@ -239,8 +254,59 @@ func TestServer_withECSClientAddr(t *testing.T) {
 				require.True(t, ok)
 				assert.Equal(t, tc.want, ctxAddr)
 			}
+
+			// A used ECS option, and any from an untrusted sender, must not
+			// reach the upstreams; the rest of the OPT record stays.
+			assert.Equal(t, tc.wantECS, hasECS(tc.req))
+			if len(tc.req.Extra) > 0 {
+				assert.NotNil(t, tc.req.IsEdns0())
+			}
 		})
 	}
+}
+
+// TestRemoveECS is a test for the removeECS function.
+func TestRemoveECS(t *testing.T) {
+	t.Parallel()
+
+	t.Run("no_opt", func(t *testing.T) {
+		t.Parallel()
+
+		m := new(dns.Msg)
+		removeECS(m)
+		assert.Nil(t, m.IsEdns0())
+	})
+
+	t.Run("ecs_and_cookie", func(t *testing.T) {
+		t.Parallel()
+
+		m := newTestMsgWithECS(t, 1, 32, "192.0.2.100")
+		opt := m.IsEdns0()
+		cookie := &dns.EDNS0_COOKIE{Code: dns.EDNS0COOKIE, Cookie: "0123456789abcdef"}
+		opt.Option = append(opt.Option, cookie)
+
+		removeECS(m)
+
+		require.NotNil(t, m.IsEdns0())
+		assert.Equal(t, []dns.EDNS0{cookie}, m.IsEdns0().Option)
+		assert.Equal(t, uint16(4096), m.IsEdns0().UDPSize())
+	})
+}
+
+// hasECS returns true if m carries an EDNS Client Subnet option.
+func hasECS(m *dns.Msg) (ok bool) {
+	opt := m.IsEdns0()
+	if opt == nil {
+		return false
+	}
+
+	for _, o := range opt.Option {
+		if _, ok = o.(*dns.EDNS0_SUBNET); ok {
+			return true
+		}
+	}
+
+	return false
 }
 
 // TestServer_setCustomUpstream_ecs checks that the custom upstream
