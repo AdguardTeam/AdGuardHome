@@ -45,7 +45,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does, and a password over the limit is reported as too long.
+- The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does.
 
 - Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
 

@@ -21,14 +21,8 @@ const validateRequiredBoolean = (value: boolean | undefined) => validateRequired
 const validatePasswordLengthMsg = (value: string | undefined) => {
     const error = validatePasswordLength(value);
 
-    switch (error) {
-        case 'too_short':
-            return intl.getMessage('password_requirements_characters');
-        case 'too_long':
-            return intl.getMessage('password_requirements_too_long');
-        default:
-            return undefined;
-    }
+    // An over-long password only keeps Next disabled; it needs no message.
+    return error === 'too_short' ? intl.getMessage('password_requirements_characters') : undefined;
 };
 
 export type AuthFormValues = {
@@ -63,14 +57,6 @@ export const Auth = (props: Props) => {
     const username = () => (getValue(authForm, 'username') as string) ?? '';
     const password = () => (getValue(authForm, 'password') as string) ?? '';
     const confirmPassword = () => (getValue(authForm, 'confirm_password') as string) ?? '';
-
-    // The checklist covers the other requirements; this one has to appear
-    // while typing, since Next is already disabled by it.
-    const tooLongError = createMemo(() =>
-        validatePasswordLength(password()) === 'too_long'
-            ? intl.getMessage('password_requirements_too_long')
-            : undefined,
-    );
 
     const validateConfirmPassword = (value: string) => {
         if (value !== password()) {
@@ -124,7 +110,14 @@ export const Auth = (props: Props) => {
 
     return (
         <div class={styles.configSetting}>
-            <Form class={styles.step} onSubmit={props.onAuthSubmit}>
+            <Form
+                class={styles.step}
+                onSubmit={(values) => {
+                    if (isAuthFormValid()) {
+                        props.onAuthSubmit(values);
+                    }
+                }}
+            >
                 <div class={styles.info}>
                     <div class={styles.titleStep}>{intl.getMessage('setup_guide_auth_title')}</div>
 
@@ -171,7 +164,7 @@ export const Auth = (props: Props) => {
                                             shouldValidate: true,
                                         })
                                     }
-                                    errorMessage={(field.error as string) || tooLongError()}
+                                    errorMessage={field.error as string}
                                     size="large"
                                 />
                             )}

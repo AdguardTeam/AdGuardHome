@@ -76,16 +76,12 @@ describe('install wizard Auth step', () => {
         submitForm();
 
         await waitFor(() =>
-            expect(onAuthSubmit).toHaveBeenCalledWith(
-                {
-                    username: 'admin',
-                    password: 'P@ssw0rd🔑',
-                    confirm_password: 'P@ssw0rd🔑',
-                    privacy_consent: true,
-                },
-                // modular-forms passes the submit event as the second argument.
-                expect.anything(),
-            ),
+            expect(onAuthSubmit).toHaveBeenCalledWith({
+                username: 'admin',
+                password: 'P@ssw0rd🔑',
+                confirm_password: 'P@ssw0rd🔑',
+                privacy_consent: true,
+            }),
         );
     });
 
@@ -236,7 +232,7 @@ describe('install wizard Auth step', () => {
         );
     });
 
-    it('shows the length error while a too-long password is typed', async () => {
+    it('keeps Next disabled without a message for a too-long password', async () => {
         setup();
         const user = userEvent.setup();
         const tooLong = `Aa1!${'a'.repeat(70)}`;
@@ -244,38 +240,33 @@ describe('install wizard Auth step', () => {
         typeInto('install_username', 'admin');
         acceptConsent();
 
-        // Real typing fires `input` only: the error must appear without a blur.
         await user.type(document.querySelector('#install_password') as HTMLInputElement, tooLong);
-        expect(errorTextFor('install_password')).toBe(copy('password_requirements_too_long'));
+        expect(errorTextFor('install_password')).toBe('');
 
         // With every other requirement met, only the length keeps Next disabled.
         typeInto('install_confirm_password', tooLong);
         expect(nextButton().disabled).toBe(true);
     });
 
-    it('rejects a password longer than 72 bytes', async () => {
-        setup();
+    it('does not advance on submit with a too-long password', () => {
+        const { onAuthSubmit } = setup();
         fillValidForm(`Aa1!${'a'.repeat(70)}`);
-
-        expect(nextButton().disabled).toBe(true);
+        acceptConsent();
 
         submitForm();
-        await waitFor(() =>
-            expect(errorTextFor('install_password')).toBe(copy('password_requirements_too_long')),
-        );
+
+        expect(onAuthSubmit).not.toHaveBeenCalled();
+        expect(errorTextFor('install_password')).toBe('');
     });
 
-    it('counts emoji as 4 bytes in the length limit', async () => {
+    it('counts emoji as 4 bytes in the length limit', () => {
         setup();
         // 44 UTF-16 code units but 84 UTF-8 bytes.
         fillValidForm(`Aa1!${'🔑'.repeat(20)}`);
+        acceptConsent();
 
         expect(nextButton().disabled).toBe(true);
-
-        submitForm();
-        await waitFor(() =>
-            expect(errorTextFor('install_password')).toBe(copy('password_requirements_too_long')),
-        );
+        expect(errorTextFor('install_password')).toBe('');
     });
 
     it('updates the requirements checklist while typing', () => {
