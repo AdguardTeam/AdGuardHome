@@ -52,6 +52,8 @@ See also the [v1.0.0 GitHub milestone][ms-v1.0.0].
 
 ### Fixed
 
+- Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
+
 - Init script actions not being passed to System V and OpenWrt services.
 
 - DNS rewrites with trailing dots not matching ([#8674]).
