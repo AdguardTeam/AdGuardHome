@@ -3,24 +3,40 @@ import { createForm, setValue, getValue } from '@modular-forms/solid';
 import { Input } from 'panel/common/controls/Input';
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
-import { PRIVACY_POLICY_LINK, TERMS_LINK } from 'panel/helpers/constants';
+import {
+    MAX_PASSWORD_LENGTH,
+    MIN_PASSWORD_LENGTH,
+    PRIVACY_POLICY_LINK,
+    TERMS_LINK,
+} from 'panel/helpers/constants';
 import cn from 'clsx';
 import { PasswordRequirements, type PasswordRequirementsState } from 'panel/install/Setup/blocks';
 import { PasswordInput } from '../../common/controls/Input/PasswordInput';
 import { Controls } from './Controls';
-import { validatePasswordLength, validateRequiredValue } from '../../helpers/validators';
 import {
-    hasMinLength,
-    hasLowercase,
-    hasUppercase,
-} from './helpers/helpers';
+    hasPasswordMinLength,
+    validatePasswordLength,
+    validateRequiredValue,
+} from '../../helpers/validators';
+import { hasLowercase, hasUppercase } from './helpers/helpers';
 import styles from './styles.module.pcss';
 
 const validateRequiredString = (value: string | undefined) => validateRequiredValue(value);
 const validateRequiredBoolean = (value: boolean | undefined) => validateRequiredValue(value);
 const validatePasswordLengthMsg = (value: string | undefined) => {
-    const result = validatePasswordLength(value);
-    return result === true ? intl.getMessage('password_requirements_characters') : result;
+    const error = validatePasswordLength(value);
+
+    switch (error) {
+        case 'too_short':
+            return intl.getMessage('password_requirements_characters');
+        case 'too_long':
+            return intl.getMessage('form_error_range', {
+                min: MIN_PASSWORD_LENGTH,
+                max: MAX_PASSWORD_LENGTH,
+            });
+        default:
+            return undefined;
+    }
 };
 
 export type AuthFormValues = {
@@ -49,7 +65,7 @@ export const Auth = (props: Props) => {
             confirm_password: props.initialValues?.password ?? '',
             privacy_consent: props.initialValues?.privacy_consent ?? false,
         },
-        validateOn: 'change',
+        validateOn: 'input',
     });
 
     const username = () => (getValue(authForm, 'username') as string) ?? '';
@@ -81,7 +97,7 @@ export const Auth = (props: Props) => {
         const pwd = password();
         const confirmPwd = confirmPassword();
         return {
-            minLength: pwd.length > 0 && hasMinLength(pwd),
+            minLength: pwd.length > 0 && hasPasswordMinLength(pwd),
             lowercase: pwd.length > 0 && hasLowercase(pwd),
             uppercase: pwd.length > 0 && hasUppercase(pwd),
             match: pwd.length > 0 && confirmPwd.length > 0 && pwd === confirmPwd,

@@ -1,8 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@solidjs/testing-library';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { Auth } from 'panel/install/Setup/Auth';
 import { copy } from 'panel/__tests__/helpers/copy';
+import { MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH } from 'panel/helpers/constants';
 
 vi.mock('panel/stores/install', () => ({
     installState: { step: 2 },
@@ -41,6 +43,9 @@ const errorTextFor = (id: string) => {
 };
 
 const nextButton = () => document.querySelector('#install_next') as HTMLButtonElement;
+
+const passwordRangeError = () =>
+    copy('form_error_range', { min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH });
 
 /** Whether each of the four checklist items is satisfied (first checklist instance). */
 const requirementStates = () =>
@@ -90,19 +95,19 @@ describe('install wizard Auth step', () => {
 
     it('accepts a password with accented letters and emoji', async () => {
         const { onAuthSubmit } = setup();
-        fillValidForm('Grün🔑🔒');
+        fillValidForm('Grün🔑🔒🔑🔒');
         acceptConsent();
 
         await waitFor(() => expect(nextButton().disabled).toBe(false));
         submitForm();
 
         await waitFor(() => expect(onAuthSubmit).toHaveBeenCalledTimes(1));
-        expect(onAuthSubmit.mock.calls[0][0].password).toBe('Grün🔑🔒');
+        expect(onAuthSubmit.mock.calls[0][0].password).toBe('Grün🔑🔒🔑🔒');
     });
 
     it('rejects a password without an uppercase letter', async () => {
         const { onAuthSubmit } = setup();
-        fillValidForm('grün🔑🔒');
+        fillValidForm('grün🔑🔒🔑🔒');
         acceptConsent();
 
         expect(nextButton().disabled).toBe(true);
@@ -127,6 +132,20 @@ describe('install wizard Auth step', () => {
     it('rejects a too-short password', async () => {
         setup();
         fillValidForm('Aa1!');
+
+        submitForm();
+        await waitFor(() =>
+            expect(errorTextFor('install_password')).toBe(copy('password_requirements_characters')),
+        );
+    });
+
+    it('rejects a password shorter than 8 code points despite its UTF-16 length', async () => {
+        setup();
+        // 8 UTF-16 code units but 5 code points, so the backend rejects it.
+        fillValidForm('aA🔒🔒🔒');
+
+        expect(nextButton().disabled).toBe(true);
+        expect(requirementStates()[0]).toBe(false);
 
         submitForm();
         await waitFor(() =>
@@ -221,6 +240,19 @@ describe('install wizard Auth step', () => {
         );
     });
 
+    it('shows the length error while a too-long password is typed', async () => {
+        setup();
+        const user = userEvent.setup();
+        const input = document.querySelector('#install_password') as HTMLInputElement;
+
+        // Real typing fires `input` only; the error must not wait for a blur
+        // while Next is already disabled.
+        await user.type(input, `Aa1!${'a'.repeat(70)}`);
+
+        expect(nextButton().disabled).toBe(true);
+        expect(errorTextFor('install_password')).toBe(passwordRangeError());
+    });
+
     it('rejects a password longer than 72 bytes', async () => {
         setup();
         fillValidForm(`Aa1!${'a'.repeat(70)}`);
@@ -229,24 +261,20 @@ describe('install wizard Auth step', () => {
 
         submitForm();
         await waitFor(() =>
-            expect(errorTextFor('install_password')).toBe(
-                copy('password_requirements_characters'),
-            ),
+            expect(errorTextFor('install_password')).toBe(passwordRangeError()),
         );
     });
 
     it('counts emoji as 4 bytes in the length limit', async () => {
         setup();
-        // 44 UTF-16 code units but 84 UTF-8 bytes.
+        // 44 code units but 84 UTF-8 bytes.
         fillValidForm(`Aa1!${'🔑'.repeat(20)}`);
 
         expect(nextButton().disabled).toBe(true);
 
         submitForm();
         await waitFor(() =>
-            expect(errorTextFor('install_password')).toBe(
-                copy('password_requirements_characters'),
-            ),
+            expect(errorTextFor('install_password')).toBe(passwordRangeError()),
         );
     });
 

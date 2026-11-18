@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does, and a too-long password reports the allowed length range.
+
 - Init script actions not being passed to System V and OpenWrt services.
 
 - DNS rewrites with trailing dots not matching ([#8674]).
