@@ -45,6 +45,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Caching behavior under reverse proxies ([#8599]).
+
 - Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
 
 - Init script actions not being passed to System V and OpenWrt services.
@@ -140,6 +142,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
     - `--port`/`-p`.
 
 [#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
+[#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
 [#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:       https://github.com/AdguardTeam/AdGuardHome/issues/8608
