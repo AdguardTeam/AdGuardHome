@@ -2,6 +2,7 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import { STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
 import { areEqualVersions } from 'panel/helpers/version';
+import { getBrowserLanguage, isLang } from 'panel/helpers/helpers';
 import {
     getStatusUrl,
     getVersionJson,
@@ -16,6 +17,7 @@ import type { ServerStatus } from 'panel/api/model/serverStatus';
 import type { VersionInfo } from 'panel/api/model/versionInfo';
 import type { Clients } from 'panel/api/model/clients';
 import type { ProfileInfo } from 'panel/api/model/profileInfo';
+import type { Lang } from 'panel/api/model/lang';
 import intl from 'panel/common/intl';
 import { addErrorToast, addSuccessToast, addNoticeToast } from './toasts';
 import { getTlsStatus } from './encryption';
@@ -356,11 +358,17 @@ export const getProfileData = async () => {
     }
 };
 
+/**
+ * An installation that never selected a language returns an empty one in the
+ * profile, but the API accepts only supported codes.  Fall back to the
+ * language the UI is showing.
+ */
+const getSupportedLanguage = (lang: string): Lang => (isLang(lang) ? lang : getBrowserLanguage());
+
 export const changeLanguage = async (lang: ProfileInfo['language']) => {
     try {
         const profile = await getProfile();
-        profile.language = lang;
-        await updateProfile(profile);
+        await updateProfile({ ...profile, language: getSupportedLanguage(lang) });
         setState('language', lang);
     } catch (error) {
         addErrorToast({ error });
@@ -370,8 +378,11 @@ export const changeLanguage = async (lang: ProfileInfo['language']) => {
 export const changeTheme = async (theme: ProfileInfo['theme']) => {
     try {
         const profile = await getProfile();
-        profile.theme = theme;
-        await updateProfile(profile);
+        await updateProfile({
+            ...profile,
+            language: getSupportedLanguage(profile.language),
+            theme,
+        });
         setState('theme', theme);
     } catch (error) {
         addErrorToast({ error });
