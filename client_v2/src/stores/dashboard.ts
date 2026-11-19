@@ -1,7 +1,8 @@
 import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
-import { STANDARD_DNS_PORT, STANDARD_WEB_PORT } from 'panel/helpers/constants';
+import { STANDARD_DNS_PORT, STANDARD_WEB_PORT, THEMES } from 'panel/helpers/constants';
 import { areEqualVersions } from 'panel/helpers/version';
+import { getBrowserLanguage, isLang } from 'panel/helpers/helpers';
 import {
     getStatusUrl,
     getVersionJson,
@@ -16,6 +17,7 @@ import type { ServerStatus } from 'panel/api/model/serverStatus';
 import type { VersionInfo } from 'panel/api/model/versionInfo';
 import type { Clients } from 'panel/api/model/clients';
 import type { ProfileInfo } from 'panel/api/model/profileInfo';
+import type { Lang } from 'panel/api/model/lang';
 import intl from 'panel/common/intl';
 import { addErrorToast, addSuccessToast, addNoticeToast } from './toasts';
 import { getTlsStatus } from './encryption';
@@ -336,6 +338,22 @@ export const getClients = async () => {
     }
 };
 
+/**
+ * An installation that never selected a language returns an empty one in the
+ * profile, but the API accepts only supported codes.  Fall back to the
+ * language the UI is showing.
+ */
+const getSupportedLanguage = (lang: string): Lang => (isLang(lang) ? lang : getBrowserLanguage());
+
+/**
+ * The update API requires one of {@link THEMES}, but a server may return an
+ * empty or null theme, which is sent back as is if spread into the payload.
+ */
+const getSupportedTheme = (theme: string | null | undefined): ProfileInfo['theme'] =>
+    theme === THEMES.auto || theme === THEMES.dark || theme === THEMES.light
+        ? theme
+        : THEMES.auto;
+
 export const getProfileData = async () => {
     setState('processingProfile', true);
     try {
@@ -347,7 +365,7 @@ export const getProfileData = async () => {
             // would overwrite the guest's choice stored in `localStorage` on
             // every load.  Keep the store theme unset for guests so that `App`
             // falls back to `getTheme()`.
-            theme: profile.name ? profile.theme : undefined,
+            theme: profile.name ? getSupportedTheme(profile.theme) : undefined,
             processingProfile: false,
         });
     } catch (error) {
@@ -356,11 +374,21 @@ export const getProfileData = async () => {
     }
 };
 
+/**
+ * Sends the profile with only the fields the update API requires and accepts.
+ */
+const saveProfile = async (profile: ProfileInfo): Promise<void> => {
+    await updateProfile({
+        name: profile.name,
+        language: getSupportedLanguage(profile.language),
+        theme: getSupportedTheme(profile.theme),
+    });
+};
+
 export const changeLanguage = async (lang: ProfileInfo['language']) => {
     try {
         const profile = await getProfile();
-        profile.language = lang;
-        await updateProfile(profile);
+        await saveProfile({ ...profile, language: lang });
         setState('language', lang);
     } catch (error) {
         addErrorToast({ error });
@@ -370,8 +398,7 @@ export const changeLanguage = async (lang: ProfileInfo['language']) => {
 export const changeTheme = async (theme: ProfileInfo['theme']) => {
     try {
         const profile = await getProfile();
-        profile.theme = theme;
-        await updateProfile(profile);
+        await saveProfile({ ...profile, theme });
         setState('theme', theme);
     } catch (error) {
         addErrorToast({ error });
