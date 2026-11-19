@@ -47,6 +47,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The new web interface blanking out or silently reloading itself when the DNS server was not running or its status check failed; it now explains the state and offers a retry.
 
+- The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does.
+
 - Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
 
 - Init script actions not being passed to System V and OpenWrt services.
