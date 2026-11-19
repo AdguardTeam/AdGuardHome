@@ -1136,7 +1136,7 @@ func initUsers(
 		rateLimiter:     rateLimiter,
 		trustedProxies:  netutil.SliceSubnetSet(netutil.UnembedPrefixes(config.DNS.TrustedProxies)),
 		dbFilename:      filepath.Join(dataDirPath, sessionsDBName),
-		users:           config.Users,
+		users:           config.Users.ToInternal(),
 		sessionTTL:      time.Duration(config.HTTPConfig.SessionTTL),
 		isGLiNet:        isGLiNet,
 		gliNetTokenRoot: glTokenRoot,

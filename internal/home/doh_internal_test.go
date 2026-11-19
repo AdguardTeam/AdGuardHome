@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,9 +20,10 @@ func TestWebAPI_wrapMux(t *testing.T) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
 	require.NoError(t, err)
 
-	users := []webUser{{
-		Name:         testUsername,
-		PasswordHash: string(passwordHash),
+	users := []*aghuser.User{{
+		Password: aghuser.NewDefaultPassword(string(passwordHash)),
+		Login:    aghuser.Login(testUsername),
+		ID:       aghuser.NewUserID(),
 	}}
 
 	sessionsDB := filepath.Join(t.TempDir(), "sessions.db")

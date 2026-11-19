@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
@@ -18,35 +19,6 @@ import (
 
 // sessionsDBName is the name of the file where session data is stored.
 const sessionsDBName = "sessions.db"
-
-// webUser represents a user of the Web UI.
-//
-// TODO(s.chzhen):  Improve naming.
-type webUser struct {
-	// Name represents the login name of the web user.
-	Name string `yaml:"name"`
-
-	// PasswordHash is the hashed representation of the web user password.
-	PasswordHash string `yaml:"password"`
-
-	// UserID is the unique identifier of the web user.
-	UserID aghuser.UserID `yaml:"-"`
-}
-
-// toUser returns the new properly initialized *aghuser.User using stored
-// properties.  It panics if there is an error generating the user ID.
-func (wu *webUser) toUser() (u *aghuser.User) {
-	uid := wu.UserID
-	if uid == (aghuser.UserID{}) {
-		uid = aghuser.NewUserID()
-	}
-
-	return &aghuser.User{
-		Password: aghuser.NewDefaultPassword(wu.PasswordHash),
-		Login:    aghuser.Login(wu.Name),
-		ID:       uid,
-	}
-}
 
 // authConfig is the configuration structure for [auth].
 type authConfig struct {
@@ -69,7 +41,7 @@ type authConfig struct {
 	dbFilename string
 
 	// users contains web user information from the configuration file.
-	users []webUser
+	users []*aghuser.User
 
 	// sessionTTL is the TTL (Time To Live) for web user sessions.
 	sessionTTL time.Duration
@@ -111,7 +83,7 @@ type auth struct {
 func newAuth(ctx context.Context, conf *authConfig) (a *auth, err error) {
 	userDB := aghuser.NewDefaultDB()
 	for i, u := range conf.users {
-		err = userDB.Create(ctx, u.toUser())
+		err = userDB.Create(ctx, u)
 		if err != nil {
 			return nil, fmt.Errorf("users: at index %d: %w", i, err)
 		}
@@ -162,27 +134,26 @@ func (a *auth) middleware() (mw httputil.Middleware) {
 }
 
 // usersList returns a copy of a users list.
-func (a *auth) usersList(ctx context.Context) (webUsers []webUser) {
+func (a *auth) usersList(ctx context.Context) (webUsers []*configmgr.WebUser) {
 	users, err := a.users.All(ctx)
 	if err != nil {
 		// Should not happen.
 		panic(err)
 	}
 
-	webUsers = make([]webUser, 0, len(users))
+	webUsers = make([]*configmgr.WebUser, 0, len(users))
 	for _, u := range users {
-		webUsers = append(webUsers, webUser{
+		webUsers = append(webUsers, &configmgr.WebUser{
 			Name:         string(u.Login),
 			PasswordHash: string(u.Password.Hash()),
-			UserID:       u.ID,
 		})
 	}
 
 	return webUsers
 }
 
-// addUser adds a new user with the given password.  u must not be nil.
-func (a *auth) addUser(ctx context.Context, u *webUser, password string) (err error) {
+// addUser adds a new user with the given password.
+func (a *auth) addUser(ctx context.Context, name, password string) (err error) {
 	if len(password) == 0 {
 		return errors.Error("empty password")
 	}
@@ -192,17 +163,25 @@ func (a *auth) addUser(ctx context.Context, u *webUser, password string) (err er
 		return fmt.Errorf("generating hash: %w", err)
 	}
 
-	u.PasswordHash = string(hash)
-
-	err = a.users.Create(ctx, u.toUser())
+	login, err := aghuser.NewLogin(name)
 	if err != nil {
-		// Should not happen.
-		panic(err)
+		return fmt.Errorf("creating login: %w", err)
+	}
+
+	u := &aghuser.User{
+		Password: aghuser.NewDefaultPassword(string(hash)),
+		Login:    login,
+		ID:       aghuser.NewUserID(),
+	}
+
+	err = a.users.Create(ctx, u)
+	if err != nil {
+		return fmt.Errorf("creating user: %w", err)
 	}
 
 	a.isUserless = false
 
-	a.logger.DebugContext(ctx, "added user", "login", u.Name)
+	a.logger.DebugContext(ctx, "added user", "login", name)
 
 	return nil
 }

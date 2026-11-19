@@ -19,32 +19,16 @@ import (
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/crypto/bcrypt"
 )
 
 func TestWeb_HandleGetProfile(t *testing.T) {
 	storeGlobals(t)
 
-	const (
-		testTTL = 60
-
-		userName     = "name"
-		userPassword = "password"
-
-		path = "/control/profile"
-	)
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
-	require.NoError(t, err)
+	const path = "/control/profile"
 
 	tempDir := t.TempDir()
 
 	sessionsDB := filepath.Join(tempDir, "sessions.db")
-
-	user := &webUser{
-		Name:         userName,
-		PasswordHash: string(passwordHash),
-	}
 
 	baseMux := http.NewServeMux()
 
@@ -85,7 +69,7 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 	}))
 
 	require.True(t, t.Run("add_user", func(t *testing.T) {
-		err = auth.addUser(testutil.ContextWithTimeout(t, testTimeout), user, userPassword)
+		err = auth.addUser(testutil.ContextWithTimeout(t, testTimeout), testUsername, testPassword)
 		require.NoError(t, err)
 
 		w := httptest.NewRecorder()
@@ -97,7 +81,7 @@ func TestWeb_HandleGetProfile(t *testing.T) {
 		w = httptest.NewRecorder()
 		r = httptest.NewRequest(http.MethodGet, path, nil)
 
-		loginCookie := generateAuthCookie(t, mux, userName, userPassword)
+		loginCookie := generateAuthCookie(t, mux, testUsername, testPassword)
 		r.AddCookie(loginCookie)
 
 		web.handleGetProfile(w, r)

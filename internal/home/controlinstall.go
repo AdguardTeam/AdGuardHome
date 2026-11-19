@@ -516,10 +516,7 @@ func (web *webAPI) finalizeInstall(
 	}
 	config.HTTPConfig.Address = netip.AddrPortFrom(req.Web.IP, req.Web.Port)
 
-	u := &webUser{
-		Name: req.Username,
-	}
-	err = web.auth.addUser(ctx, u, req.Password)
+	err = web.auth.addUser(ctx, req.Username, req.Password)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusUnprocessableEntity, "%s", err)
 

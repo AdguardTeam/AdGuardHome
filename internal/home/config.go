@@ -74,7 +74,8 @@ type configuration struct {
 	HTTPConfig configmgr.HTTPConfig `yaml:"http"`
 
 	// Users are the clients capable for accessing the web interface.
-	Users []webUser `yaml:"users"`
+	Users configmgr.WebUsers `yaml:"users"`
+
 	// AuthAttempts is the maximum number of failed login attempts a user
 	// can do before being blocked.
 	AuthAttempts uint `yaml:"auth_attempts"`
@@ -571,6 +572,7 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	errs = validate.Append(errs, "dhcp", config.DHCP)
 	errs = validate.Append(errs, "http", &config.HTTPConfig)
 	errs = validate.Append(errs, "clients", config.Clients)
+	errs = validate.Append(errs, "users", config.Users)
 
 	if len(errs) > 0 {
 		return errors.Join(errs...)

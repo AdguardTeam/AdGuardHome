@@ -489,9 +489,10 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
 	require.NoError(t, err)
 
-	users := []webUser{{
-		Name:         testUsername,
-		PasswordHash: string(passwordHash),
+	users := []*aghuser.User{{
+		Password: aghuser.NewDefaultPassword(string(passwordHash)),
+		Login:    aghuser.Login(testUsername),
+		ID:       aghuser.NewUserID(),
 	}}
 
 	tempDir := t.TempDir()
@@ -643,21 +644,15 @@ func assertHandlerStatusCode(tb testing.TB, h http.Handler, r *http.Request, wan
 func TestAuth_ServeHTTP_logout(t *testing.T) {
 	storeGlobals(t)
 
-	const (
-		testTTL = 60
-
-		userName     = "name"
-		userPassword = "password"
-	)
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
-	require.NoError(t, err)
-
 	sessionsDB := filepath.Join(t.TempDir(), "sessions.db")
 
-	users := []webUser{{
-		Name:         userName,
-		PasswordHash: string(passwordHash),
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(testPassword), bcrypt.DefaultCost)
+	require.NoError(t, err)
+
+	users := []*aghuser.User{{
+		Password: aghuser.NewDefaultPassword(string(passwordHash)),
+		Login:    aghuser.Login(testUsername),
+		ID:       aghuser.NewUserID(),
 	}}
 
 	mw := &webMw{}
@@ -694,7 +689,7 @@ func TestAuth_ServeHTTP_logout(t *testing.T) {
 
 	mux := auth.middleware().Wrap(baseMux)
 
-	loginCookie := generateAuthCookie(t, mux, userName, userPassword)
+	loginCookie := generateAuthCookie(t, mux, testUsername, testPassword)
 
 	r := httptest.NewRequest(http.MethodGet, "/control/profile", nil)
 	r.AddCookie(loginCookie)

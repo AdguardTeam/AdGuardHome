@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AdguardTeam/AdGuardHome/internal/aghuser"
 	"github.com/AdguardTeam/golibs/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -12,22 +11,9 @@ import (
 )
 
 func TestAuth_UsersList(t *testing.T) {
-	const (
-		userName     = "name"
-		userPassword = "password"
-	)
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(userPassword), bcrypt.DefaultCost)
-	require.NoError(t, err)
+	t.Parallel()
 
 	sessionsDB := filepath.Join(t.TempDir(), "sessions.db")
-
-	user := webUser{
-		Name:         userName,
-		PasswordHash: string(passwordHash),
-		UserID:       aghuser.NewUserID(),
-	}
-
 	auth, err := newAuth(testutil.ContextWithTimeout(t, testTimeout), &authConfig{
 		baseLogger:     testLogger,
 		rateLimiter:    emptyRateLimiter{},
@@ -45,8 +31,16 @@ func TestAuth_UsersList(t *testing.T) {
 
 	assert.Empty(t, auth.usersList(ctx))
 
-	err = auth.addUser(ctx, &user, userPassword)
+	err = auth.addUser(ctx, testUsername, testPassword)
 	require.NoError(t, err)
 
-	assert.Equal(t, []webUser{user}, auth.usersList(ctx))
+	users := auth.usersList(ctx)
+	require.Len(t, users, 1)
+
+	user := users[0]
+	assert.Equal(t, user.Name, testUsername)
+	assert.NoError(
+		t,
+		bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(testPassword)),
+	)
 }
