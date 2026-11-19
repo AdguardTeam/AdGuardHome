@@ -541,26 +541,43 @@ export const validateIpv4InCidr = (
     return undefined;
 };
 
-const utf8StringLength = (value: string): number => {
-    const encoder = new TextEncoder();
-    const view = encoder.encode(value);
-
-    return view.length;
-};
+/**
+ * Counts Unicode code points, the unit the backend uses for the minimum
+ * password length (`utf8.RuneCountInString`).
+ */
+const codePointLength = (value: string): number => Array.from(value).length;
 
 /**
- * Validates password length. Returns "true" (react-hook-form convention)
- * if invalid, NOT an i18n string.
+ * Counts UTF-8 bytes, the unit bcrypt uses for its 72-byte password limit.
+ */
+const utf8StringLength = (value: string): number => new TextEncoder().encode(value).length;
+
+/** Whether the value has at least {@link MIN_PASSWORD_LENGTH} code points. */
+export const hasPasswordMinLength = (value: string): boolean =>
+    codePointLength(value) >= MIN_PASSWORD_LENGTH;
+
+/** Which password length limit a value breaks. */
+export type PasswordLengthError = 'too_short' | 'too_long';
+
+/**
+ * Validates password length: at least {@link MIN_PASSWORD_LENGTH} code points
+ * and at most {@link MAX_PASSWORD_LENGTH} UTF-8 bytes.  Returns which limit is
+ * broken, or `undefined` if the value fits.
  *
- * @example validatePasswordLength("short")      // true (too short)
+ * @example validatePasswordLength("short")      // "too_short"
  * @example validatePasswordLength("longenough") // undefined (valid)
  */
-export const validatePasswordLength = (value?: string): boolean | undefined => {
-    if (value) {
-        const length = utf8StringLength(value);
-        if (length < MIN_PASSWORD_LENGTH || length > MAX_PASSWORD_LENGTH) {
-            return true;
-        }
+export const validatePasswordLength = (value?: string): PasswordLengthError | undefined => {
+    if (!value) {
+        return undefined;
+    }
+
+    if (!hasPasswordMinLength(value)) {
+        return 'too_short';
+    }
+
+    if (utf8StringLength(value) > MAX_PASSWORD_LENGTH) {
+        return 'too_long';
     }
 
     return undefined;
