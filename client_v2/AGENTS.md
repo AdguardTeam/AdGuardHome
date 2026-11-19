@@ -108,7 +108,7 @@ client_v2/
 │   ├── install/                   # Standalone install-wizard entry
 │   ├── forgot_password/           # Standalone password-reset entry
 │   ├── __locales/                 # Translation JSON (en, ru, de, …)
-│   ├── stories/                   # Storybook stories (Controls/*, UI/*)
+│   ├── stories/                   # Storybook docs pages (theme tokens, icon gallery)
 │   └── __tests__/                 # Vitest unit/integration tests
 ├── tests/e2e/                     # Playwright e2e specs
 ├── .storybook/                    # Storybook config (Vite preview, docs)
@@ -487,12 +487,22 @@ must not depend on stores or components. Helpers are pure and dependency-free.
 - Storybook is a **development and documentation** build on Vite. Webpack
   stays the production build; never import Storybook-only code from
   application modules.
-- Stories live in `src/stories/**/*.stories.tsx` and are grouped as
-  `Controls/*` (primitives from `src/common/controls/`) and `UI/*`
-  (`src/common/ui/`). Pages and store-backed components are out of scope.
+- A component's story sits next to it as `<Component>.stories.tsx`
+  (e.g. `src/common/ui/Button/Button.stories.tsx`). Pages and store-backed
+  components are out of scope. The sidebar group comes from the story
+  `title` — `Controls/*` for `src/common/controls/`, `UI/*` for
+  `src/common/ui/` — not from the file location.
+- Docs-only pages with no component behind them — the design tokens and the
+  icon gallery — live in `src/stories/`, next to the shared story layout
+  helpers in `src/stories/Stories.module.pcss`.
 - Add or update a story when a common component's props or states change.
   Stories are typechecked and linted with the rest of `src`, so a broken
   story fails `npm run check`.
+- Type the `argTypes.options` arrays of a select control with the
+  component's exported prop types (`ButtonVariant`, `ISelectSize`, …), or
+  with `Parameters<typeof Component>[0]['prop']`. Storybook does not type
+  `argTypes`, so an untyped array silently drops a new variant from the
+  controls.
 - The preview imports `src/index.pcss`, mounts the `<Icons/>` sprite once and
   pins the locale to English from `.storybook/preview-head.html`. Switch the
   theme with the `Theme` toolbar, which sets `data-theme` on `<html>`.

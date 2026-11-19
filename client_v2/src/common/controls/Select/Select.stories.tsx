@@ -2,13 +2,17 @@ import { createSignal, untrack } from 'solid-js';
 import { fn } from 'storybook/test';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 
-import { Select, type SelectProps } from 'panel/common/controls/Select';
 import type { IOption } from 'panel/lib/helpers/utils';
+import s from 'panel/stories/Stories.module.pcss';
 
-import s from '../Stories.module.pcss';
+import { Select, type SelectProps } from './Select';
+import type { ISelectMenuSize, ISelectSize } from './types';
 
 type Option = IOption<string>;
 type SelectArgs = SelectProps<string, false>;
+
+const sizes: ISelectSize[] = ['auto', 'small', 'medium', 'big', 'big-limit', 'responsive'];
+const menuSizes: ISelectMenuSize[] = ['small', 'medium', 'big', 'large'];
 
 const options: Option[] = [
     { value: 'all', label: 'All queries' },
@@ -32,7 +36,10 @@ const SingleSelect = (props: SelectArgs) => {
             {...props}
             class={s.column}
             value={value()}
-            onChange={(next) => setValue(next as Option)}
+            onChange={(next) => {
+                setValue(next as Option);
+                props.onChange(next);
+            }}
         />
     );
 };
@@ -75,11 +82,11 @@ const meta = {
         menuIsOpen: { control: 'boolean' },
         size: {
             control: 'select',
-            options: ['auto', 'small', 'medium', 'big', 'big-limit', 'responsive'],
+            options: sizes,
         },
         menuSize: {
             control: 'select',
-            options: ['small', 'medium', 'big', 'large'],
+            options: menuSizes,
         },
         class: { control: false },
         onChange: { action: 'changed' },

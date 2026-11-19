@@ -1,7 +1,6 @@
 import { render } from 'solid-js/web';
 import { createDecorator, type Preview } from 'storybook-solidjs-vite';
 
-import intl from '../src/common/intl';
 import { Icons } from '../src/common/ui/Icons';
 
 import '../src/index.pcss';
@@ -9,11 +8,6 @@ import '../src/index.pcss';
 interface StoryGlobals {
     theme?: 'light' | 'dark';
 }
-
-intl.changeLanguage('en').catch(() => {
-    // The base locale is already bundled, so this only fails when the loader
-    // is missing; the preview keeps rendering English.
-});
 
 // Icon components reference `<use href="#name">`, and a docs page renders
 // several stories at once, so the sprite is mounted once per document.

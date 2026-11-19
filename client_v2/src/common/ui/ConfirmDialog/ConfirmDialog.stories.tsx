@@ -2,8 +2,18 @@ import { createSignal, Show } from 'solid-js';
 import { fn } from 'storybook/test';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 
-import { Button } from 'panel/common/ui/Button';
-import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
+import { Button, type ButtonVariant } from 'panel/common/ui/Button';
+
+import { ConfirmDialog } from './ConfirmDialog';
+
+const buttonVariants: ButtonVariant[] = [
+    'primary',
+    'secondary',
+    'danger',
+    'secondary-danger',
+    'warning',
+    'ghost',
+];
 
 type DialogArgs = Parameters<typeof ConfirmDialog>[0];
 
@@ -16,7 +26,13 @@ const DialogExample = (props: DialogArgs) => {
                 Open dialog
             </Button>
             <Show when={open()}>
-                <ConfirmDialog {...props} onClose={() => setOpen(false)} />
+                <ConfirmDialog
+                    {...props}
+                    onClose={() => {
+                        setOpen(false);
+                        props.onClose();
+                    }}
+                />
             </Show>
         </>
     );
@@ -45,7 +61,7 @@ const meta = {
         submitDisabled: { control: 'boolean' },
         buttonVariant: {
             control: 'select',
-            options: ['primary', 'secondary', 'danger', 'secondary-danger', 'warning', 'ghost'],
+            options: buttonVariants,
         },
         customFooter: { control: false },
         onConfirm: { action: 'confirmed' },

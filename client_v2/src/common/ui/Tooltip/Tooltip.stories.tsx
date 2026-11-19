@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 
 import { Button } from 'panel/common/ui/Button';
-import { Tooltip } from 'panel/common/ui/Tooltip';
+
+import { Tooltip } from './Tooltip';
 
 const positions = ['bottomRight', 'bottomLeft', 'topRight', 'topLeft', 'top'] as const;
 

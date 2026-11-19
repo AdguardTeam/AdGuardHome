@@ -1,7 +1,19 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 
-import { Button } from 'panel/common/ui/Button';
 import { Icon } from 'panel/common/ui/Icon';
+
+import { Button, type ButtonVariant, type ButtonProps } from './Button';
+
+const variants: ButtonVariant[] = [
+    'primary',
+    'secondary',
+    'danger',
+    'secondary-danger',
+    'warning',
+    'ghost',
+];
+
+const sizes: NonNullable<ButtonProps['size']>[] = ['very-small', 'small', 'medium', 'big'];
 
 const meta = {
     title: 'UI/Button',
@@ -13,12 +25,12 @@ const meta = {
     argTypes: {
         variant: {
             control: 'select',
-            options: ['primary', 'secondary', 'danger', 'secondary-danger', 'warning', 'ghost'],
+            options: variants,
             description: 'Button variant',
         },
         size: {
             control: 'select',
-            options: ['very-small', 'small', 'medium', 'big'],
+            options: sizes,
             description: 'Button size',
         },
         disabled: {
