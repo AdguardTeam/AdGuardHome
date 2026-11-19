@@ -1,4 +1,4 @@
-//go:build freebsd || openbsd
+//go:build freebsd || netbsd || openbsd
 
 package dhcpd
 
