@@ -2,9 +2,7 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 
 import { Button } from 'panel/common/ui/Button';
 
-import { Tooltip } from './Tooltip';
-
-const positions = ['bottomRight', 'bottomLeft', 'topRight', 'topLeft', 'top'] as const;
+import { TOOLTIP_POSITIONS, Tooltip } from './Tooltip';
 
 const meta = {
     title: 'UI/Tooltip',
@@ -17,7 +15,7 @@ const meta = {
         content: { control: 'text' },
         position: {
             control: 'select',
-            options: [...positions],
+            options: [...TOOLTIP_POSITIONS],
         },
         disabled: { control: 'boolean' },
         class: { control: false },

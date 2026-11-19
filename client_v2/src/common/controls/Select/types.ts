@@ -3,9 +3,13 @@ import { IOption } from 'panel/lib/helpers/utils';
 
 export const SEARCH_ENABLE_LIMIT = 10;
 
-export type ISelectSize = 'auto' | 'small' | 'medium' | 'big' | 'big-limit' | 'responsive';
+export const SELECT_SIZES = ['auto', 'small', 'medium', 'big', 'big-limit', 'responsive'] as const;
+export type ISelectSize = (typeof SELECT_SIZES)[number];
+
+export const SELECT_MENU_SIZES = ['small', 'medium', 'big', 'large'] as const;
+export type ISelectMenuSize = (typeof SELECT_MENU_SIZES)[number];
+
 export type ISelectHeight = 'extra-small' | 'small' | 'medium' | 'big' | 'big-mobile';
-export type ISelectMenuSize = 'small' | 'medium' | 'big' | 'large';
 export type ISelectValue<T, Multi extends boolean> = Multi extends true ? IOption<T>[] : IOption<T>;
 
 export interface SelectProps<

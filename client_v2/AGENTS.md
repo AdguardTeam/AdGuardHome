@@ -488,21 +488,25 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   stays the production build; never import Storybook-only code from
   application modules.
 - A component's story sits next to it as `<Component>.stories.tsx`
-  (e.g. `src/common/ui/Button/Button.stories.tsx`). Pages and store-backed
-  components are out of scope. The sidebar group comes from the story
-  `title` — `Controls/*` for `src/common/controls/`, `UI/*` for
-  `src/common/ui/` — not from the file location.
-- Docs-only pages with no component behind them — the design tokens and the
-  icon gallery — live in `src/stories/`, next to the shared story layout
-  helpers in `src/stories/Stories.module.pcss`.
+  (e.g. `src/common/ui/Button/Button.stories.tsx`). The glob loads every
+  `*.stories.tsx` under `src/`; pages and store-backed components are out of
+  scope. The sidebar group comes from the story `title`, not from the file
+  location — `Controls/*` for `src/common/controls/`, `UI/*` for
+  `src/common/ui/`.
+- Docs-only pages with no component behind them live in `src/stories/`, next
+  to the shared story layout helpers in `src/stories/Stories.module.pcss`.
+  The design tokens are grouped as `Theme/*`, the icon gallery as `UI/Icons`.
 - Add or update a story when a common component's props or states change.
   Stories are typechecked and linted with the rest of `src`, so a broken
   story fails `npm run check`.
-- Type the `argTypes.options` arrays of a select control with the
-  component's exported prop types (`ButtonVariant`, `ISelectSize`, …), or
-  with `Parameters<typeof Component>[0]['prop']`. Storybook does not type
-  `argTypes`, so an untyped array silently drops a new variant from the
-  controls.
+- Storybook does not type `argTypes`, so a select control's `options` must
+  come from the component, never from a hand-copied list: export the values
+  as an `as const` list and derive the prop union from it
+  (`BUTTON_VARIANTS`/`BUTTON_SIZES`, `SELECT_SIZES`, `SELECT_MENU_SIZES`,
+  `TOOLTIP_POSITIONS`, `INPUT_SIZES`, `ICON_VALUES`), then spread it in the
+  story. A typed hand-copy only rejects invalid values; a newly added member
+  is still missed. Controls whose values are a curated subset of a DOM union
+  (e.g. `Input`'s `type`) keep a literal list.
 - The preview imports `src/index.pcss`, mounts the `<Icons/>` sprite once and
   pins the locale to English from `.storybook/preview-head.html`. Switch the
   theme with the `Theme` toolbar, which sets `data-theme` on `<html>`.
@@ -557,8 +561,9 @@ vulnerabilities, supply-chain risk, and long-term maintenance cost.
   in npm scripts and read from `constants.js`. `BASE_URL = 'control'` is the
   API path prefix.
 - **Path aliases**: Defined in `tsconfig.json` (`panel/*`, `Twosky`) and
-  consumed by Webpack, Vitest, and ESLint. Update `tsconfig.json` when adding
-  new aliases.
+  consumed by Webpack and Storybook (both read `compilerOptions.paths`
+  through `scripts/tsconfig-aliases.js`), Vitest, and ESLint. Update
+  `tsconfig.json` when adding new aliases.
 - **i18n**: Locale JSON files live in `src/__locales/`. The base locale and
   language list come from the root `.twosky.json` (via the `Twosky` alias in
   `src/helpers/twosky.ts`). Run `npm run translations:check` after editing

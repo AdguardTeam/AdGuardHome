@@ -6,13 +6,10 @@ import type { IOption } from 'panel/lib/helpers/utils';
 import s from 'panel/stories/Stories.module.pcss';
 
 import { Select, type SelectProps } from './Select';
-import type { ISelectMenuSize, ISelectSize } from './types';
+import { SELECT_MENU_SIZES, SELECT_SIZES } from './types';
 
 type Option = IOption<string>;
 type SelectArgs = SelectProps<string, false>;
-
-const sizes: ISelectSize[] = ['auto', 'small', 'medium', 'big', 'big-limit', 'responsive'];
-const menuSizes: ISelectMenuSize[] = ['small', 'medium', 'big', 'large'];
 
 const options: Option[] = [
     { value: 'all', label: 'All queries' },
@@ -82,11 +79,11 @@ const meta = {
         menuIsOpen: { control: 'boolean' },
         size: {
             control: 'select',
-            options: sizes,
+            options: [...SELECT_SIZES],
         },
         menuSize: {
             control: 'select',
-            options: menuSizes,
+            options: [...SELECT_MENU_SIZES],
         },
         class: { control: false },
         onChange: { action: 'changed' },

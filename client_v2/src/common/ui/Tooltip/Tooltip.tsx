@@ -11,9 +11,17 @@ import s from './Tooltip.module.pcss';
 const SHOW_DELAY = 200;
 const HIDE_DELAY = 300;
 
+export const TOOLTIP_POSITIONS = [
+    'bottomRight',
+    'bottomLeft',
+    'topRight',
+    'topLeft',
+    'top',
+] as const;
+
 type Props = {
     content: JSX.Element;
-    position?: 'bottomRight' | 'bottomLeft' | 'topRight' | 'topLeft' | 'top';
+    position?: (typeof TOOLTIP_POSITIONS)[number];
     overlayClass?: string;
     class?: string;
     disabled?: boolean;

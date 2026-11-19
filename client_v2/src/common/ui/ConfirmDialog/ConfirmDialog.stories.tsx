@@ -2,18 +2,9 @@ import { createSignal, Show } from 'solid-js';
 import { fn } from 'storybook/test';
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 
-import { Button, type ButtonVariant } from 'panel/common/ui/Button';
+import { Button, BUTTON_VARIANTS } from 'panel/common/ui/Button';
 
 import { ConfirmDialog } from './ConfirmDialog';
-
-const buttonVariants: ButtonVariant[] = [
-    'primary',
-    'secondary',
-    'danger',
-    'secondary-danger',
-    'warning',
-    'ghost',
-];
 
 type DialogArgs = Parameters<typeof ConfirmDialog>[0];
 
@@ -61,7 +52,7 @@ const meta = {
         submitDisabled: { control: 'boolean' },
         buttonVariant: {
             control: 'select',
-            options: buttonVariants,
+            options: [...BUTTON_VARIANTS],
         },
         customFooter: { control: false },
         onConfirm: { action: 'confirmed' },

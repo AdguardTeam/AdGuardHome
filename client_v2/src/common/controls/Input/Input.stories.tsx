@@ -4,12 +4,10 @@ import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 import { Icon } from 'panel/common/ui/Icon';
 import s from 'panel/stories/Stories.module.pcss';
 
-import { Input } from './Input';
+import { INPUT_SIZES, Input } from './Input';
 import { PasswordInput } from './PasswordInput';
 
 type InputArgs = Parameters<typeof Input>[0];
-
-const sizes: NonNullable<InputArgs['size']>[] = ['small', 'medium', 'large'];
 
 const ControlledInput = (props: InputArgs) => {
     const [value, setValue] = createSignal(String(untrack(() => props.value) ?? ''));
@@ -56,7 +54,7 @@ const meta = {
         invalid: { control: 'boolean', description: 'Invalid styling without a message' },
         size: {
             control: 'select',
-            options: sizes,
+            options: [...INPUT_SIZES],
         },
         borderless: { control: 'boolean' },
         isClearable: { control: 'boolean', description: 'Shows the clear button' },
