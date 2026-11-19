@@ -47,6 +47,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The new web interface blanking out or silently reloading itself when the DNS server was not running or its status check failed; it now explains the state and offers a retry.
 
+- Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
+
+- Init script actions not being passed to System V and OpenWrt services.
+
 - DNS rewrites with trailing dots not matching ([#8674]).
 
 - Shutdown deadlock when looking up clients for query accounting ([#8658]).

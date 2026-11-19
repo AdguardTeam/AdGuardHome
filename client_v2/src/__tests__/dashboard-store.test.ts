@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
     tlsStatus: vi.fn(),
     getVersionJson: vi.fn(),
     getProfile: vi.fn(),
+    updateProfile: vi.fn(),
     clientsStatus: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
@@ -15,6 +16,7 @@ vi.mock('panel/api/generated', () => ({
     getStatusUrl: () => 'control/status',
     getVersionJson: mocks.getVersionJson,
     getProfile: mocks.getProfile,
+    updateProfile: mocks.updateProfile,
     beginUpdate: vi.fn(),
     tlsStatus: mocks.tlsStatus,
     clientsStatus: mocks.clientsStatus,
@@ -27,6 +29,7 @@ vi.mock('panel/stores/toasts', () => ({
 
 import { resetStore } from 'panel/__tests__/helpers/resetStore';
 import { copy } from 'panel/__tests__/helpers/copy';
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
 import {
     getDnsStatus,
     getTimerStatus,
@@ -34,6 +37,8 @@ import {
     getVersion,
     refreshDnsStatus,
     stopStatusChecks,
+    changeTheme,
+    changeLanguage,
     dashboardState,
 } from 'panel/stores/dashboard';
 
@@ -131,6 +136,35 @@ describe('getDnsStatus', () => {
         expect(dashboardState.name).toBe('');
         expect(dashboardState.theme).toBeUndefined();
         expect(dashboardState.processingProfile).toBe(false);
+    });
+
+    it('falls back to the auto theme when the profile has no valid one', async () => {
+        mocks.getVersionJson.mockResolvedValue({
+            disabled: true,
+            new_version: 'x',
+        });
+        // An older server may return null instead of a theme from the enum.
+        mocks.getProfile.mockResolvedValue({ name: 'admin', theme: null });
+        mocks.tlsStatus.mockResolvedValue({ enabled: false });
+
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+            new Response(
+                JSON.stringify({
+                    running: true,
+                    version: 'v',
+                    dns_port: 53,
+                    dns_addresses: [],
+                    protection_enabled: true,
+                    http_port: 80,
+                }),
+                { status: 200 },
+            ),
+        );
+
+        await getDnsStatus();
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(dashboardState.theme).toBe('auto');
     });
 });
 
@@ -355,6 +389,30 @@ describe('status checks — ownership of retries', () => {
     });
 });
 
+describe('changeLanguage', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        LocalStorageHelper.clear();
+        resetStore(dashboardState, { language: '' });
+    });
+
+    it('replaces a null theme from the profile with a supported one', async () => {
+        // The update API requires a theme from the enum, so a profile value
+        // must not be sent back as is.
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: 'en', theme: null });
+
+        await changeLanguage('de');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'de',
+            theme: 'auto',
+        });
+        expect(dashboardState.language).toBe('de');
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+});
+
 /** A `Response` body is readable only once, so serve a fresh one per call. */
 const respondWith = (
     fetchMock: { mockImplementation: (fn: () => Promise<Response>) => unknown },
@@ -508,5 +566,43 @@ describe('status checks — all attempts failed', () => {
         expect(dashboardState.statusFailed).toBe(false);
         expect(dashboardState.processing).toBe(false);
         expect(dashboardState.dnsVersion).toBe('v');
+    });
+});
+
+describe('changeTheme', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        LocalStorageHelper.clear();
+        resetStore(dashboardState, { theme: undefined });
+    });
+
+    it('sends a supported language when the profile has none', async () => {
+        // An installation that never selected a language returns an empty one,
+        // which the profile API rejects on update.
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, 'ru');
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: '', theme: 'auto' });
+
+        await changeTheme('dark');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'ru',
+            theme: 'dark',
+        });
+        expect(dashboardState.theme).toBe('dark');
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
+    it('keeps the language already selected in the profile', async () => {
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, 'ru');
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: 'de', theme: 'auto' });
+
+        await changeTheme('light');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'de',
+            theme: 'light',
+        });
     });
 });
