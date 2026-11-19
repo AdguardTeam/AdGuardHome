@@ -71,10 +71,18 @@ export const CheckResult = (props: Props) => {
         }),
     );
 
+    const ruleGroups = createMemo(() =>
+        meta()
+            .ruleGroups.map((group) => ({
+                ...group,
+                rules: group.rules.filter((rule) => rule.text?.trim()),
+            }))
+            .filter((group) => group.rules.length > 0),
+    );
+
     const statusClassName = createMemo(() => getStatusClassName(meta().tone));
     const showRewriteActions = () =>
         props.checkResult.reason === FILTERED_STATUS.REWRITE && props.hasMatchedRewrite;
-    const showSource = () => Boolean(meta().source);
     const hasStandaloneResultMessage = () =>
         props.checkResult.reason ? STANDALONE_RESULT_REASONS.has(props.checkResult.reason) : false;
     const redirectedValue = () =>
@@ -148,23 +156,11 @@ export const CheckResult = (props: Props) => {
                         <div class={s.resultItem}>{reasonContent()}</div>
                     </Show>
 
-                    <Show when={showSource() && meta().source}>
-                        <div class={s.resultItem}>
-                            {renderSourceLabel(meta().source!, meta().sourceListType)}
-                        </div>
-                    </Show>
-
                     <Show when={normalizedServiceName()}>
                         <div class={s.resultItem}>
                             {intl.getMessage('user_rules_service', {
                                 service: normalizedServiceName(),
                             })}
-                        </div>
-                    </Show>
-
-                    <Show when={meta().tone !== 'rewritten' && meta().rule}>
-                        <div class={s.resultItem}>
-                            {intl.getMessage('user_rules_rule', { rule: meta().rule })}
                         </div>
                     </Show>
 
@@ -180,10 +176,36 @@ export const CheckResult = (props: Props) => {
                         </div>
                     </Show>
 
-                    <Show when={meta().tone === 'rewritten' && meta().rule}>
-                        <div class={s.resultItem}>
-                            {intl.getMessage('user_rules_rule', { rule: meta().rule })}
-                        </div>
+                    <Show when={meta().showRulesSection !== false}>
+                        <For each={ruleGroups()}>
+                            {(group) => (
+                                <>
+                                    <Show when={group.source}>
+                                        {(source) => (
+                                            <div
+                                                class={s.resultItem}
+                                                data-testid="user-rules-result-source"
+                                            >
+                                                {renderSourceLabel(source(), group.sourceListType)}
+                                            </div>
+                                        )}
+                                    </Show>
+
+                                    <For each={group.rules}>
+                                        {(rule) => (
+                                            <div
+                                                class={s.resultItem}
+                                                data-testid="user-rules-result-rule"
+                                            >
+                                                {intl.getMessage('user_rules_rule', {
+                                                    rule: rule.text,
+                                                })}
+                                            </div>
+                                        )}
+                                    </For>
+                                </>
+                            )}
+                        </For>
                     </Show>
 
                     <Show when={meta().tone !== 'rewritten' && props.checkResult.cname}>

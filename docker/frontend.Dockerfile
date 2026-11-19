@@ -28,7 +28,7 @@
 #    needed.  Keep it in sync with .github/workflows/*.
 
 # NOTE:  Keep in sync with .github/workflows/*.
-ARG BASE_IMAGE=adguard/home-js-builder:4.0
+ARG BASE_IMAGE=adguard/home-js-builder:4.1
 ARG CLIENT_DIR=client
 
 # The dependencies stage is needed to install packages and tool dependencies.

@@ -656,7 +656,7 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 		config.Lock()
 		defer config.Unlock()
 
-		tlsConf = config.TLS
+		tlsConf = confToTLSSettings(web.tlsManager.ExtendedTLSConfig())
 		webAPIAddr = config.HTTPConfig.Address.Addr()
 		webAPIPort = config.HTTPConfig.Address.Port()
 		plainDNSPort = config.DNS.Port
@@ -669,6 +669,7 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 		tcpPort(setts.PortDNSCrypt),
 		udpPort(plainDNSPort),
 		udpPort(setts.PortDNSOverQUIC),
+		web.conf.serveHTTP3,
 	)
 	if err != nil {
 		// Don't wrap the error because it's informative enough as is.
@@ -676,22 +677,41 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 	}
 
 	// Don't wrap the error because it's informative enough as is.
-	return checkPortAvailability(tlsConf, setts.tlsConfigSettings, webAPIAddr)
+	return checkPortAvailability(tlsConf, setts.tlsConfigSettings, webAPIAddr, web.conf.serveHTTP3)
 }
 
-// checkPortAvailability checks [tlsConfigSettings.PortHTTPS],
-// [tlsConfigSettings.PortDNSOverTLS], and
-// [tlsConfigSettings.PortDNSOverQUIC] are available for use.  It checks
+// bindingCheck represents a single network protocol binding check.
+type bindingCheck struct {
+	network  string
+	proto    string
+	currPort uint16
+	newPort  uint16
+}
+
+// checkPortAvailability checks ports, which are available for use.  It checks
 // the current configuration and, if needed, attempts to bind to the port.  The
 // function returns human-readable error messages for the frontend.  This is
-// best-effort check to prevent an "address already in use" error.
+// best-effort check to prevent an "address already in use" error.  The checked
+// ports are:
 //
-// TODO(a.garipov): Adapt for HTTP/3.
+//   - [tlsConfigSettings.PortHTTPS] (TCP)
+//   - [tlsConfigSettings.PortHTTPS] (UDP, if HTTP/3 is enabled)
+//   - [tlsConfigSettings.PortDNSOverTLS]
+//   - [tlsConfigSettings.PortDNSOverQUIC]
+//
+// TODO(m.kazantsev):  Base the port check on the ports actually held by the
+// DoH, DoT, and DoQ servers instead of comparing the current and the new
+// settings.
 func checkPortAvailability(
 	currConf tlsConfigSettings,
 	newConf tlsConfigSettings,
 	addr netip.Addr,
+	useHTTP3 bool,
 ) (err error) {
+	if !newConf.Enabled {
+		return nil
+	}
+
 	const (
 		networkTCP = "tcp"
 		networkUDP = "udp"
@@ -701,12 +721,7 @@ func checkPortAvailability(
 		protoDoQ   = "DNS-over-QUIC"
 	)
 
-	needBindingCheck := []struct {
-		network  string
-		proto    string
-		currPort uint16
-		newPort  uint16
-	}{{
+	needBindingCheck := []bindingCheck{{
 		network:  networkTCP,
 		proto:    protoHTTPS,
 		currPort: currConf.PortHTTPS,
@@ -723,10 +738,23 @@ func checkPortAvailability(
 		newPort:  newConf.PortDNSOverQUIC,
 	}}
 
+	if useHTTP3 {
+		http3Check := bindingCheck{
+			network:  networkUDP,
+			proto:    protoHTTPS,
+			currPort: currConf.PortHTTPS,
+			newPort:  newConf.PortHTTPS,
+		}
+
+		needBindingCheck = append(needBindingCheck, http3Check)
+	}
+
 	var errs []error
+	enabledChanged := newConf.Enabled != currConf.Enabled
 	for _, v := range needBindingCheck {
 		port := v.newPort
-		if v.currPort == port {
+
+		if v.currPort == port && !enabledChanged {
 			continue
 		}
 
@@ -743,16 +771,17 @@ func checkPortAvailability(
 // validatePorts validates the uniqueness of TCP and UDP ports for AdGuard Home
 // DNS protocols.
 func validatePorts(
-	bindPort, dohPort, dotPort, dnscryptTCPPort tcpPort,
+	bindPort, dohPort, dotPort, dnscryptPort tcpPort,
 	dnsPort, doqPort udpPort,
+	serveHTTP3 bool,
 ) (err error) {
 	tcpPorts := aghalg.UniqChecker[tcpPort]{}
 	addPorts(
 		tcpPorts,
 		bindPort,
-		dohPort,
+		tcpPort(dohPort),
 		dotPort,
-		dnscryptTCPPort,
+		dnscryptPort,
 		tcpPort(dnsPort),
 	)
 
@@ -762,7 +791,11 @@ func validatePorts(
 	}
 
 	udpPorts := aghalg.UniqChecker[udpPort]{}
-	addPorts(udpPorts, dnsPort, doqPort)
+	addPorts(udpPorts, dnsPort, doqPort, udpPort(dnscryptPort))
+
+	if serveHTTP3 {
+		addPorts(udpPorts, udpPort(dohPort))
+	}
 
 	err = udpPorts.Validate()
 	if err != nil {

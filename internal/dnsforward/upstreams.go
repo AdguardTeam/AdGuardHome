@@ -31,7 +31,7 @@ func newBootstrap(
 	addrs = stringutil.FilterOut(addrs, aghnet.IsCommentOrEmpty)
 
 	if len(addrs) == 0 {
-		addrs = defaultBootstrap
+		addrs = defaultDNSBootstrap
 	}
 
 	boots, err = aghnet.ParseBootstraps(addrs, opts)

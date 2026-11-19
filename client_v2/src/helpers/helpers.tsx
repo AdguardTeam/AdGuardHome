@@ -867,7 +867,7 @@ export const setTheme = (theme: string): void => {
  */
 
 export const getTheme = () =>
-    LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.THEME) || THEMES.light;
+    LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.THEME) || THEMES.auto;
 
 /**
  * Sets UI theme.
@@ -875,16 +875,21 @@ export const getTheme = () =>
  * @param theme
  */
 export const setUITheme = (theme?: string): void => {
-    let currentTheme = theme || getTheme();
+    const requestedTheme = theme || getTheme();
+    let appliedTheme = requestedTheme;
 
-    if (currentTheme === THEMES.auto) {
+    if (appliedTheme === THEMES.auto) {
         const prefersDark =
             window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        currentTheme = prefersDark ? THEMES.dark : THEMES.light;
+        appliedTheme = prefersDark ? THEMES.dark : THEMES.light;
     }
-    setTheme(currentTheme);
-    document.documentElement.dataset.theme = currentTheme;
-    document.documentElement.style.colorScheme = currentTheme;
+
+    // Persist the requested theme rather than the resolved one, so that
+    // "auto" survives a reload and the inlined pre-paint script can resolve it
+    // itself.
+    setTheme(requestedTheme);
+    document.documentElement.dataset.theme = appliedTheme;
+    document.documentElement.style.colorScheme = appliedTheme;
 };
 
 /**

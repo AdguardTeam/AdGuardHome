@@ -159,6 +159,62 @@ func TestWebAPI_HandleTLSConfigure(t *testing.T) {
 	}, testTimeout, testTimeout/10)
 }
 
+func TestWebAPI_HandleTLSConfigure_busyPort(t *testing.T) {
+	storeGlobals(t)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	m, err := aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
+		Logger:  testLogger,
+		Watcher: aghos.EmptyFSWatcher{},
+	})
+	require.NoError(t, err)
+
+	web := newTestWeb(t, &webConfig{tlsManager: m})
+
+	// Occupy the HTTPS port that is going to be requested.
+	tcpLn, err := net.Listen("tcp", ":0")
+	require.NoError(t, err)
+
+	testutil.CleanupAndRequireSuccess(t, tcpLn.Close)
+
+	tcpAddr := testutil.RequireTypeAssert[*net.TCPAddr](t, tcpLn.Addr())
+	busyPort := uint16(tcpAddr.Port)
+
+	func() {
+		config.Lock()
+		defer config.Unlock()
+
+		config.TLS.Enabled = false
+		config.TLS.PortHTTPS = busyPort
+	}()
+
+	setts := &tlsConfigSettingsExt{
+		Enabled:   true,
+		PortHTTPS: busyPort,
+	}
+
+	body, err := json.Marshal(setts)
+	require.NoError(t, err)
+
+	r := httptest.NewRequest(http.MethodPost, "/control/tls/configure", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	web.handleTLSConfigure(w, r)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), fmt.Sprintf("port %d for HTTPS is not available", busyPort))
+
+	func() {
+		config.Lock()
+		defer config.Unlock()
+
+		assert.False(t, config.TLS.Enabled)
+		assert.Equal(t, busyPort, config.TLS.PortHTTPS)
+	}()
+
+	assert.False(t, m.ExtendedTLSConfig().Enabled)
+}
+
 func TestWebAPI_HandleTLSStatus(t *testing.T) {
 	testCertChain := requireReadFile(t, testCertificatePath)
 	testPrivateKeyData := requireReadFile(t, testPrivateKeyPath)

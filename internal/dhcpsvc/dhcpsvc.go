@@ -32,20 +32,21 @@ type Interface interface {
 	Enabled() (ok bool)
 
 	// HostByIP returns the hostname of the DHCP client with the given IP
-	// address.  The address will be netip.Addr{} if there is no such client,
-	// due to an assumption that a DHCP client must always have an IP address.
+	// address.  The hostname will be an empty string, if there is no such
+	// client, due to an assumption that a DHCP client must always have an IP
+	// address.  Expired dynamic leases are ignored.
 	HostByIP(ip netip.Addr) (host string)
 
 	// MACByIP returns the MAC address for the given IP address leased.  It
 	// returns nil if there is no such client, due to an assumption that a DHCP
 	// client must always have a MAC address.  mac must be a valid MAC address
-	// according to [netutil.ValidateMAC].
+	// according to [netutil.ValidateMAC].  Expired dynamic leases are ignored.
 	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	// IPByHost returns the IP address of the DHCP client with the given
-	// hostname.  The hostname will be an empty string if there is no such
+	// hostname.  The IP address will be netip.Addr{} if there is no such
 	// client, due to an assumption that a DHCP client must always have a
-	// hostname, either set or generated.
+	// hostname, either set or generated.  Expired dynamic leases are ignored.
 	//
 	// TODO(e.burkov):  Support several IP addresses for a single hostname.
 	// This is possible if the client has several network interfaces.

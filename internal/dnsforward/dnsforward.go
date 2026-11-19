@@ -45,10 +45,20 @@ const DefaultTimeout = 10 * time.Second
 // faster than ordinary upstreams.
 const defaultLocalTimeout = 1 * time.Second
 
-var defaultDNS = []string{
-	"https://dns10.quad9.net/dns-query",
+// defaultDNSUpstream is the default DNS upstream URL.
+var defaultDNSUpstream = []string{
+	"https://cloudflare-dns.com/dns-query",
 }
-var defaultBootstrap = []string{"9.9.9.10", "149.112.112.10", "2620:fe::10", "2620:fe::fe:10"}
+
+// defaultDNSBootstrap are the default DNS servers for bootstrapping.
+//
+// TODO(ameshkov, a.garipov):  Consider using TLS.
+var defaultDNSBootstrap = []string{
+	"1.0.0.1",
+	"1.1.1.1",
+	"2606:4700:4700::1001",
+	"2606:4700:4700::1111",
+}
 
 // Often requested by all kinds of DNS probes
 var defaultBlockedHosts = []string{"version.bind", "id.server", "hostname.bind"}
@@ -131,8 +141,9 @@ type Server struct {
 	// be nil.
 	tlsManager aghtls.Manager
 
-	// access drops disallowed clients.
-	access *accessManager
+	// access drops disallowed clients.  It is an atomic pointer to avoid
+	// reacquiring serverLock during client lookups in query accounting.
+	access atomic.Pointer[accessManager]
 
 	// anonymizer masks the client's IP addresses if needed.
 	anonymizer *aghnet.IPMut
@@ -274,7 +285,7 @@ func NewServer(p DNSCreateParams) (s *Server, err error) {
 
 	if runtime.GOARCH == "mips" || runtime.GOARCH == "mipsle" {
 		// Use plain DNS on MIPS, encryption is too slow
-		defaultDNS = defaultBootstrap
+		defaultDNSUpstream = defaultDNSBootstrap
 	}
 
 	return s, nil
@@ -536,7 +547,7 @@ func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 
 	s.setupDNS64()
 
-	s.access, err = newAccessCtx(
+	a, err := newAccessManager(
 		s.conf.AllowedClients,
 		s.conf.DisallowedClients,
 		s.conf.BlockedHosts,
@@ -544,6 +555,8 @@ func (s *Server) Prepare(ctx context.Context, conf *ServerConfig) (err error) {
 	if err != nil {
 		return fmt.Errorf("preparing access: %w", err)
 	}
+
+	s.access.Store(a)
 
 	proxyConfig.Fallbacks, err = s.setupFallbackDNS()
 	if err != nil {
@@ -573,7 +586,7 @@ func (s *Server) prepareUpstreamSettings(ctx context.Context, boot upstream.Reso
 		return fmt.Errorf("loading upstreams: %w", err)
 	}
 
-	uc, err := newUpstreamConfig(ctx, s.logger, upstreams, defaultDNS, &upstream.Options{
+	uc, err := newUpstreamConfig(ctx, s.logger, upstreams, defaultDNSUpstream, &upstream.Options{
 		Logger:       aghslog.NewForUpstream(s.baseLogger, aghslog.UpstreamTypeMain),
 		Bootstrap:    boot,
 		Timeout:      s.conf.UpstreamTimeout,
@@ -926,16 +939,15 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // IsBlockedClient returns true if the client is blocked by the current access
 // settings.
 func (s *Server) IsBlockedClient(ip netip.Addr, clientID string) (blocked bool, rule string) {
-	s.serverLock.RLock()
-	defer s.serverLock.RUnlock()
+	a := s.access.Load()
 
 	blockedByIP := false
 	if ip != (netip.Addr{}) {
-		blockedByIP, rule = s.access.isBlockedIP(ip)
+		blockedByIP, rule = a.isBlockedIP(ip)
 	}
 
-	allowlistMode := s.access.allowlistMode()
-	blockedByClientID := s.access.isBlockedClientID(clientID)
+	allowlistMode := a.allowlistMode()
+	blockedByClientID := a.isBlockedClientID(clientID)
 
 	// TODO(s.chzhen):  Pass context.
 	ctx := context.TODO()

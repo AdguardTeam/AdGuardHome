@@ -133,10 +133,13 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip netip.Addr) (ho
 
 // HostByIP implements the [Interface] interface for *v4Server.
 func (s *v4Server) HostByIP(ip netip.Addr) (host string) {
+	now := time.Now()
+
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	if l, ok := s.ipIndex[ip]; ok {
+	l, ok := s.ipIndex[ip]
+	if ok && (l.IsStatic || l.Expiry.After(now)) {
 		return l.Hostname
 	}
 
@@ -145,10 +148,13 @@ func (s *v4Server) HostByIP(ip netip.Addr) (host string) {
 
 // IPByHost implements the [Interface] interface for *v4Server.
 func (s *v4Server) IPByHost(host string) (ip netip.Addr) {
+	now := time.Now()
+
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	if l, ok := s.hostsIndex[host]; ok {
+	l, ok := s.hostsIndex[host]
+	if ok && (l.IsStatic || l.Expiry.After(now)) {
 		return l.IP
 	}
 

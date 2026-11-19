@@ -468,11 +468,11 @@ func parseBogusNXDOMAIN(confBogusNXDOMAIN []string) (subnets []netip.Prefix, err
 // is configured
 func (s *Server) initDefaultSettings() {
 	if len(s.conf.UpstreamDNS) == 0 {
-		s.conf.UpstreamDNS = defaultDNS
+		s.conf.UpstreamDNS = defaultDNSUpstream
 	}
 
 	if len(s.conf.BootstrapDNS) == 0 {
-		s.conf.BootstrapDNS = defaultBootstrap
+		s.conf.BootstrapDNS = defaultDNSBootstrap
 	}
 
 	if s.conf.UDPListenAddrs == nil {

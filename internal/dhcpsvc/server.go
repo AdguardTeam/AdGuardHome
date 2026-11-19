@@ -251,7 +251,9 @@ func (srv *DHCPServer) HostByIP(ip netip.Addr) (host string) {
 	defer srv.leasesMu.RUnlock()
 
 	if l, ok := srv.leases.leaseByAddr(ip); ok {
-		return l.Hostname
+		if srv.isValidLease(l) {
+			return l.Hostname
+		}
 	}
 
 	return ""
@@ -263,7 +265,9 @@ func (srv *DHCPServer) MACByIP(ip netip.Addr) (mac net.HardwareAddr) {
 	defer srv.leasesMu.RUnlock()
 
 	if l, ok := srv.leases.leaseByAddr(ip); ok {
-		return l.HWAddr
+		if srv.isValidLease(l) {
+			return l.HWAddr
+		}
 	}
 
 	return nil
@@ -275,7 +279,9 @@ func (srv *DHCPServer) IPByHost(host string) (ip netip.Addr) {
 	defer srv.leasesMu.RUnlock()
 
 	if l, ok := srv.leases.leaseByName(host); ok {
-		return l.IP
+		if srv.isValidLease(l) {
+			return l.IP
+		}
 	}
 
 	return netip.Addr{}
@@ -441,6 +447,26 @@ func (srv *DHCPServer) removeLeaseByAddr(ctx context.Context, addr netip.Addr) (
 	)
 
 	return nil
+}
+
+// isValidLease returns true if the lease is valid.  Static leases are always
+// valid, and dynamic leases are valid only if they haven't expired.  l must not
+// be nil.  srv.leasesMu must be locked.
+func (srv *DHCPServer) isValidLease(l *Lease) (ok bool) {
+	if l.IsStatic {
+		return true
+	}
+
+	iface, err := ifaceForAddr(l.IP, srv.interfaces4, srv.interfaces6)
+	if err != nil {
+		// TODO(m.kazantsev):  Use DebugContext.
+		srv.logger.Debug("failed to find interface for lease ip", "ip", l.IP)
+
+		// If we can't find the interface, consider the lease invalid.
+		return false
+	}
+
+	return l.Expiry.After(iface.clock.Now())
 }
 
 // ifaceForAddr returns the handled network interface for the given IP address,

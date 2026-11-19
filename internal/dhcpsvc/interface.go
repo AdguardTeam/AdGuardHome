@@ -12,6 +12,7 @@ import (
 
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/timeutil"
 )
 
 // macKey contains hardware address as byte array of 6, 8, or 20 bytes.
@@ -47,6 +48,10 @@ type netInterface struct {
 
 	// addressChecker checks if an address is available for leasing.
 	addressChecker addressChecker
+
+	// clock is used to get the current time, which is necessary for lease
+	// expiration checks.
+	clock timeutil.Clock
 
 	// indexMu protects the index, leases, and leasedOffsets.
 	indexMu *sync.RWMutex

@@ -120,14 +120,6 @@ fi
 readonly CGO_ENABLED race_flags
 export CGO_ENABLED
 
-# Build the new binary if requested.
-if [ "${NEXTAPI:-0}" -eq '0' ]; then
-	tags_flags='--tags='
-else
-	tags_flags='--tags=next'
-fi
-readonly tags_flags
-
 if [ "$verbose" -gt '0' ]; then
 	"$go" env
 fi
@@ -142,7 +134,6 @@ fi
 	"$cover_flags" \
 	--ldflags="$ldflags" \
 	"$race_flags" \
-	"$tags_flags" \
 	--trimpath \
 	"$o_flags" \
 	"$v_flags" \

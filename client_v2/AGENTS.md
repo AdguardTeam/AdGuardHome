@@ -21,6 +21,7 @@
     - [Markdown Formatting](#markdown-formatting)
     - [Other](#other)
         - [Accessibility](#accessibility)
+        - [Commits](#commits)
         - [Translations](#translations)
 
 # Project Overview
@@ -62,7 +63,10 @@ Playwright (e2e).
   Playwright 1.56 (e2e against a real backend)
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
   `eslint-plugin-prettier`), Prettier 3
-- **Storage**: Browser `localStorage` (language, theme); no database
+- **Storage**: Browser `localStorage` (language, theme); no database.  The theme
+  of a signed-in operator lives in the server profile and is mirrored to
+  `localStorage['account_theme']` for the inlined pre-paint script; a userless
+  (auth-disabled or GL-iNet) install keeps the theme only in `localStorage`
 - **Target Platform**: Modern evergreen browsers (see `browserslist` in
   `package.json`); output is static assets served by the Go backend
 - **Project Type**: Website (single, browser-resident SPA)
@@ -102,7 +106,8 @@ client_v2/
 │   ├── __locales/                 # Translation JSON (en, ru, de, …)
 │   └── __tests__/                 # Vitest unit/integration tests
 ├── tests/e2e/                     # Playwright e2e specs
-├── scripts/                       # check-translations.js, translation-audit.js
+├── public/                        # HTML entry points + `theme-bootstrap.js` (inlined pre-paint theme script)
+├── scripts/                       # check-translations.js, translation-audit.js, theme-bootstrap-template.js
 ├── webpack.common.js              # 4 entry points, loaders, path aliases
 ├── webpack.dev.js                 # Dev server + backend proxy
 ├── webpack.prod.js                # Production build
@@ -274,7 +279,16 @@ no server process of its own. Design for the browser environment:
 - **Theme via attributes, not JS state.** Theming is driven by the
   `data-theme` attribute on `<html>` and CSS custom properties; switch themes
   through `setUITheme` in `src/helpers/helpers.tsx`, not by toggling
-  component-level classes.
+  component-level classes.  The server profile is authoritative for the
+  signed-in operator: `getProfileData` in `src/stores/dashboard.ts` feeds its
+  theme into the `App` effect, and `setUITheme` persists the *requested* value
+  (including `"auto"`) to `localStorage['account_theme']`.  The pre-paint
+  script, `public/theme-bootstrap.js`, reads that key; `webpack.common.js`
+  inlines it into every entry point via the `themeBootstrapScript` parameter,
+  so the key must match `LOCAL_STORAGE_KEYS.THEME`
+  (`src/__tests__/theme-bootstrap.spec.ts` guards this).  A userless install
+  ignores the profile theme, since the API only echoes the config default
+  there, and falls back to `getTheme()`.
 - **Static asset output.** The production build emits static files into
   `../build/static/` which the Go binary embeds. Do not introduce runtime
   server requirements (Node, databases, etc.) — the built output must be
@@ -556,6 +570,20 @@ All Markdown files MUST follow these formatting rules:
 **Rationale**: Uniform Markdown formatting improves readability for both
 humans and AI agents that consume project documentation.
 
+### CHANGELOG.md Formatting
+
+The root `CHANGELOG.md` follows these rules when adding entries:
+
+- Add entries to the `## [Unreleased]` section between the
+  "NOTE: Add new changes BELOW THIS COMMENT." and
+  "NOTE: Add new changes ABOVE THIS COMMENT." markers.
+- Within a `###` subsection, new entries go ABOVE older ones (newest first).
+- Write each entry as a single-line bullet matching the surrounding block's
+  indentation — do not wrap entries onto continuation lines.
+- Reference issues as `([#1234])` and add the link reference at the bottom of
+  the block, keeping the list sorted and aligned with neighboring references.
+- Do not reword or reorder existing entries.
+
 ## Other
 
 ### Accessibility
@@ -574,6 +602,18 @@ friendly:
 - Focusable rows acting as buttons must be keyboard-activatable: `tabindex` of
   `0` plus an `onKeyDown` handler for Enter/Space.
 - Any `id` used for labeling must be unique per rendered instance.
+
+### Commits
+
+- Follow the AdGuard Git guidelines for commit headers:
+  `pkg: lowercase description`, where `pkg` is the affected directory, or
+  `all` for cross-cutting changes. Keep headers within 80 columns. See
+  <https://github.com/AdguardTeam/CodeGuidelines/blob/master/Go/Git.md>.
+- You MUST NOT put `#<number>` references in a commit message. The remote
+  rejects a message that matches the pattern `(?m)(^|[\s(])#\d+\b`.
+- Prefix the subject of code commits with the Jira key, for example
+  `AGDNS-4717 client_v2: fix the recheck button after a failed update check`.
+  Put the GitHub issue link in `CHANGELOG.md`, not in the commit message.
 
 ### Translations
 

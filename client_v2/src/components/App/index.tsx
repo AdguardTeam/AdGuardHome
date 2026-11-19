@@ -21,7 +21,7 @@ import { LeasesPage } from 'panel/components/Dhcp/LeasesPage';
 import { QueryLog } from 'panel/components/QueryLog';
 import { Toasts } from 'panel/components/Toasts';
 import { THEMES } from '../../helpers/constants';
-import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
+import { getTheme, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashboard';
 
 import s from './styles.module.pcss';
@@ -81,26 +81,27 @@ const App = () => {
         }
     });
 
-    // React to theme changes
+    // React to theme changes.  The profile theme is authoritative for the
+    // signed-in operator; a userless install (auth disabled or GL-iNet) has no
+    // operator theme in the profile and keeps it in `localStorage` only.
     createEffect(() => {
-        const theme = dashboardState.theme;
+        const theme = dashboardState.name ? dashboardState.theme : getTheme();
 
-        if (!theme) return;
+        if (theme) setUITheme(theme);
 
-        if (theme !== THEMES.auto) {
-            setUITheme(theme);
-            return;
-        }
-
+        // The OS-scheme listener is registered for every preference: a guest's
+        // choice lives in `localStorage` (written by `Footer`) rather than in
+        // `dashboardState`, so it does not re-run this effect.  Re-checking the
+        // preference here keeps an explicit choice intact while still applying
+        // OS changes as soon as "auto" is selected.
         const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
-        setUITheme(theme);
 
-        const handleChange = (e: MediaQueryListEvent) => {
-            if (e.matches) {
-                setUITheme(THEMES.dark);
-            } else {
-                setUITheme(THEMES.light);
-            }
+        const handleChange = () => {
+            const current = dashboardState.name ? dashboardState.theme : getTheme();
+
+            // Re-resolve through `setUITheme` so the stored preference stays
+            // "auto" instead of being overwritten with the resolved theme.
+            if (current === THEMES.auto) setUITheme(THEMES.auto);
         };
 
         colorSchemeMedia.addEventListener('change', handleChange);

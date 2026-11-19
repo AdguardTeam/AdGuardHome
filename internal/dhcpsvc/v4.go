@@ -150,9 +150,6 @@ type dhcpInterfaceV4 struct {
 	// server.
 	common *netInterface
 
-	// clock used to get current time.
-	clock timeutil.Clock
-
 	// gateway is the IP address of the network gateway.
 	gateway netip.Addr
 
@@ -193,7 +190,6 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 
 	iface = &dhcpInterfaceV4{
 		gateway: conf.GatewayIP,
-		clock:   conf.Clock,
 		subnet:  netip.PrefixFrom(conf.GatewayIP, maskLen),
 		common: &netInterface{
 			logger:         baseLogger,
@@ -205,6 +201,7 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 			name:           name,
 			addrSpace:      addrSpace,
 			leaseTTL:       conf.LeaseDuration,
+			clock:          conf.Clock,
 		},
 	}
 	iface.implicitOpts, iface.explicitOpts = conf.options(ctx, baseLogger)

@@ -1,5 +1,3 @@
-export const hasMinLength = (v: string) => v.length >= 8;
-
 export const hasLowercase = (v: string) => /\p{Ll}/u.test(v);
 
 export const hasUppercase = (v: string) => /\p{Lu}/u.test(v);

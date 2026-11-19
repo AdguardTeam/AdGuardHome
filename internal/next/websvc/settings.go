@@ -8,16 +8,16 @@ import (
 
 // All Settings Handlers
 
-// RespGetV1SettingsAll describes the response of the GET /api/v1/settings/all
+// RespGetV2SettingsAll describes the response of the GET /api/v2/settings/all
 // HTTP API.
-type RespGetV1SettingsAll struct {
+type RespGetV2SettingsAll struct {
 	// TODO(a.garipov): Add more as we go.
 
 	DNS  *HTTPAPIDNSSettings  `json:"dns"`
 	HTTP *HTTPAPIHTTPSettings `json:"http"`
 }
 
-// handleGetSettingsAll is the handler for the GET /api/v1/settings/all HTTP
+// handleGetSettingsAll is the handler for the GET /api/v2/settings/all HTTP
 // API.
 func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request) {
 	dnsSvc := svc.confMgr.DNS()
@@ -27,7 +27,7 @@ func (svc *Service) handleGetSettingsAll(w http.ResponseWriter, r *http.Request)
 	httpConf := webSvc.Config()
 
 	// TODO(a.garipov): Add all currently supported parameters.
-	aghhttp.WriteJSONResponseOK(r.Context(), svc.logger, w, r, &RespGetV1SettingsAll{
+	aghhttp.WriteJSONResponseOK(r.Context(), svc.logger, w, r, &RespGetV2SettingsAll{
 		DNS: &HTTPAPIDNSSettings{
 			UpstreamMode:        dnsConf.UpstreamMode,
 			Addresses:           dnsConf.Addresses,

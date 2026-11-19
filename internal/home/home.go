@@ -857,7 +857,7 @@ func run(
 	err = setupBindOpts(opts)
 	fatalOnError(ctx, baseLogger, err)
 
-	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, tlsMgr, isFirstRun, workDir, confPath)
+	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, hc, tlsMgr, isFirstRun, workDir, confPath)
 
 	dataDirPath := filepath.Join(workDir, dataDir)
 	err = os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
@@ -1001,6 +1001,7 @@ func initUpdate(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	opts options,
+	hc *aghnet.HostsContainer,
 	tlsMgr aghtls.Manager,
 	isFirstRun bool,
 	workDir string,
@@ -1021,7 +1022,7 @@ func initUpdate(
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, baseLogger, opts, upd, tlsMgr, isFirstRun)
+	cmdlineUpdate(ctx, baseLogger, opts, hc, upd, tlsMgr, isFirstRun)
 
 	if !isFirstRun {
 		// Save the updated config.
@@ -1431,6 +1432,7 @@ func cmdlineUpdate(
 	ctx context.Context,
 	l *slog.Logger,
 	opts options,
+	hc *aghnet.HostsContainer,
 	upd *updater.Updater,
 	tlsMgr aghtls.Manager,
 	isFirstRun bool,
@@ -1450,6 +1452,7 @@ func cmdlineUpdate(
 			Logger:      l,
 			TLSManager:  tlsMgr,
 			PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
+			EtcHosts:    hc,
 		},
 		nil,
 		agh.EmptyConfigModifier{},

@@ -14,7 +14,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
-// ReqPatchSettingsHTTP describes the request to the PATCH /api/v1/settings/http
+// ReqPatchSettingsHTTP describes the request to the PATCH /api/v2/settings/http
 // HTTP API.
 type ReqPatchSettingsHTTP struct {
 	// TODO(a.garipov): Add more as we go.
@@ -40,7 +40,7 @@ type HTTPAPIHTTPSettings struct {
 	ForceHTTPS      bool                 `json:"force_https"`
 }
 
-// handlePatchSettingsHTTP is the handler for the PATCH /api/v1/settings/http
+// handlePatchSettingsHTTP is the handler for the PATCH /api/v2/settings/http
 // HTTP API.
 func (svc *Service) handlePatchSettingsHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
