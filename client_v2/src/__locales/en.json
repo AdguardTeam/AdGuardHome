@@ -312,7 +312,7 @@
   "dns_server_addresses_placeholder": "IP addresses, sdns://, quic://, https://, h3://, or tls://",
   "dns_server_addresses_title": "Server addresses",
   "dns_settings": "DNS",
-  "dns_start_error_action": "Free the port, grant permission, or set the current address, then restart AdGuard Home",
+  "dns_start_error_action": "Free the port, grant permission, or set the current address, then restart AdGuard Home and reload the page",
   "dns_start_error_address": "The IP address set for AdGuard Home no longer exists",
   "dns_start_error_permission": "AdGuard Home doesn't have permission to use the port",
   "dns_start_error_port": "Port %port% is already used by another service or app",

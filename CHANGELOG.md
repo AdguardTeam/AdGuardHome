@@ -45,7 +45,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- The new web interface blanking out or silently reloading itself when the DNS server was not running or its status check failed; it now explains the state and offers a retry.
+- The new web interface blanking out or silently reloading itself when the DNS server was not running or its status check failed; it now explains the state, lists the likely causes of a stopped DNS server, and offers a retry when the check itself failed.
 
 - The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does.
 

@@ -30,6 +30,7 @@ vi.mock('panel/stores/toasts', () => ({
 import { resetStore } from 'panel/__tests__/helpers/resetStore';
 import { copy } from 'panel/__tests__/helpers/copy';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import { STANDARD_DNS_PORT } from 'panel/helpers/constants';
 import {
     getDnsStatus,
     getTimerStatus,
@@ -496,6 +497,16 @@ describe('status checks — all attempts failed', () => {
         expect(dashboardState.statusFailed).toBe(false);
         // The start-error screen names the port, which comes from the config.
         expect(dashboardState.dnsPort).toBe(5353);
+    });
+
+    it('falls back to the standard port when the config has none', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        respondWith(fetchMock, { running: false, dns_port: 0 });
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(dashboardState.dnsPort).toBe(STANDARD_DNS_PORT);
     });
 
     it('does not report a stopped core as a failed check from the timer chain', async () => {

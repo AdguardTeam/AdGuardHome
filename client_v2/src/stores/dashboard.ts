@@ -220,11 +220,12 @@ export const getDnsStatus = async () => {
         } else {
             // The status is learned even though the core is down, so the retry
             // loop must not keep the page blank while it polls.  The port comes
-            // from the config, so the start-error screen can name it.
+            // from the config, so the start-error screen can name it; `0` means
+            // the config holds no port, and the standard one would be used.
             setState({
                 isCoreRunning: runningStatus,
                 processing: false,
-                dnsPort: dnsStatus.dns_port ?? untrack(() => state.dnsPort),
+                dnsPort: dnsStatus.dns_port || STANDARD_DNS_PORT,
             });
         }
     };
