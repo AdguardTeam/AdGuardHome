@@ -36,6 +36,7 @@ import {
     getVersion,
     refreshDnsStatus,
     changeTheme,
+    changeLanguage,
     dashboardState,
 } from 'panel/stores/dashboard';
 
@@ -133,6 +134,35 @@ describe('getDnsStatus', () => {
         expect(dashboardState.name).toBe('');
         expect(dashboardState.theme).toBeUndefined();
         expect(dashboardState.processingProfile).toBe(false);
+    });
+
+    it('falls back to the auto theme when the profile has no valid one', async () => {
+        mocks.getVersionJson.mockResolvedValue({
+            disabled: true,
+            new_version: 'x',
+        });
+        // An older server may return null instead of a theme from the enum.
+        mocks.getProfile.mockResolvedValue({ name: 'admin', theme: null });
+        mocks.tlsStatus.mockResolvedValue({ enabled: false });
+
+        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+            new Response(
+                JSON.stringify({
+                    running: true,
+                    version: 'v',
+                    dns_port: 53,
+                    dns_addresses: [],
+                    protection_enabled: true,
+                    http_port: 80,
+                }),
+                { status: 200 },
+            ),
+        );
+
+        await getDnsStatus();
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(dashboardState.theme).toBe('auto');
     });
 });
 
@@ -275,6 +305,30 @@ describe('getVersion — update check failures', () => {
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(copy('updates_checked'));
         expect(dashboardState.checkUpdateFlag).toBe(true);
         expect(dashboardState.isUpdateAvailable).toBe(true);
+    });
+});
+
+describe('changeLanguage', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        LocalStorageHelper.clear();
+        resetStore(dashboardState, { language: '' });
+    });
+
+    it('replaces a null theme from the profile with a supported one', async () => {
+        // The update API requires a theme from the enum, so a profile value
+        // must not be sent back as is.
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: 'en', theme: null });
+
+        await changeLanguage('de');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'de',
+            theme: 'auto',
+        });
+        expect(dashboardState.language).toBe('de');
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
     });
 });
 
