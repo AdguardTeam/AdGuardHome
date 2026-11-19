@@ -8,10 +8,12 @@ type Props = ControllerRenderProps<FieldValues> & {
     className?: string;
     icon?: string;
     error?: string;
+    hasSchedule?: boolean;
+    onScheduleClick?: () => void;
 };
 
 export const ServiceField = React.forwardRef<HTMLInputElement, Props>(
-    ({ name, value, onChange, onBlur, placeholder, disabled, className, icon, error, ...rest }, ref) => (
+    ({ name, value, onChange, onBlur, placeholder, disabled, className, icon, error, hasSchedule, onScheduleClick, ...rest }, ref) => (
         <>
             <label className={cn('service custom-switch', className)}>
                 <input
@@ -32,6 +34,23 @@ export const ServiceField = React.forwardRef<HTMLInputElement, Props>(
                     {placeholder}
                 </span>
                 {icon && <div dangerouslySetInnerHTML={{ __html: window.atob(icon) }} className="service__icon" />}
+
+                {!disabled && (
+                    <button
+                        type="button"
+                        className={cn('btn btn-icon btn-sm service__schedule-btn', { 'service__schedule-btn--active': hasSchedule })}
+                        title="Schedule"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onScheduleClick?.();
+                        }}
+                    >
+                        <svg className="icons icon12">
+                            <use xlinkHref="#watch" />
+                        </svg>
+                    </button>
+                )}
             </label>
 
             {!disabled && error && <span className="form__message form__message--error">{error}</span>}
