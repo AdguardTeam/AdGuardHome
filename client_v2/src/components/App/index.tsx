@@ -136,15 +136,29 @@ const App = () => {
                         <Sidebar />
 
                         <Show when={dashboardState.statusFailed || !dashboardState.isCoreRunning}>
-                            <StatusError
-                                message={
-                                    dashboardState.statusFailed
-                                        ? intl.getMessage('dns_status_error_short')
-                                        : intl.getMessage('dns_not_running')
+                            <Show
+                                when={dashboardState.statusFailed}
+                                fallback={
+                                    <StatusError
+                                        message={intl.getMessage('dns_start_error_title')}
+                                        processing={dashboardState.processing}
+                                        reasons={[
+                                            intl.getMessage('dns_start_error_port', {
+                                                port: dashboardState.dnsPort,
+                                            }),
+                                            intl.getMessage('dns_start_error_permission'),
+                                            intl.getMessage('dns_start_error_address'),
+                                        ]}
+                                        action={intl.getMessage('dns_start_error_action')}
+                                    />
                                 }
-                                processing={dashboardState.processing}
-                                onRetry={() => getDnsStatus()}
-                            />
+                            >
+                                <StatusError
+                                    message={intl.getMessage('dns_status_error_short')}
+                                    processing={dashboardState.processing}
+                                    onRetry={() => getDnsStatus()}
+                                />
+                            </Show>
                         </Show>
 
                         <Show

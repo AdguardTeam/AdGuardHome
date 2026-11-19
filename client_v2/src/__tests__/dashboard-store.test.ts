@@ -451,7 +451,7 @@ describe('status checks — all attempts failed', () => {
         vi.restoreAllMocks();
     });
 
-    it('keeps the notice, flags only a failed bootstrap, and does not reload', async () => {
+    it('toasts a failed background check but not a failed bootstrap', async () => {
         const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
         const reload = stubLocation();
 
@@ -469,15 +469,14 @@ describe('status checks — all attempts failed', () => {
         fetchMock.mockClear();
         mocks.addErrorToast.mockClear();
 
-        // A failing bootstrap leaves the dashboard unknown: the retry surface
-        // must show up instead of the route body.
+        // A failing bootstrap leaves the dashboard unknown: the retry screen
+        // must show up instead of the route body, and it carries the message
+        // itself, so a toast would only repeat it.
         getDnsStatus();
         await vi.advanceTimersByTimeAsync(61_000);
 
         expect(fetchMock).toHaveBeenCalledTimes(60);
-        expect(mocks.addErrorToast).toHaveBeenCalledWith({
-            error: copy('dns_status_error'),
-        });
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
         expect(dashboardState.processing).toBe(false);
         expect(dashboardState.statusFailed).toBe(true);
         expect(reload).not.toHaveBeenCalled();
@@ -485,7 +484,7 @@ describe('status checks — all attempts failed', () => {
 
     it('reports a stopped core instead of a failed check', async () => {
         const fetchMock = vi.spyOn(globalThis, 'fetch');
-        respondWith(fetchMock, { running: false });
+        respondWith(fetchMock, { running: false, dns_port: 5353 });
 
         getDnsStatus();
         await vi.advanceTimersByTimeAsync(61_000);
@@ -495,6 +494,8 @@ describe('status checks — all attempts failed', () => {
         expect(dashboardState.processing).toBe(false);
         expect(dashboardState.isCoreRunning).toBe(false);
         expect(dashboardState.statusFailed).toBe(false);
+        // The start-error screen names the port, which comes from the config.
+        expect(dashboardState.dnsPort).toBe(5353);
     });
 
     it('does not report a stopped core as a failed check from the timer chain', async () => {

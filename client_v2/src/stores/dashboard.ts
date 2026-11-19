@@ -183,11 +183,11 @@ const handleStatusRequestError = () => {
 /**
  * Handles a bootstrap status check that failed all of its attempts.  The store
  * still holds `initialState` defaults, so the route body must not render:
- * `App` shows an error screen with a retry instead.
+ * `App` shows an error screen with a retry instead.  The screen carries the
+ * message, so a toast would only repeat it.
  */
 const handleBootstrapStatusError = () => {
-    handleStatusRequestError();
-    setState('statusFailed', true);
+    setState({ processing: false, statusFailed: true });
 };
 
 export const getDnsStatus = async () => {
@@ -219,8 +219,13 @@ export const getDnsStatus = async () => {
             getProfileData();
         } else {
             // The status is learned even though the core is down, so the retry
-            // loop must not keep the page blank while it polls.
-            setState({ isCoreRunning: runningStatus, processing: false });
+            // loop must not keep the page blank while it polls.  The port comes
+            // from the config, so the start-error screen can name it.
+            setState({
+                isCoreRunning: runningStatus,
+                processing: false,
+                dnsPort: dnsStatus.dns_port ?? untrack(() => state.dnsPort),
+            });
         }
     };
 

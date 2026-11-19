@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
         processing: false,
         statusFailed: false,
         isCoreRunning: true,
+        dnsPort: 53,
         language: 'en',
         theme: undefined as string | undefined,
         protectionEnabled: false,
@@ -55,6 +56,7 @@ describe('App status screens', () => {
         mocks.state.processing = false;
         mocks.state.statusFailed = false;
         mocks.state.isCoreRunning = true;
+        mocks.state.dnsPort = 53;
     });
 
     it('explains a failed bootstrap and hides the route body', async () => {
@@ -74,7 +76,32 @@ describe('App status screens', () => {
 
         expect(await screen.findByTestId('status-error')).toBeInTheDocument();
         expect(screen.queryByTestId('route-dashboard')).not.toBeInTheDocument();
-        expect(screen.getByText(copyInDom('dns_not_running'))).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('dns_start_error_title'))).toBeInTheDocument();
+    });
+
+    it('lists the reasons and what to do when the core has stopped', async () => {
+        mocks.state.isCoreRunning = false;
+        mocks.state.dnsPort = 5353;
+
+        renderApp();
+
+        expect(
+            await screen.findByText(
+                copyInDom('dns_start_error_port', { port: mocks.state.dnsPort }),
+            ),
+        ).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('dns_start_error_permission'))).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('dns_start_error_address'))).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('dns_start_error_action'))).toBeInTheDocument();
+    });
+
+    it('offers no retry when the core has stopped', async () => {
+        mocks.state.isCoreRunning = false;
+
+        renderApp();
+
+        await screen.findByTestId('status-error');
+        expect(screen.queryByRole('button', { name: copy('try_again') })).not.toBeInTheDocument();
     });
 
     it('retries the full status check from the button', async () => {
