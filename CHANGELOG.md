@@ -32,7 +32,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-## [v1.0.0] - 2026-11-18
+## [v1.0.0] - 2026-11-19
 
 See also the [v1.0.0 GitHub milestone][ms-v1.0.0].
 
