@@ -2,8 +2,6 @@ import cn from 'clsx';
 
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
-import { Icon } from 'panel/common/ui/Icon';
-import { Button } from 'panel/common/ui/Button';
 
 import s from './StatusError.module.pcss';
 
@@ -15,18 +13,19 @@ type StatusErrorProps = {
 
 export const StatusError = (props: StatusErrorProps) => {
     return (
-        <div class={cn(theme.text.t2, s.root)} data-testid="status-error">
-            <Icon icon="attention" class={s.icon} />
-            <div class={s.message}>{props.message}</div>
-            <Button
-                variant="secondary"
-                size="small"
-                class={s.button}
+        <div class={s.root} data-testid="status-error">
+            <div class={cn(theme.title.h0, s.face)} aria-hidden="true">
+                :(
+            </div>
+            <div class={cn(theme.text.t3, s.message)}>{props.message}</div>
+            <button
+                type="button"
+                class={cn(theme.text.t3, theme.link.link, theme.link.noDecoration)}
                 disabled={props.processing}
-                onClick={props.onRetry}
+                onClick={() => props.onRetry()}
             >
                 {intl.getMessage('try_again')}
-            </Button>
+            </button>
         </div>
     );
 };

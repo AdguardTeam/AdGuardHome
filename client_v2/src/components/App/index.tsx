@@ -139,7 +139,7 @@ const App = () => {
                             <StatusError
                                 message={
                                     dashboardState.statusFailed
-                                        ? intl.getMessage('dns_status_error')
+                                        ? intl.getMessage('dns_status_error_short')
                                         : intl.getMessage('dns_not_running')
                                 }
                                 processing={dashboardState.processing}

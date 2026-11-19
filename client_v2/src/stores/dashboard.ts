@@ -176,7 +176,7 @@ export const stopStatusChecks = () => {
  * attempts and reload forever.
  */
 const handleStatusRequestError = () => {
-    addErrorToast({ error: intl.getMessage('dns_status_error_reload') });
+    addErrorToast({ error: intl.getMessage('dns_status_error') });
     setState('processing', false);
 };
 

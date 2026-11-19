@@ -64,7 +64,7 @@ describe('App status screens', () => {
 
         expect(await screen.findByTestId('status-error')).toBeInTheDocument();
         expect(screen.queryByTestId('route-dashboard')).not.toBeInTheDocument();
-        expect(screen.getByText(copyInDom('dns_status_error'))).toBeInTheDocument();
+        expect(screen.getByText(copyInDom('dns_status_error_short'))).toBeInTheDocument();
     });
 
     it('explains a stopped core and hides the route body', async () => {

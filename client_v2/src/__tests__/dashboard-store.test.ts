@@ -461,7 +461,7 @@ describe('status checks — all attempts failed', () => {
 
         expect(fetchMock).toHaveBeenCalledTimes(60);
         expect(mocks.addErrorToast).toHaveBeenCalledWith({
-            error: copy('dns_status_error_reload'),
+            error: copy('dns_status_error'),
         });
         expect(dashboardState.statusFailed).toBe(false);
         expect(reload).not.toHaveBeenCalled();
@@ -476,7 +476,7 @@ describe('status checks — all attempts failed', () => {
 
         expect(fetchMock).toHaveBeenCalledTimes(60);
         expect(mocks.addErrorToast).toHaveBeenCalledWith({
-            error: copy('dns_status_error_reload'),
+            error: copy('dns_status_error'),
         });
         expect(dashboardState.processing).toBe(false);
         expect(dashboardState.statusFailed).toBe(true);
