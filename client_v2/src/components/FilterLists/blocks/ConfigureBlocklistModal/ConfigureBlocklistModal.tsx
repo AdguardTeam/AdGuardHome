@@ -171,7 +171,18 @@ export const ConfigureBlocklistModal = (props: Props) => {
                 break;
             }
             case MODAL_TYPE.EDIT_BLOCKLIST: {
-                editFilter(props.filterToEdit!.url, values as FilterSetUrlData, false);
+                const filterToEdit = props.filterToEdit;
+                if (!filterToEdit) {
+                    break;
+                }
+
+                const data: FilterSetUrlData = {
+                    name: values.name,
+                    url: values.url,
+                    enabled: filterToEdit.enabled ?? true,
+                };
+
+                editFilter(filterToEdit.url, data, false);
                 break;
             }
             default: {

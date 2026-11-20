@@ -37,7 +37,12 @@ export const runTranslationAudit = async ({
         const repoRoot = path.resolve(rootDir, '..');
         const localesDir = path.join(srcDir, '__locales');
         const supportedLocales = await loadTwoskyLocales(repoRoot);
-        const pluralErrors = await validatePlurals(localesDir, supportedLocales);
+        const pluralKeys = new Set(
+            usage.staticKeys
+                .filter((entry) => entry.method === 'getPlural')
+                .map((entry) => entry.key),
+        );
+        const pluralErrors = await validatePlurals(localesDir, supportedLocales, pluralKeys);
         write(`${formatPluralReport(pluralErrors)}\n`);
 
         return 0;
