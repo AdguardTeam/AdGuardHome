@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
+	"net/netip"
+	"slices"
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
@@ -34,7 +37,9 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 			return nil
 		}
 
-		blocked, _ := s.IsBlockedClient(pctx.Addr.Addr(), clientID)
+		ctx, clientAddr := s.withECSClientAddr(ctx, pctx)
+
+		blocked, _ := s.IsBlockedClient(clientAddr, clientID)
 		if blocked {
 			return s.serveBlockedResponse(pctx)
 		}
@@ -52,6 +57,137 @@ func (s *Server) Wrap(h proxy.Handler) (wrapped proxy.Handler) {
 	}
 
 	return proxy.HandlerFunc(f)
+}
+
+// withECSClientAddr returns the context carrying the ECS client address, if
+// any, and the address to use for client identification: the one advertised in
+// the EDNS Client Subnet option when it's enabled, the request comes from a
+// trusted proxy, and the option carries a host address, or the connection
+// address otherwise.
+//
+// When the client address is taken from ECS, the ECS option is removed from the
+// request.  It carries the client's full, often private, address and is only
+// meant for AdGuard Home, so it must not be passed on to the upstreams.  The
+// EDNS Client Subnet settings then apply as if the request had come without it.
+//
+// While the option is enabled, ECS from senders that are not trusted proxies is
+// removed as well.  Such an option is either a client posing as another one or
+// a forwarder that isn't trusted, for example one sending from an unexpected
+// address, and in both cases it may carry a client address that must not reach
+// the upstreams either.
+func (s *Server) withECSClientAddr(
+	ctx context.Context,
+	pctx *proxy.DNSContext,
+) (newCtx context.Context, addr netip.Addr) {
+	addr = pctx.Addr.Addr()
+
+	enabled, trusted := s.ecsClientAddrPolicy(addr)
+	if !enabled {
+		return ctx, addr
+	}
+
+	if !trusted {
+		removeECS(pctx.Req)
+
+		return ctx, addr
+	}
+
+	ecsAddr, ok := ecsClientAddr(pctx.Req)
+	if !ok {
+		return ctx, addr
+	}
+
+	removeECS(pctx.Req)
+
+	return contextWithECSClientAddr(ctx, ecsAddr), ecsAddr
+}
+
+// removeECS removes all EDNS Client Subnet options from req and keeps the rest
+// of its OPT record.  req must not be nil.
+func removeECS(req *dns.Msg) {
+	opt := req.IsEdns0()
+	if opt == nil {
+		return
+	}
+
+	opt.Option = slices.DeleteFunc(opt.Option, func(o dns.EDNS0) (isECS bool) {
+		_, isECS = o.(*dns.EDNS0_SUBNET)
+
+		return isECS
+	})
+}
+
+// ecsClientAddrPolicy returns whether client identification by the EDNS Client
+// Subnet option is enabled and, if so, whether remote is a trusted proxy.  ECS
+// is only trusted from trusted proxies, the same list that is used for the real
+// client address of DoH requests.
+func (s *Server) ecsClientAddrPolicy(remote netip.Addr) (enabled, trusted bool) {
+	s.serverLock.RLock()
+	defer s.serverLock.RUnlock()
+
+	if !s.conf.EDNSClientSubnet.UseClientAddrFromECS {
+		return false, false
+	}
+
+	remote = remote.Unmap()
+	for _, p := range s.conf.TrustedProxies {
+		if p.Contains(remote) {
+			return true, true
+		}
+	}
+
+	return true, false
+}
+
+// ecsClientAddr extracts the client IP from the EDNS Client Subnet option, or
+// the zero address and false if absent.
+func ecsClientAddr(req *dns.Msg) (addr netip.Addr, ok bool) {
+	opt := req.IsEdns0()
+	if opt == nil {
+		return netip.Addr{}, false
+	}
+
+	for _, o := range opt.Option {
+		ecs, isSubnet := o.(*dns.EDNS0_SUBNET)
+		if !isSubnet {
+			continue
+		}
+
+		if addr, ok = ecsSubnetAddr(ecs); ok {
+			return addr, true
+		}
+	}
+
+	return netip.Addr{}, false
+}
+
+// ecsSubnetAddr returns the client address from an EDNS Client Subnet option,
+// or the zero address and false if the option is absent or invalid.
+func ecsSubnetAddr(ecs *dns.EDNS0_SUBNET) (addr netip.Addr, ok bool) {
+	var ip net.IP
+	var hostLen uint8
+	switch ecs.Family {
+	case 1:
+		// IPv4.
+		ip, hostLen = ecs.Address.To4(), 32
+	case 2:
+		// IPv6.
+		ip, hostLen = ecs.Address, 128
+	default:
+		return netip.Addr{}, false
+	}
+
+	// Only a host address identifies a single client.
+	if ip == nil || ecs.SourceNetmask != hostLen {
+		return netip.Addr{}, false
+	}
+
+	addr, ok = netip.AddrFromSlice(ip)
+	if !ok || !addr.IsValid() || addr.IsUnspecified() {
+		return netip.Addr{}, false
+	}
+
+	return addr, true
 }
 
 // serveBlockedResponse sets a protocol-appropriate response for a request that

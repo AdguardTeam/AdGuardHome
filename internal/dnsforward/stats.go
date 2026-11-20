@@ -29,7 +29,7 @@ func (s *Server) processQueryLogsAndStats(
 	host := aghnet.NormalizeDomain(q.Name)
 	processingTime := time.Since(dctx.startTime)
 
-	ip := pctx.Addr.Addr().AsSlice()
+	ip := dctx.clientAddr().AsSlice()
 	s.anonymizer.Load()(ip)
 	ipStr := net.IP(ip).String()
 
