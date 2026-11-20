@@ -23,6 +23,12 @@ export const TopUpstreamsPage = () => {
         [...statsState.topUpstreamsResponses].toSorted((a, b) => a.name.localeCompare(b.name)),
     );
 
+    // Cache hits and blocked or rewritten queries never reach an upstream, so
+    // the share is taken from the upstream responses themselves.
+    const totalResponses = createMemo(() =>
+        statsState.topUpstreamsResponses.reduce((sum, upstream) => sum + upstream.count, 0),
+    );
+
     const columns = (): TableColumn<UpstreamStat>[] => [
         {
             key: 'upstream',
@@ -37,9 +43,7 @@ export const TopUpstreamsPage = () => {
             accessor: 'count',
             sortable: true,
             sortFn: (a: number, b: number) => a - b,
-            render: (_v, row) => (
-                <CountWithPercent count={row.count} total={statsState.numDnsQueries} />
-            ),
+            render: (_v, row) => <CountWithPercent count={row.count} total={totalResponses()} />,
         },
     ];
 
@@ -71,12 +75,9 @@ export const TopUpstreamsPage = () => {
                         {
                             label: intl.getMessage('queries'),
                             value: (
-                                <CountWithPercent
-                                    count={row.count}
-                                    total={statsState.numDnsQueries}
-                                />
+                                <CountWithPercent count={row.count} total={totalResponses()} />
                             ),
-                            progress: computePercent(row.count, statsState.numDnsQueries),
+                            progress: computePercent(row.count, totalResponses()),
                         },
                     ]}
                 />

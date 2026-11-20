@@ -31,6 +31,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The *Top upstreams* percentages in the new web interface not adding up to 100% ([#8738]).
+
 - The certificate details in the new web interface being hidden by a validation warning or a key/certificate mismatch ([#8727]).
 
 - The stats period labels in the new web interface showing the `last_days` key instead of the text in German and Slovak ([#8736]).
@@ -48,6 +50,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8727]:       https://github.com/AdguardTeam/AdGuardHome/issues/8727
 [#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
 [#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
+[#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
