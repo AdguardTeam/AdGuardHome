@@ -3,7 +3,9 @@ package home
 import (
 	"io"
 	"net/http"
+	"strings"
 
+	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/c2h5oh/datasize"
 )
@@ -54,5 +56,22 @@ func limitRequestBody(h http.Handler) (limited http.Handler) {
 		rr.Body = io.NopCloser(reader)
 
 		h.ServeHTTP(w, rr)
+	})
+}
+
+// noCacheHeaders is a middleware that sets the headers preventing caching of
+// the dynamic API responses.  h must not be nil.
+func noCacheHeaders(h http.Handler) (wrapped http.Handler) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p := r.URL.Path
+
+		if strings.HasPrefix(p, "/control/") || strings.HasPrefix(p, "/apple/") {
+			hdr := w.Header()
+			hdr.Set(httphdr.CacheControl, "no-store, no-cache, must-revalidate, proxy-revalidate")
+			hdr.Set(httphdr.Pragma, "no-cache")
+			hdr.Set(httphdr.Expires, "0")
+		}
+
+		h.ServeHTTP(w, r)
 	})
 }

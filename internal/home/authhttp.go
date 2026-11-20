@@ -190,11 +190,6 @@ func (web *webAPI) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, cookie)
 
-	h := w.Header()
-	h.Set(httphdr.CacheControl, "no-store, no-cache, must-revalidate, proxy-revalidate")
-	h.Set(httphdr.Pragma, "no-cache")
-	h.Set(httphdr.Expires, "0")
-
 	aghhttp.OK(ctx, web.logger, w)
 }
 
