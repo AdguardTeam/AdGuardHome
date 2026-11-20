@@ -41,7 +41,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
 
-[#8599]:       https://github.com/AdguardTeam/AdGuardHome/issues/8599
+[#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
 [#8726]:       https://github.com/AdguardTeam/AdGuardHome/issues/8726
 [#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
 [#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
