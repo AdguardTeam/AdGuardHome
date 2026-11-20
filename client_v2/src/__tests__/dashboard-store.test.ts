@@ -499,6 +499,23 @@ describe('status checks — all attempts failed', () => {
         expect(dashboardState.dnsPort).toBe(5353);
     });
 
+    it('does not toast a timer failure while the failure screen is up', async () => {
+        vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+
+        // The bootstrap chain raises the screen...
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+        expect(dashboardState.statusFailed).toBe(true);
+        mocks.addErrorToast.mockClear();
+
+        // ...while a timer chain that was started earlier keeps polling and
+        // runs out of attempts.  The screen already reports the failure.
+        getTimerStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
     it('falls back to the standard port when the config has none', async () => {
         const fetchMock = vi.spyOn(globalThis, 'fetch');
         respondWith(fetchMock, { running: false, dns_port: 0 });

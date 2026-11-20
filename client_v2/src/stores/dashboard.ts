@@ -301,6 +301,12 @@ export const getTimerStatus = async () => {
             // already learned the core state and must not claim a failure.
             return;
         }
+        // The full check may have raised a screen while this chain was still
+        // polling, and the screen carries the message already.
+        const screenIsUp = untrack(() => state.statusFailed || !state.isCoreRunning);
+        if (screenIsUp) {
+            return;
+        }
         handleStatusRequestError();
     };
 
