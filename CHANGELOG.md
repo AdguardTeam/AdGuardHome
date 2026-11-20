@@ -18,16 +18,28 @@ The information about older versions may be migrated into a separate document in
 ## [Unreleased]
 
 <!--
-## [v1.0.0] – TBA
+## [v1.1.0] – TBA
 
-## [v0.107.80] - 2026-09-03 (APPROX.)
+## [v1.0.1] - 2026-12-01 (APPROX.)
 
-See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
+See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 
-[ms-v0.107.80]: https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
+[ms-v1.0.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/117?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v1.0.0] - 2026-11-19
+
+See also the [v1.0.0 GitHub milestone][ms-v1.0.0].
 
 ### Security
 
@@ -165,10 +177,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
 [dns-kb-list]: https://adguard-dns.io/kb/general/dns-providers/
 [go-1.27.4]:   https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v1.0.0]:   https://github.com/AdguardTeam/AdGuardHome/milestone/116?closed=1
 
 ## [v0.107.80] - 2026-11-03
 
@@ -3907,11 +3916,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.81...HEAD
-[v0.107.81]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...v0.107.81
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.1...HEAD
+[v1.0.1]:     https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.0...v1.0.1
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.0...HEAD
+[v1.0.0]:     https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...v1.0.0
 [v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
 [v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
 [v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78

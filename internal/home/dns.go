@@ -240,7 +240,7 @@ func ipsToUDPAddrs(ips []netip.Addr, port uint16) (udpAddrs []*net.UDPAddr) {
 // address the DoH server is served on.
 func newServerConfig(
 	dnsConf *configmgr.DNSConfig,
-	clientSrcConf *clientSourcesConfig,
+	clientSrcConf *configmgr.ClientSourcesConfig,
 	dohConf *configmgr.DoHConfig,
 	tlsManager aghtls.Manager,
 	dohAddr netip.AddrPort,

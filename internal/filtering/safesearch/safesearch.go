@@ -45,7 +45,7 @@ const (
 )
 
 // isServiceProtected returns true if the service safe search is active.
-func isServiceProtected(s filtering.SafeSearchConfig, service Service) (ok bool) {
+func isServiceProtected(s *filtering.SafeSearchConfig, service Service) (ok bool) {
 	switch service {
 	case Bing:
 		return s.Bing
@@ -71,6 +71,10 @@ type DefaultConfig struct {
 	// Logger is used for logging the operation of the safe search filter.
 	Logger *slog.Logger
 
+	// ServicesConfig contains safe search settings for services.  It must not
+	// be nil.
+	ServicesConfig *filtering.SafeSearchConfig
+
 	// ClientName is the name of the persistent client associated with the safe
 	// search filter, if there is one.
 	ClientName string
@@ -80,10 +84,6 @@ type DefaultConfig struct {
 
 	// CacheTTL is the Time to Live duration for cached items.
 	CacheTTL time.Duration
-
-	// ServicesConfig contains safe search settings for services.  It must not
-	// be nil.
-	ServicesConfig filtering.SafeSearchConfig
 }
 
 // Default is the default safe search filter that uses filtering rules with the
@@ -130,11 +130,11 @@ func NewDefault(ctx context.Context, conf *DefaultConfig) (ss *Default, err erro
 }
 
 // resetEngine creates new engine for provided safe search configuration and
-// sets it in ss.
+// sets it in ss.  conf must not be nil.
 func (ss *Default) resetEngine(
 	ctx context.Context,
 	id rules.ListID,
-	conf filtering.SafeSearchConfig,
+	conf *filtering.SafeSearchConfig,
 ) (err error) {
 	if !conf.Enabled {
 		ss.logger.DebugContext(ctx, "disabled")
@@ -345,8 +345,8 @@ func (ss *Default) getCachedResult(
 }
 
 // Update implements the [filtering.SafeSearch] interface for *Default.  Update
-// ignores the CustomResolver and Enabled fields.
-func (ss *Default) Update(ctx context.Context, conf filtering.SafeSearchConfig) (err error) {
+// ignores the CustomResolver and Enabled fields.  conf must not be nil.
+func (ss *Default) Update(ctx context.Context, conf *filtering.SafeSearchConfig) (err error) {
 	ss.mu.Lock()
 	defer ss.mu.Unlock()
 

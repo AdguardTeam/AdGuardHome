@@ -43,9 +43,9 @@ func (c *testBlockedClientChecker) IsBlockedClient(
 	return c.onIsBlockedClient(ip, clientID)
 }
 
-// newPersistentClient is a helper function that returns a persistent client
+// newTestPersistentClient is a helper function that returns a persistent client
 // with the specified name and newly generated UID.
-func newPersistentClient(name string) (c *client.Persistent) {
+func newTestPersistentClient(name string) (c *client.Persistent) {
 	return &client.Persistent{
 		Name: name,
 		UID:  client.NewUID(),
@@ -60,7 +60,7 @@ func newPersistentClient(name string) (c *client.Persistent) {
 func newPersistentClientWithIDs(tb testing.TB, name string, ids []string) (c *client.Persistent) {
 	tb.Helper()
 
-	c = newPersistentClient(name)
+	c = newTestPersistentClient(name)
 	err := c.SetIDs(ids)
 	require.NoError(tb, err)
 
@@ -151,7 +151,7 @@ func TestClientsContainer_HandleAddClient(t *testing.T) {
 	clientOne := newPersistentClientWithIDs(t, "client1", []string{testClientIP1})
 	clientTwo := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
-	clientEmptyID := newPersistentClient("empty_client_id")
+	clientEmptyID := newTestPersistentClient("empty_client_id")
 	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
@@ -232,7 +232,7 @@ func TestClientsContainer_HandleDelClient(t *testing.T) {
 		wantClient: []*client.Persistent{clientTwo},
 	}, {
 		name:       "empty_client_name",
-		client:     newPersistentClient(""),
+		client:     newTestPersistentClient(""),
 		wantCode:   http.StatusBadRequest,
 		wantClient: []*client.Persistent{clientTwo},
 	}, {
@@ -276,7 +276,7 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 
 	clientModified := newPersistentClientWithIDs(t, "client2", []string{testClientIP2})
 
-	clientEmptyID := newPersistentClient("empty_client_id")
+	clientEmptyID := newTestPersistentClient("empty_client_id")
 	clientEmptyID.ClientIDs = []client.ClientID{""}
 
 	testCases := []struct {
@@ -312,7 +312,7 @@ func TestClientsContainer_HandleUpdateClient(t *testing.T) {
 	}, {
 		name:       "no_ids",
 		clientName: clientModified.Name,
-		modified:   newPersistentClient("no_ids"),
+		modified:   newTestPersistentClient("no_ids"),
 		wantCode:   http.StatusBadRequest,
 		wantClient: []*client.Persistent{clientModified},
 	}}
