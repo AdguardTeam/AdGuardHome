@@ -1,6 +1,8 @@
 package configmgr
 
 import (
+	"math"
+
 	"github.com/AdguardTeam/AdGuardHome/internal/client"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/validate"
@@ -59,7 +61,8 @@ type Client struct {
 	// UID is the unique identifier of the persistent client.
 	UID client.UID `yaml:"uid"`
 
-	// UpstreamsCacheSize is the DNS cache size.
+	// UpstreamsCacheSize is the DNS cache size.  It must not be greater than
+	// [math.MaxUint32].
 	UpstreamsCacheSize datasize.ByteSize `yaml:"upstreams_cache_size"`
 
 	// FilteringEnabled indicates if filtering is enabled for the client.
@@ -117,5 +120,5 @@ func (c *Client) Validate() (err error) {
 
 	// TODO(d.kolyshev):  Add more validations.
 
-	return nil
+	return validate.NoGreaterThan("upstreams_cache_size", c.UpstreamsCacheSize, math.MaxUint32)
 }
