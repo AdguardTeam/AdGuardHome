@@ -29,6 +29,8 @@
     --default-placeholder: var(--gray-50);
     --default-input-on-card-background: var(--gray-10);
     --disabled-input-on-card-background: var(--gray-10);
+    --hovered-input-on-card-background: var(--gray-20);
+    --pressed-input-on-card-background: var(--gray-30);
     /* Dropdown */
     --default-dropdown-menu-background: var(--gray-0);
     --hovered-dropdown-menu-background: var(--gray-10);
@@ -69,6 +71,7 @@
     --hovered-link: var(--product-primary-60);
     --pressed-link: var(--product-primary-70);
     --visited-link: var(--product-primary-80);
+    --disabled-link: var(--product-primary-30);
     /* Attention link */
     --default-attention-link: var(--orange-50);
     --hovered-attention-link: var(--orange-60);
@@ -90,6 +93,8 @@
     --stroke-icons-secondary-icon-disabled: var(--product-secondary-30);
     --default-product-secondary-icon-stroke: var(--product-secondary-50);
     --default-attention-icon-stroke: var(--orange-50);
+    /* Focus outline */
+    --default-focus-outline: var(--product-primary-90);
     /* Stat */
     --default-stats-background: var(--gray-20);
     --default-red-stat: var(--red-50);

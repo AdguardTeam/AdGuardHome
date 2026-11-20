@@ -12,12 +12,14 @@ import { mockMatchMedia } from './helpers/matchMedia';
 vi.mock('panel/stores/dashboard', () => ({
     dashboardState: {
         processing: true,
+        statusFailed: false,
         isCoreRunning: true,
         language: '',
         protectionEnabled: false,
     },
     getDnsStatus: vi.fn(),
     getTimerStatus: vi.fn(),
+    stopStatusChecks: vi.fn(),
 }));
 
 vi.mock('panel/common/ui/Header', () => ({ Header: (): null => null }));

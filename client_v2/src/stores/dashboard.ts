@@ -28,6 +28,8 @@ import type { ClientAuto } from 'panel/api/model/clientAuto';
 
 type DashboardState = {
     processing: boolean;
+    /** The bootstrap status check failed, so the dashboard is unknown. */
+    statusFailed: boolean;
     isCoreRunning: boolean;
     processingVersion: boolean;
     processingClients: boolean;
@@ -58,6 +60,7 @@ type DashboardState = {
 
 const initialState: DashboardState = {
     processing: true,
+    statusFailed: false,
     isCoreRunning: true,
     processingVersion: true,
     processingClients: true,
@@ -90,12 +93,6 @@ const [state, setState] = createStore<DashboardState>(initialState);
 
 const CHECK_TIMEOUT = 1000;
 
-let statusTimeout: ReturnType<typeof setTimeout> | null = null;
-const rmTimeout = (t: ReturnType<typeof setTimeout> | null): null => {
-    if (t) clearTimeout(t);
-    return null;
-};
-
 /** Fetches the server status without redirecting to the login page on 401. */
 const fetchStatus = (): Promise<ServerStatus> =>
     customFetch<ServerStatus>(getStatusUrl(), {
@@ -103,50 +100,102 @@ const fetchStatus = (): Promise<ServerStatus> =>
         skipAuthRedirect: true,
     });
 
-const checkStatus = async (
+type StopStatusCheck = () => void;
+
+let stopDnsStatus: StopStatusCheck | null = null;
+let stopTimerStatus: StopStatusCheck | null = null;
+let stopUpdateStatus: StopStatusCheck | null = null;
+
+// Each call owns its retry timer and can be stopped.  A shared timer would let
+// a concurrent chain, e.g. the one started by `getTimerStatus`, cancel another
+// chain's pending retry and leave `processing` stuck at true forever.
+const checkStatus = (
     handleRequestSuccess: (response: { status: number; data: ServerStatus }) => void,
-    handleRequestError: () => void,
+    handleRequestError: (sawAnswer: boolean) => void,
     attempts = 60,
-): Promise<void> => {
-    if (attempts === 0) {
-        handleRequestError();
-        return;
-    }
-    try {
-        const data = await fetchStatus();
-        statusTimeout = rmTimeout(statusTimeout);
-        handleRequestSuccess({ status: 200, data });
-        if (data.running === false) {
-            statusTimeout = setTimeout(
-                checkStatus,
-                CHECK_TIMEOUT,
-                handleRequestSuccess,
-                handleRequestError,
-                attempts - 1,
-            );
+): StopStatusCheck => {
+    let timeout: ReturnType<typeof setTimeout> | null = null;
+    let stopped = false;
+
+    // A chain that only ever got `running: false` answers has learned the core
+    // state and must not report a failed check when it runs out of attempts.
+    let sawAnswer = false;
+
+    const check = async (remaining: number): Promise<void> => {
+        if (stopped) {
+            return;
         }
-    } catch {
-        statusTimeout = rmTimeout(statusTimeout);
-        statusTimeout = setTimeout(
-            checkStatus,
-            CHECK_TIMEOUT,
-            handleRequestSuccess,
-            handleRequestError,
-            attempts - 1,
-        );
-    }
+        if (remaining === 0) {
+            handleRequestError(sawAnswer);
+            return;
+        }
+        try {
+            const data = await fetchStatus();
+            // A stopped chain must not touch the state of a newer one.
+            if (stopped) {
+                return;
+            }
+            sawAnswer = true;
+            handleRequestSuccess({ status: 200, data });
+            if (data.running === false) {
+                timeout = setTimeout(check, CHECK_TIMEOUT, remaining - 1);
+            }
+        } catch {
+            if (stopped) {
+                return;
+            }
+            timeout = setTimeout(check, CHECK_TIMEOUT, remaining - 1);
+        }
+    };
+
+    void check(attempts);
+
+    return () => {
+        stopped = true;
+        if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+        }
+    };
+};
+
+/** Stops every pending status poll, e.g. when the app unmounts. */
+export const stopStatusChecks = () => {
+    stopDnsStatus?.();
+    stopTimerStatus?.();
+    stopUpdateStatus?.();
+    stopDnsStatus = null;
+    stopTimerStatus = null;
+    stopUpdateStatus = null;
+};
+
+/**
+ * Handles a status check that failed all of its attempts: shows the notice and
+ * unblocks the UI.  It must not reload the page: the reload would wipe the
+ * notice before it is shown and, while the backend keeps failing, restart the
+ * attempts and reload forever.
+ */
+const handleStatusRequestError = () => {
+    addErrorToast({ error: intl.getMessage('dns_status_error') });
+    setState('processing', false);
+};
+
+/**
+ * Handles a bootstrap status check that failed all of its attempts.  The store
+ * still holds `initialState` defaults, so the route body must not render:
+ * `App` shows an error screen with a retry instead.  The screen carries the
+ * message, so a toast would only repeat it.
+ */
+const handleBootstrapStatusError = () => {
+    setState({ processing: false, statusFailed: true });
 };
 
 export const getDnsStatus = async () => {
+    stopDnsStatus?.();
     setState('processing', true);
 
-    const handleRequestError = () => {
-        addErrorToast({ error: intl.getMessage('dns_status_error') });
-        setState('processing', false);
-        window.location.reload();
-    };
-
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
+        setState('statusFailed', false);
         const dnsStatus = response.data;
         if (dnsStatus.protection_disabled_duration === 0) {
             dnsStatus.protection_disabled_duration = null;
@@ -169,15 +218,29 @@ export const getDnsStatus = async () => {
             // The store wrapper, not the raw API call: it saves name and theme.
             getProfileData();
         } else {
-            setState('isCoreRunning', runningStatus);
+            // The status is learned even though the core is down, so the retry
+            // loop must not keep the page blank while it polls.  The port comes
+            // from the config, so the start-error screen can name it; `0` means
+            // the config holds no port, and the standard one would be used.
+            setState({
+                isCoreRunning: runningStatus,
+                processing: false,
+                dnsPort: dnsStatus.dns_port || STANDARD_DNS_PORT,
+            });
         }
     };
 
-    try {
-        checkStatus(handleRequestSuccess, handleRequestError);
-    } catch {
-        handleRequestError();
-    }
+    const handleBootstrapError = (sawAnswer: boolean) => {
+        if (sawAnswer) {
+            // The endpoint answers, it only reports a stopped core: the
+            // not-running screen is already up, and the toast would claim a
+            // failure that did not happen.
+            return;
+        }
+        handleBootstrapStatusError();
+    };
+
+    stopDnsStatus = checkStatus(handleRequestSuccess, handleBootstrapError);
 };
 
 /**
@@ -202,18 +265,26 @@ export const refreshDnsStatus = async (): Promise<void> => {
 };
 
 export const getTimerStatus = async () => {
-    const handleRequestError = () => {
-        addErrorToast({ error: intl.getMessage('dns_status_error') });
-        setState('processing', false);
-        window.location.reload();
-    };
+    stopTimerStatus?.();
 
     const handleRequestSuccess = (response: { status: number; data: ServerStatus }) => {
         const dnsStatus = response.data;
+        const runningStatus = dnsStatus && dnsStatus.running;
+
+        // A background check cannot rebuild the page: after a failed bootstrap
+        // or while the not-running screen is up, only the full check restores
+        // the status values the route body renders.
+        const needsFullCheck = untrack(
+            () => state.statusFailed || (runningStatus === true && !state.isCoreRunning),
+        );
+        if (needsFullCheck) {
+            getDnsStatus();
+            return;
+        }
+
         if (dnsStatus.protection_disabled_duration === 0) {
             dnsStatus.protection_disabled_duration = null;
         }
-        const runningStatus = dnsStatus && dnsStatus.running;
         if (runningStatus === true) {
             setState({
                 protectionEnabled: dnsStatus.protection_enabled,
@@ -224,11 +295,22 @@ export const getTimerStatus = async () => {
         }
     };
 
-    try {
-        checkStatus(handleRequestSuccess, handleRequestError);
-    } catch {
-        handleRequestError();
-    }
+    const handleTimerError = (sawAnswer: boolean) => {
+        if (sawAnswer) {
+            // Same as the bootstrap check: a chain that received answers has
+            // already learned the core state and must not claim a failure.
+            return;
+        }
+        // The full check may have raised a screen while this chain was still
+        // polling, and the screen carries the message already.
+        const screenIsUp = untrack(() => state.statusFailed || !state.isCoreRunning);
+        if (screenIsUp) {
+            return;
+        }
+        handleStatusRequestError();
+    };
+
+    stopTimerStatus = checkStatus(handleRequestSuccess, handleTimerError);
 };
 
 export const getVersion = async (recheck = false) => {
@@ -284,7 +366,8 @@ export const getUpdate = async () => {
     };
     try {
         await beginUpdate();
-        checkStatus(handleRequestSuccess, handleRequestError);
+        stopUpdateStatus?.();
+        stopUpdateStatus = checkStatus(handleRequestSuccess, handleRequestError);
     } catch {
         handleRequestError();
     }
