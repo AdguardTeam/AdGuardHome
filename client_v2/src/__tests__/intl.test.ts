@@ -228,6 +228,10 @@ describe('shipped locale plural values', () => {
     it.each(['de', 'sk'] as const)('resolves last_days in %s instead of the key', async (locale) => {
         await intl.changeLanguage(locale);
 
+        // changeLanguage swallows a load failure, leaving the English
+        // translator active; without this the assertion could pass for the
+        // wrong reason.
+        expect(intl.getUILanguage()).toBe(locale);
         expect(intl.getPlural('last_days', 7)).not.toBe('last_days');
     });
 });

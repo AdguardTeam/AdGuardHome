@@ -28,15 +28,16 @@ See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
-### Fixed
 
-- Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
+### Fixed
 
 - The stats period labels in the new web interface showing the `last_days` key instead of the text in German and Slovak ([#8736]).
 
 - The custom rules examples and the rules editor placeholder in the new web interface missing the `^` at the end of block and allow rules ([#8726]).
 
 - Renaming a blocklist in the new web interface disabling it ([#8728]).
+
+- Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

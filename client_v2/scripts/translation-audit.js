@@ -277,8 +277,8 @@ export const collectTranslationUsageFromFiles = async (filePaths) => {
  * @param {string} localesDir - Path to __locales directory
  * @param {Map<string, string|null>} supportedLocales - Twosky locale mapping
  * @param {Set<string>} [pluralKeys] - Keys that are passed to `getPlural` in
- *   the sources.  Their values are validated even when the empty zero form is
- *   missing, which is exactly the mistake the `|` heuristic cannot see.
+ *   the sources.  Their values are validated even when they do not start with
+ *   a pipe, which is exactly the mistake the `|` heuristic cannot see.
  * @returns {Promise<Array<{file: string, key: string, value: string}>>}
  */
 export const validatePlurals = async (localesDir, supportedLocales, pluralKeys = new Set()) => {
@@ -306,9 +306,12 @@ export const validatePlurals = async (localesDir, supportedLocales, pluralKeys =
                 continue;
             }
 
-            // A plural value starts with the empty zero form, so it begins
-            // with a pipe.  Strings containing "||" (filter rule examples) are
-            // not plurals, hence the known plural keys are checked separately.
+            // A plural value has the number of pipe-separated forms the locale
+            // requires.  For en/de-like locales the first form is the usually
+            // empty zero form, so the value starts with a pipe; for ja/zh/ko-
+            // like locales it is a real string.  Filter examples containing
+            // "||" are not plurals, hence the known plural keys are checked
+            // separately.
             if (!pluralKeys.has(key) && !value.trimStart().startsWith('|')) {
                 continue;
             }
