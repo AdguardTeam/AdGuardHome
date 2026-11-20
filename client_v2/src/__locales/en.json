@@ -318,7 +318,7 @@
   "dns_start_error_port": "Port %port% is already used by another service or app",
   "dns_start_error_reasons": "Possible reasons:",
   "dns_start_error_title": "Couldn't start the DNS server",
-  "dns_status_error": "Failed to check the DNS server status. Try reloading the page",
+  "dns_status_error": "Couldn't check the DNS server status. Try reloading the page",
   "dns_status_error_short": "Couldn't check the DNS server status",
   "dns_subnet_placeholder": "Enter prefix length",
   "dns_subnet_prefix": "Subnet prefix length for %value% addresses",
