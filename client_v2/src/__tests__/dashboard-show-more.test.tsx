@@ -124,7 +124,6 @@ describe('Dashboard "Show more" links', () => {
                     { name: 'tls://x:853', count: 5 },
                     ...fillers(DOMAINS_VISIBLE_ITEMS),
                 ]}
-                numDnsQueries={100}
             />
         ));
         expect(getLinkHref('show-more-top-upstreams')).toContain('/top_upstreams');
@@ -170,10 +169,7 @@ describe('Dashboard "Show more" links', () => {
 
     it('the link is hidden for top upstreams with no hidden rows', () => {
         renderWithRouter(() => (
-            <TopUpstreams
-                topUpstreamsResponses={fillers(DOMAINS_VISIBLE_ITEMS)}
-                numDnsQueries={100}
-            />
+            <TopUpstreams topUpstreamsResponses={fillers(DOMAINS_VISIBLE_ITEMS)} />
         ));
         expect(screen.queryByTestId('show-more-top-upstreams')).toBeNull();
     });

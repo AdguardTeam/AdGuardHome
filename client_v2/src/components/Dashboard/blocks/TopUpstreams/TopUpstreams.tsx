@@ -1,6 +1,7 @@
 import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import { formatCompactNumber } from 'panel/helpers/helpers';
+import { computePercent, sumUpstreamResponses } from 'panel/helpers/statistics';
 import theme from 'panel/lib/theme';
 import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { TruncatedText } from 'panel/common/ui/TruncatedText';
@@ -20,7 +21,6 @@ type UpstreamInfo = {
 
 type Props = {
     topUpstreamsResponses: UpstreamInfo[];
-    numDnsQueries: number;
     period?: number;
 };
 
@@ -30,6 +30,8 @@ export const TopUpstreams = (props: Props) => {
     );
 
     const hasStats = createMemo(() => props.topUpstreamsResponses.length > 0);
+
+    const totalResponses = createMemo(() => sumUpstreamResponses(props.topUpstreamsResponses));
 
     return (
         <div class={s.card}>
@@ -51,9 +53,7 @@ export const TopUpstreams = (props: Props) => {
                     <For each={sortedUpstreams()}>
                         {(upstream) => {
                             const percent = createMemo(() =>
-                                props.numDnsQueries > 0
-                                    ? (upstream.count / props.numDnsQueries) * 100
-                                    : 0,
+                                computePercent(upstream.count, totalResponses()),
                             );
 
                             return (
