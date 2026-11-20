@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-// The single reader of `compilerOptions.paths`, shared by webpack.common.js and
-// .storybook/main.ts, so a new alias only has to be registered in tsconfig.json.
+// The only reader of `compilerOptions.paths`, shared by webpack.common.js,
+// .storybook/main.ts and vitest.config.ts, so a new alias only has to be
+// registered in tsconfig.json.
 export function getAliasesFromTsconfig(tsconfigPath, basePath) {
     const tsConfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'));
     const aliases = {};

@@ -9,8 +9,17 @@ import { getAliasesFromTsconfig } from '../scripts/tsconfig-aliases.js';
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const clientDir = path.resolve(rootDir, '..');
-const repoDir = path.resolve(clientDir, '..');
-const twoskyPath = path.resolve(repoDir, '.twosky.json');
+
+// The same reader webpack and Vitest use, so tsconfig.json stays the only
+// place an alias has to be registered.
+const aliases = getAliasesFromTsconfig(path.resolve(clientDir, 'tsconfig.json'), clientDir);
+
+// Alias targets outside `client_v2` (only `.twosky.json` today) must be listed
+// too: Vite checks `fs.allow` per file, so the rest of the checkout, its
+// git-ignored config included, stays unreadable over `/@fs/`.
+const externalAliasTargets = Object.values(aliases).filter(
+    (target) => target !== clientDir && !target.startsWith(`${clientDir}${path.sep}`),
+);
 
 const FONTS_DIR = path.resolve(clientDir, 'src/common/styles/fonts');
 const FONTS_URL = '/common/styles/fonts/';
@@ -26,9 +35,6 @@ const config: StorybookConfig = {
         // second copy would break reactivity inside the preview.
         viteConfig.resolve.dedupe = [...(viteConfig.resolve.dedupe ?? []), 'solid-js'];
 
-        // Same reader webpack uses, so tsconfig.json stays the only place an
-        // alias has to be registered.
-        const aliases = getAliasesFromTsconfig(path.resolve(clientDir, 'tsconfig.json'), clientDir);
         const alias = viteConfig.resolve.alias;
         viteConfig.resolve.alias = Array.isArray(alias)
             ? [
@@ -41,13 +47,10 @@ const config: StorybookConfig = {
         // which is what webpack does too (`s.height_xs`).  Keep it that way:
         // `localsConvention: 'asIs'` is not a Vite value and empties the map.
 
-        // `.twosky.json` is the only module outside the project; Vite checks
-        // `fs.allow` per file, so the rest of the checkout — its git-ignored
-        // config included — stays unreadable over `/@fs/`.
         viteConfig.server ??= {};
         viteConfig.server.fs = {
             ...viteConfig.server.fs,
-            allow: [...(viteConfig.server.fs?.allow ?? []), clientDir, twoskyPath],
+            allow: [...(viteConfig.server.fs?.allow ?? []), clientDir, ...externalAliasTargets],
         };
 
         // `client_v2/public` holds the application's HTML entry points; copying

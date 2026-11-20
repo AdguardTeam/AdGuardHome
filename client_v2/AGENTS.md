@@ -503,10 +503,10 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   come from the component, never from a hand-copied list: export the values
   as an `as const` list and derive the prop union from it
   (`BUTTON_VARIANTS`/`BUTTON_SIZES`, `SELECT_SIZES`, `SELECT_MENU_SIZES`,
-  `TOOLTIP_POSITIONS`, `INPUT_SIZES`, `ICON_VALUES`), then spread it in the
-  story. A typed hand-copy only rejects invalid values; a newly added member
-  is still missed. Controls whose values are a curated subset of a DOM union
-  (e.g. `Input`'s `type`) keep a literal list.
+  `TOOLTIP_POSITIONS`, `INPUT_SIZES`, `TEXTAREA_SIZES`), then spread it in
+  the story. A typed hand-copy only rejects invalid values; a newly added
+  member is still missed. Controls whose values are a curated subset of a
+  DOM union (e.g. `Input`'s `type`) keep a literal list.
 - The preview imports `src/index.pcss`, mounts the `<Icons/>` sprite once and
   pins the locale to English from `.storybook/preview-head.html`. Switch the
   theme with the `Theme` toolbar, which sets `data-theme` on `<html>`.
@@ -561,9 +561,9 @@ vulnerabilities, supply-chain risk, and long-term maintenance cost.
   in npm scripts and read from `constants.js`. `BASE_URL = 'control'` is the
   API path prefix.
 - **Path aliases**: Defined in `tsconfig.json` (`panel/*`, `Twosky`) and
-  consumed by Webpack and Storybook (both read `compilerOptions.paths`
-  through `scripts/tsconfig-aliases.js`), Vitest, and ESLint. Update
-  `tsconfig.json` when adding new aliases.
+  consumed by Webpack, Storybook, and Vitest (all read `compilerOptions.paths`
+  through `scripts/tsconfig-aliases.js`) and by ESLint (through its TypeScript
+  import resolver). Update `tsconfig.json` when adding new aliases.
 - **i18n**: Locale JSON files live in `src/__locales/`. The base locale and
   language list come from the root `.twosky.json` (via the `Twosky` alias in
   `src/helpers/twosky.ts`). Run `npm run translations:check` after editing
