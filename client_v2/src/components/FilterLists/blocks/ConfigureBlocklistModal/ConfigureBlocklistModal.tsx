@@ -16,7 +16,6 @@ import {
     filteringState,
 } from 'panel/stores/filtering';
 import type { Filter } from 'panel/helpers/helpers';
-import type { FilterSetUrlData } from 'panel/api/model/filterSetUrlData';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
 import { ManualFilterForm } from 'panel/components/FilterLists/blocks/ConfigureBlocklistModal/blocks/ManualFilterForm';
 import { Tabs } from 'panel/common/ui/Tabs';
@@ -91,8 +90,13 @@ export const ConfigureBlocklistModal = (props: Props) => {
         getSelectedValues(filteringState.filters, catalogSourcesToIdMap()),
     );
 
-    const [activeTab, setActiveTab] = createSignal(TAB_TYPE.LIST);
+    const [activeTab, setActiveTab] = createSignal<string>(TAB_TYPE.LIST);
     const [selectedFilterIds, setSelectedFilterIds] = createSignal<Record<string, boolean>>({});
+
+    const [name, setName] = createSignal('');
+    const [url, setUrl] = createSignal('');
+    const [nameError, setNameError] = createSignal<string | undefined>();
+    const [urlError, setUrlError] = createSignal<string | undefined>();
 
     createEffect(() => {
         setSelectedFilterIds(
@@ -102,89 +106,148 @@ export const ConfigureBlocklistModal = (props: Props) => {
         );
     });
 
+    createEffect(() => {
+        setName(props.filterToEdit?.name ?? '');
+        setUrl(props.filterToEdit?.url ?? '');
+        setNameError(undefined);
+        setUrlError(undefined);
+    });
+
+    const validateNameField = () => {
+        const err = validateRequiredValue(name());
+        setNameError(err || undefined);
+        return !err;
+    };
+
+    const validateUrlField = () => {
+        const err = validateRequiredValue(url()) || validatePath(url());
+        setUrlError(err || undefined);
+        return !err;
+    };
+
+    const validateAndSetErrors = () => {
+        const nameValid = validateNameField();
+        const urlValid = validateUrlField();
+        return nameValid && urlValid;
+    };
+
+    const handleNameChange = (value: string) => {
+        setName(value);
+        setNameError(undefined);
+    };
+
+    const handleUrlChange = (value: string) => {
+        setUrl(value);
+        setUrlError(undefined);
+    };
+
+    const resetForm = () => {
+        setName('');
+        setUrl('');
+        setNameError(undefined);
+        setUrlError(undefined);
+    };
+
     const handleFormSubmit = async (e: Event) => {
         e.preventDefault();
 
-        const form = e.target as HTMLFormElement;
-        const formData = new FormData(form);
-        const values: FormValues = {
-            name: (formData.get('name') as string) || '',
-            url: (formData.get('url') as string) || '',
-        };
+        if (props.modalId === MODAL_TYPE.EDIT_BLOCKLIST) {
+            const filterToEdit = props.filterToEdit;
 
-        switch (props.modalId) {
-            case MODAL_TYPE.ADD_BLOCKLIST: {
-                if (values.url && values.name) {
-                    const nameErr = validateRequiredValue(values.name);
-                    const urlErr = validateRequiredValue(values.url) || validatePath(values.url);
-                    if (nameErr || urlErr) {
-                        return;
-                    }
-                    addFilter(values.url, values.name, false);
-                } else {
-                    const existingFilterSources = new Set(
-                        filteringState.filters.map((filter: Filter) => filter.url),
-                    );
+            if (!filterToEdit || !validateAndSetErrors()) {
+                return;
+            }
 
-                    const ids = selectedFilterIds();
-                    const changedValues = Object.entries(ids)?.reduce(
-                        (acc: Record<string, any>, [key, value]) => {
-                            if (value && key in filtersCatalog.filters) {
-                                const filterSource =
-                                    filtersCatalog.filters[
-                                        key as keyof typeof filtersCatalog.filters
-                                    ].source;
-                                if (!existingFilterSources.has(filterSource)) {
-                                    acc[key] = value;
-                                }
-                            }
-                            return acc;
-                        },
-                        {},
-                    );
+            await editFilter(
+                filterToEdit.url,
+                {
+                    name: name(),
+                    url: url(),
+                    enabled: filterToEdit.enabled ?? true,
+                },
+                false,
+            );
 
-                    const filtersToAdd = Object.keys(changedValues).map((fieldName) => {
-                        const { source, name } =
-                            filtersCatalog.filters[
-                                fieldName as keyof typeof filtersCatalog.filters
-                            ];
-                        return { url: source, name };
-                    });
-                    if (filtersToAdd.length > 0) {
-                        await addFiltersBatch(filtersToAdd);
-                    }
+            resetForm();
+            closeModal();
+            return;
+        }
 
-                    const initialSelected = selectedValues().selectedFilterIds;
-                    const currentIds = selectedFilterIds();
-                    const filtersToRemove = Object.entries(initialSelected)
-                        .filter(([id, wasSelected]) => wasSelected && !currentIds[id])
-                        .map(([id]) => {
-                            const { source } =
-                                filtersCatalog.filters[id as keyof typeof filtersCatalog.filters];
-                            return source;
-                        });
+        if (activeTab() === TAB_TYPE.MANUAL) {
+            if (!validateAndSetErrors()) {
+                return;
+            }
 
-                    for (const url of filtersToRemove) {
-                        await removeFilter(url, false);
+            await addFilter(url(), name(), false);
+
+            resetForm();
+            closeModal();
+            return;
+        }
+
+        const existingFilterSources = new Set(
+            filteringState.filters.map((filter: Filter) => filter.url),
+        );
+
+        const ids = selectedFilterIds();
+        const changedValues = Object.entries(ids)?.reduce(
+            (acc: Record<string, any>, [key, value]) => {
+                if (value && key in filtersCatalog.filters) {
+                    const filterSource =
+                        filtersCatalog.filters[key as keyof typeof filtersCatalog.filters].source;
+                    if (!existingFilterSources.has(filterSource)) {
+                        acc[key] = value;
                     }
                 }
-                break;
-            }
-            case MODAL_TYPE.EDIT_BLOCKLIST: {
-                editFilter(props.filterToEdit!.url, values as FilterSetUrlData, false);
-                break;
-            }
-            default: {
-                break;
-            }
+                return acc;
+            },
+            {},
+        );
+
+        const filtersToAdd = Object.keys(changedValues).map((fieldName) => {
+            const { source, name: filterName } =
+                filtersCatalog.filters[fieldName as keyof typeof filtersCatalog.filters];
+            return { url: source, name: filterName };
+        });
+        if (filtersToAdd.length > 0) {
+            await addFiltersBatch(filtersToAdd);
+        }
+
+        const initialSelected = selectedValues().selectedFilterIds;
+        const currentIds = selectedFilterIds();
+        const filtersToRemove = Object.entries(initialSelected)
+            .filter(([id, wasSelected]) => wasSelected && !currentIds[id])
+            .map(([id]) => {
+                const { source } =
+                    filtersCatalog.filters[id as keyof typeof filtersCatalog.filters];
+                return source;
+            });
+
+        for (const filterUrl of filtersToRemove) {
+            await removeFilter(filterUrl, false);
         }
 
         closeModal();
     };
 
     const handleCancel = () => {
+        resetForm();
         closeModal();
     };
+
+    const manualForm = () => (
+        <ManualFilterForm
+            class={s.formGroup}
+            name={name()}
+            url={url()}
+            nameError={nameError()}
+            urlError={urlError()}
+            onNameChange={handleNameChange}
+            onUrlChange={handleUrlChange}
+            onNameBlur={validateNameField}
+            onUrlBlur={validateUrlField}
+        />
+    );
 
     return (
         <ModalWrapper id={props.modalId}>
@@ -196,13 +259,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                         </Show>
                         <Show
                             when={props.modalId === MODAL_TYPE.ADD_BLOCKLIST}
-                            fallback={
-                                <ManualFilterForm
-                                    class={s.formGroup}
-                                    initialName={props.filterToEdit?.name}
-                                    initialUrl={props.filterToEdit?.url}
-                                />
-                            }
+                            fallback={manualForm()}
                         >
                             <Tabs
                                 activeTab={activeTab()}
@@ -224,13 +281,7 @@ export const ConfigureBlocklistModal = (props: Props) => {
                                     {
                                         id: TAB_TYPE.MANUAL,
                                         label: intl.getMessage('blocklist_add_manual'),
-                                        content: (
-                                            <ManualFilterForm
-                                                class={s.formGroup}
-                                                initialName={props.filterToEdit?.name}
-                                                initialUrl={props.filterToEdit?.url}
-                                            />
-                                        ),
+                                        content: manualForm(),
                                     },
                                 ]}
                             />

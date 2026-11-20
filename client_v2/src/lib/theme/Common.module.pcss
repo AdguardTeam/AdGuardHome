@@ -36,16 +36,22 @@
 }
 
 .scrollable {
+    scrollbar-width: thin;
+    scrollbar-color: var(--default-gray-icons) transparent;
+
     &::-webkit-scrollbar {
         -webkit-appearance: none;
         width: 6px;
-        background: var(--light-gray);
-        border-radius: 8px;
+        background: transparent;
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: transparent;
     }
 
     &::-webkit-scrollbar-thumb {
-        border-radius: 8px;
-        background: var(--middle-gray);
+        border-radius: 10px;
+        background-color: var(--default-gray-icons);
     }
 }
 

@@ -1,0 +1,51 @@
+.root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+    min-height: calc(100vh - 64px);
+    padding: 24px;
+    text-align: center;
+
+    @media (min-width: 1200px) {
+        min-height: 100vh;
+    }
+}
+
+.face {
+    color: var(--default-link);
+}
+
+.message {
+    max-width: 508px;
+    color: var(--default-main-text);
+}
+
+/* One column, so the label, the bullets and the action share a left edge;
+   centring each block separately would offset them by their own widths. */
+.details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 508px;
+    color: var(--default-main-text);
+    text-align: left;
+}
+
+.reasonsLabel {
+    color: var(--default-main-text);
+}
+
+.reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding-left: 20px;
+    list-style: disc;
+    text-align: left;
+}
