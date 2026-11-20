@@ -152,32 +152,32 @@ describe('TlsCertSection — validation messages', () => {
         hostname: 'example.org',
     });
 
-    // The validation message is a state of its own: it replaces the
-    // certificate block instead of stacking on top of it, so only one status
-    // is ever visible.
-    it('shows the mismatch message instead of the certificate block', () => {
+    // Validation messages are informational for the certificate's own data, so
+    // they stack below the certificate details instead of replacing them, as
+    // they did in the legacy UI.
+    it('shows the mismatch message together with the certificate block', () => {
         renderSection({ valid_pair: false, key_type: 'ECDSA' });
 
         expect(screen.getByText(copyInDom('encryption_key_cert_mismatch'))).toBeInTheDocument();
-        expect(screen.queryByText(copyInDom('encryption_chain_valid'))).not.toBeInTheDocument();
+        expect(screen.getByText(copyInDom('encryption_chain_valid'))).toBeInTheDocument();
         expect(
-            screen.queryByText(copyInDom('encryption_subject', { value: 'example.org' })),
-        ).not.toBeInTheDocument();
-        expect(algorithmLine()).not.toBeInTheDocument();
+            screen.getByText(copyInDom('encryption_subject', { value: 'example.org' })),
+        ).toBeInTheDocument();
+        expect(algorithmLine()).toBeInTheDocument();
     });
 
-    it('shows the warning message instead of the certificate block', () => {
+    it('shows the warning message together with the certificate block', () => {
         renderSection({ warning_validation: serverNameWarning });
 
         expect(screen.getByText(serverNameWarning)).toBeInTheDocument();
         expect(
             screen.getByText(copyInDom('encryption_certificate_has_issues')),
         ).toBeInTheDocument();
-        expect(screen.queryByText(copyInDom('encryption_chain_valid'))).not.toBeInTheDocument();
+        expect(screen.getByText(copyInDom('encryption_chain_valid'))).toBeInTheDocument();
         expect(
-            screen.queryByText(copyInDom('encryption_subject', { value: 'example.org' })),
-        ).not.toBeInTheDocument();
-        expect(algorithmLine()).not.toBeInTheDocument();
+            screen.getByText(copyInDom('encryption_subject', { value: 'example.org' })),
+        ).toBeInTheDocument();
+        expect(algorithmLine()).toBeInTheDocument();
     });
 
     it('shows the validation message alone when no certificate is configured', () => {
