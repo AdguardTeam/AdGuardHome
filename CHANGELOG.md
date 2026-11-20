@@ -31,13 +31,13 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
-- Caching behavior under reverse proxies ([#8599]).
-
 - The stats period labels in the new web interface showing the `last_days` key instead of the text in German and Slovak ([#8736]).
 
 - The custom rules examples and the rules editor placeholder in the new web interface missing the `^` at the end of block and allow rules ([#8726]).
 
 - Renaming a blocklist in the new web interface disabling it ([#8728]).
+
+- Caching behavior under reverse proxies ([#8599]).
 
 - Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
 
