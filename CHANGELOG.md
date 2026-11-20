@@ -30,12 +30,15 @@ NOTE: Add new changes BELOW THIS COMMENT.
 -->
 ### Fixed
 
+- The custom rules examples and the rules editor placeholder in the new web interface missing the `^` at the end of block and allow rules ([#8726]).
+
 - Renaming a blocklist in the new web interface disabling it ([#8728]).
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
+[#8726]: https://github.com/AdguardTeam/AdGuardHome/issues/8726
 [#8728]: https://github.com/AdguardTeam/AdGuardHome/issues/8728
 
 ## [v1.0.0] - 2026-11-19
