@@ -131,6 +131,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     }}
                                     onBlur={validateNameField}
                                     errorMessage={nameError()}
+                                    size="large"
                                     onCard
                                 />
                             </div>
@@ -145,6 +146,7 @@ export const ConfigureAllowlistModal = (props: Props) => {
                                     onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
                                     onBlur={validateUrlField}
                                     errorMessage={urlError()}
+                                    size="large"
                                     onCard
                                 />
                             </div>
