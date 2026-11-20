@@ -124,6 +124,7 @@ type Config struct {
 	// disabled.
 	ProtectionDisabledUntil *time.Time `yaml:"protection_disabled_until"`
 
+	// TODO(d.kolyshev):  Make it a pointer.
 	SafeSearchConf SafeSearchConfig `yaml:"safe_search"`
 
 	// DataDir is used to store filters' contents.

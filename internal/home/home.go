@@ -589,7 +589,7 @@ func setupDNSFilteringConf(
 	logger := baseLogger.With(slogutil.KeyPrefix, safesearch.LogPrefix)
 	conf.SafeSearch, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
 		Logger:         logger,
-		ServicesConfig: conf.SafeSearchConf,
+		ServicesConfig: &conf.SafeSearchConf,
 		CacheSize:      conf.SafeSearchCacheSize,
 		CacheTTL:       cacheTime,
 	})

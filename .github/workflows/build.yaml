@@ -4,7 +4,10 @@
   'BUILD_DIR': |-
     build
   'CHANNEL': |-
-    development
+    ${{ case(
+      startsWith(github.ref_name, 'rc-v'), 'candidate',
+      'development'
+    ) }}
   'CLIENT_DIR': |-
     ${{ inputs.client_dir || 'client_v2' }}
   'DIST_DIR': |-
@@ -15,6 +18,9 @@
   'Build':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'outputs':
+      'app_version': ${{ steps.set_envs.outputs.app_version }}
+      'source_date_epoch': ${{ steps.set_envs.outputs.source_date_epoch }}
     'permissions':
       'contents': 'read'
     'runs-on': 'team-go'
@@ -35,10 +41,18 @@
 
           echo "SOURCE_DATE_EPOCH=${source_date_epoch}" >> "$GITHUB_ENV"
 
+          # Also expose the source date epoch as a job output, since the env
+          # context is not available to the other jobs.
+          echo "source_date_epoch=${source_date_epoch}" >> "$GITHUB_OUTPUT"
+
           app_version="$(env CHANNEL=${{ env.CHANNEL }} sh ./scripts/make/version.sh)"
           readonly app_version
 
           echo "APP_VERSION=${app_version}" >> "$GITHUB_ENV"
+
+          # Also expose the version as a job output, since the env context is
+          # not available to the other jobs.
+          echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
       - 'name': 'Build frontend'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
@@ -80,6 +94,108 @@
           'name': 'adguardhome-qa'
           'path': |
             ${{ env.DIST_DIR }}
+  'BuildCandidate':
+    'name': 'Build candidate artifacts'
+    'needs': 'Build'
+    'if': |
+      ${{
+        github.repository_owner == 'AdGuardSoftwareLimited'
+        && startsWith(github.ref_name, 'rc-v')
+      }}
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'runs-on': 'team-go'
+    'steps':
+      - 'uses': 'actions/checkout@v6'
+        'with':
+          # Set to false to avoid GITHUB_TOKEN leaking.
+          #
+          # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
+          'persist-credentials': false
+      - 'uses': 'actions/download-artifact@v8'
+        'with':
+          'name': 'adguardhome-frontend'
+          'path': |
+            ${{ env.BUILD_DIR }}
+      - 'name': 'Retrieve GPG signing secrets'
+        'uses': 'hashicorp/vault-action@v4'
+        'with':
+          'url': ${{ vars.VAULT_URL }}
+          'method': 'jwt'
+          'role': 'gpg-signing'
+          'secrets': |
+            secret/data/ci-secrets/gpg-signing gpgPassword | GPG_PASSWORD ;
+            secret/data/ci-secrets/gpg-signing gpgSecretKey | GPG_SECRET_KEY ;
+      - 'name': 'Build unix candidate artifacts'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/ci.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            ARCH=amd64 arm64
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            BRANCH=${{ github.ref_name }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL=${{ env.CHANNEL }}
+            DIST_DIR=${{ env.DIST_DIR }}
+            OS=darwin linux
+            REVISION=${{ github.sha }}
+            SIGN=1
+            SOURCE_DATE_EPOCH=${{ needs.Build.outputs.source_date_epoch }}
+            VERSION=${{ needs.Build.outputs.app_version }}
+          'secrets': |
+            GPG_KEY_PASSPHRASE=${{ env.GPG_PASSWORD }}
+            GPG_SECRET_KEY=${{ env.GPG_SECRET_KEY }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome-candidate-unix'
+          'path': |
+            ${{ env.DIST_DIR }}
+      - 'name': 'Build windows candidate artifacts'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
+        'with':
+          'dockerfile': 'docker/ci.Dockerfile'
+          'context': '.'
+          'target': 'builder-exporter'
+          'output': '.'
+          'build-args': |
+            ARCH=amd64 arm64
+            BASE_IMAGE=${{ env.BASE_IMAGE }}
+            BRANCH=${{ github.ref_name }}
+            CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
+            CHANNEL=${{ env.CHANNEL }}
+            DIST_DIR=${{ env.DIST_DIR }}
+            OS=windows
+            REVISION=${{ github.sha }}
+            SIGN=0
+            SOURCE_DATE_EPOCH=${{ needs.Build.outputs.source_date_epoch }}
+            VERSION=${{ needs.Build.outputs.app_version }}
+      - 'uses': 'actions/upload-artifact@v7'
+        'with':
+          'name': 'adguardhome-candidate-win'
+          'path': |
+            ${{ env.DIST_DIR }}/AdGuardHome_windows_*
+  'SignWindowsBuilds':
+    'name': 'Sign Windows executables'
+    'needs': 'BuildCandidate'
+    'if': |
+      ${{
+        github.repository_owner == 'AdGuardSoftwareLimited'
+        && startsWith(github.ref_name, 'rc-v')
+      }}
+    'permissions':
+      'contents': 'read'
+      'id-token': 'write'
+    'uses': 'AdGuardSoftwareLimited/actions/.github/workflows/sign-by-signer.yml@master'
+    'with':
+      'team': 'go'
+      'artifact-name': 'adguardhome-candidate-win'
+      'files': '**/**/AdGuardHome.exe'
+      'signed-artifact-name': 'adguardhome-candidate-win'
+  # TODO(e.burkov): Add a job to pack candidate artifacts.
   'TestE2E':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}

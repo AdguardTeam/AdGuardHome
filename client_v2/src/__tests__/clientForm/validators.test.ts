@@ -11,6 +11,7 @@ import {
     validateIpForGatewaySubnetMask,
     validateIpv4InCidr,
     validatePasswordLength,
+    hasPasswordMinLength,
     validateIpNotDuplicate,
     validateIpPerLine,
     validateBetween,
@@ -420,11 +421,11 @@ describe('validateIpv4InCidr', () => {
 });
 
 describe('validatePasswordLength', () => {
-    it('returns true for too-short password (< 8 UTF-8 bytes)', () => {
-        expect(validatePasswordLength('short')).toBe(true);
+    it('returns "too_short" for a password shorter than 8 code points', () => {
+        expect(validatePasswordLength('short')).toBe('too_short');
     });
 
-    it('returns undefined for valid password', () => {
+    it('returns undefined for a valid password', () => {
         expect(validatePasswordLength('longenough')).toBeUndefined();
     });
 
@@ -436,15 +437,32 @@ describe('validatePasswordLength', () => {
         expect(validatePasswordLength(undefined)).toBeUndefined();
     });
 
-    it('returns true for password exceeding 72 UTF-8 bytes', () => {
-        expect(validatePasswordLength('a'.repeat(73))).toBe(true);
+    it('returns "too_long" for a password longer than 72 UTF-8 bytes', () => {
+        expect(validatePasswordLength('a'.repeat(73))).toBe('too_long');
     });
 
-    it('counts UTF-8 bytes, not characters (multibyte é = 2 bytes)', () => {
-        // 'é' repeated 3 times = 6 UTF-8 bytes < 8 → too short
-        expect(validatePasswordLength('é'.repeat(3))).toBe(true);
-        // 'é' repeated 4 times = 8 UTF-8 bytes → valid
-        expect(validatePasswordLength('é'.repeat(4))).toBeUndefined();
+    it('counts code points for the minimum, like the backend', () => {
+        // 5 code points but 14 UTF-8 bytes: the backend rejects it.
+        expect(validatePasswordLength('aA🔒🔒🔒')).toBe('too_short');
+        // 8 code points and 21 UTF-8 bytes.
+        expect(validatePasswordLength('Grün🔑🔒🔑🔒')).toBeUndefined();
+        // 'é' is one code point but two UTF-8 bytes.
+        expect(validatePasswordLength('é'.repeat(7))).toBe('too_short');
+        expect(validatePasswordLength('é'.repeat(8))).toBeUndefined();
+    });
+
+    it('counts UTF-8 bytes for the maximum, like bcrypt', () => {
+        // 24 code points but 84 UTF-8 bytes.
+        expect(validatePasswordLength(`Aa1!${'🔑'.repeat(20)}`)).toBe('too_long');
+    });
+});
+
+describe('hasPasswordMinLength', () => {
+    it('counts code points, not UTF-16 code units', () => {
+        expect(hasPasswordMinLength('short')).toBe(false);
+        // 8 UTF-16 code units but 5 code points.
+        expect(hasPasswordMinLength('aA🔒🔒🔒')).toBe(false);
+        expect(hasPasswordMinLength('longenough')).toBe(true);
     });
 });
 

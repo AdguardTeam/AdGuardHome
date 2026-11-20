@@ -602,7 +602,7 @@ func TestSafeSearch(t *testing.T) {
 		googleSafeSearch = "forcesafesearch.google.com."
 	)
 
-	safeSearchConf := filtering.SafeSearchConfig{
+	safeSearchConf := &filtering.SafeSearchConfig{
 		Enabled: true,
 		Google:  true,
 		Yandex:  true,
@@ -612,7 +612,7 @@ func TestSafeSearch(t *testing.T) {
 		Logger:              testLogger,
 		BlockingMode:        filtering.BlockingModeDefault,
 		ProtectionEnabled:   true,
-		SafeSearchConf:      safeSearchConf,
+		SafeSearchConf:      *safeSearchConf,
 		SafeSearchCacheSize: 1000,
 		CacheTime:           30,
 	}
