@@ -24,7 +24,7 @@ require (
 	// TODO(e.burkov):  Get rid of this dependency.  At least, don't update
 	// it, unless all custom templates will be migrated to the new format,
 	// see https://github.com/kardianos/service/issues/418.
-	github.com/kardianos/service v1.3.0
+	github.com/kardianos/service v1.2.4
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/netlink v1.11.2
 	github.com/mdlayher/packet v1.2.0

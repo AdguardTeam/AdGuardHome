@@ -602,7 +602,7 @@ func TestSafeSearch(t *testing.T) {
 		googleSafeSearch = "forcesafesearch.google.com."
 	)
 
-	safeSearchConf := filtering.SafeSearchConfig{
+	safeSearchConf := &filtering.SafeSearchConfig{
 		Enabled: true,
 		Google:  true,
 		Yandex:  true,
@@ -612,7 +612,7 @@ func TestSafeSearch(t *testing.T) {
 		Logger:              testLogger,
 		BlockingMode:        filtering.BlockingModeDefault,
 		ProtectionEnabled:   true,
-		SafeSearchConf:      safeSearchConf,
+		SafeSearchConf:      *safeSearchConf,
 		SafeSearchCacheSize: 1000,
 		CacheTime:           30,
 	}
@@ -1506,10 +1506,11 @@ func TestPTRResponseFromHosts(t *testing.T) {
 		OnHostByIP: func(ip netip.Addr) (host string) { return "" },
 	}
 
-	var eventsCalledCounter atomic.Uint32
+	eventsCalledCh := make(chan struct{})
+
 	watcher := aghtest.NewFSWatcher()
 	watcher.OnEvents = func() (e <-chan aghos.Event) {
-		assert.Equal(t, uint32(1), eventsCalledCounter.Add(1))
+		testutil.RequireSend(testutil.NewPanicT(t), eventsCalledCh, struct{}{}, testTimeout)
 
 		return nil
 	}
@@ -1523,7 +1524,7 @@ func TestPTRResponseFromHosts(t *testing.T) {
 	hc, err := aghnet.NewHostsContainer(ctx, testLogger, testFS, watcher, hostsFilename)
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		assert.Equal(t, uint32(1), eventsCalledCounter.Load())
+		testutil.RequireReceive(t, eventsCalledCh, testTimeout)
 	})
 
 	flt, err := filtering.New(&filtering.Config{
