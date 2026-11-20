@@ -14,7 +14,7 @@ type SafeSearch interface {
 	// Update updates the configuration of the safe search filter.  Update must
 	// be safe for concurrent use.  An implementation of Update may ignore some
 	// fields, but it must document which.
-	Update(ctx context.Context, conf SafeSearchConfig) (err error)
+	Update(ctx context.Context, conf *SafeSearchConfig) (err error)
 }
 
 // SafeSearchConfig is a struct with safe search related settings.

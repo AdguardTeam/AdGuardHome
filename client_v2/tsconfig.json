@@ -5,8 +5,6 @@
     "jsxImportSource": "solid-js",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
     "allowArbitraryExtensions": true,
     "resolveJsonModule": true,
     "allowJs": true,
