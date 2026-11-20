@@ -12,29 +12,52 @@ type Props = {
     commentPrefixes?: readonly CommentLineToken[];
 };
 
-export const TextareaHighlight = (props: Props) => {
-    const lines = () => (props.value() || '').split('\n');
+type HighlightBlock = {
+    isComment: boolean;
+    text: string;
+};
 
+export const TextareaHighlight = (props: Props) => {
     const prefixes = createMemo(() => props.commentPrefixes || [COMMENT_LINE_DEFAULT_TOKEN]);
 
-    const isComment = (line: string) => {
+    const isCommentLine = (line: string) => {
         const trimmed = line.trimStart();
         return prefixes().some((p) => trimmed.startsWith(p));
     };
 
+    // Group adjacent lines by their highlight state. A long comment or rule
+    // block then stays a single span instead of one span per line.
+    const blocks = createMemo(() => {
+        const result: HighlightBlock[] = [];
+
+        (props.value() || '').split('\n').forEach((line) => {
+            const isComment = isCommentLine(line);
+            const text = line || ' ';
+            const previous = result[result.length - 1];
+
+            if (previous?.isComment === isComment) {
+                previous.text += `\n${text}`;
+            } else {
+                result.push({ isComment, text });
+            }
+        });
+
+        return result;
+    });
+
     return (
         <div class={cn(s.overlay, props.class)} aria-hidden="true">
-            <For each={lines()}>
-                {(line, index) => (
+            <For each={blocks()}>
+                {(block, index) => (
                     <>
                         {index() > 0 && '\n'}
                         <span
                             class={cn({
-                                [s.commentLine]: isComment(line),
-                                [s.overlayNonComment]: !isComment(line),
+                                [s.commentLine]: block.isComment,
+                                [s.overlayNonComment]: !block.isComment,
                             })}
                         >
-                            {line || ' '}
+                            {block.text}
                         </span>
                     </>
                 )}

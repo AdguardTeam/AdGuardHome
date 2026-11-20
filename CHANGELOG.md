@@ -29,6 +29,10 @@ See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
+
 ### Fixed
 
 - The stats period labels in the new web interface showing the `last_days` key instead of the text in German and Slovak ([#8736]).
