@@ -28,6 +28,11 @@ See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Fixed
+
+- Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
