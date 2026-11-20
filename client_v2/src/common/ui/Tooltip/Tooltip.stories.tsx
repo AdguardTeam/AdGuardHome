@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from 'storybook-solidjs-vite';
 
 import { Button } from 'panel/common/ui/Button';
+import s from 'panel/stories/Stories.module.pcss';
 
 import { TOOLTIP_POSITIONS, Tooltip } from './Tooltip';
 
@@ -9,6 +10,13 @@ const meta = {
     component: Tooltip,
     parameters: {
         layout: 'centered',
+        docs: {
+            // The tooltip is positioned inside the docs story box, so it needs
+            // room to open there without making that box scroll.
+            story: {
+                height: '320px',
+            },
+        },
     },
     tags: ['autodocs'],
     argTypes: {
@@ -26,7 +34,7 @@ const meta = {
         content: 'Tooltip content',
     },
     render: (args) => (
-        <Tooltip {...args}>
+        <Tooltip {...args} content={<div class={s.tooltipContent}>{args.content}</div>}>
             <Button variant="secondary">Hover me</Button>
         </Tooltip>
     ),

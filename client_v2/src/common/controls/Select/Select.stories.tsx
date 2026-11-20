@@ -145,13 +145,6 @@ export const DropdownSelect: Story = {
     },
 };
 
-export const Loading: Story = {
-    args: {
-        options,
-        isLoading: true,
-    },
-};
-
 export const Multi: Story = {
     render: () => <MultiSelect />,
 };

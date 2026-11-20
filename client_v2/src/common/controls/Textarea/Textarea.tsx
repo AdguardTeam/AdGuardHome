@@ -15,12 +15,14 @@ type TextareaChangeEvent = Event & {
     target: HTMLTextAreaElement;
 };
 
+export const TEXTAREA_SIZES = ['small', 'medium', 'large', 'compact'] as const;
+
 type Props = Omit<
     JSX.TextareaHTMLAttributes<HTMLTextAreaElement>,
     'onChange' | 'onBlur' | 'onInput' | 'onScroll'
 > & {
     label?: JSX.Element;
-    size?: 'small' | 'medium' | 'large' | 'compact';
+    size?: (typeof TEXTAREA_SIZES)[number];
     errorMessage?: string;
     onCard?: boolean;
     highlightComments?: boolean;
