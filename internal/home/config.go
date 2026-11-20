@@ -46,19 +46,6 @@ const (
 	defaultFastestTimeout = 1 * time.Second
 )
 
-// osConfig contains OS-related configuration.
-type osConfig struct {
-	// Group is the name of the group which AdGuard Home must switch to on
-	// startup.  Empty string means no switching.
-	Group string `yaml:"group"`
-	// User is the name of the user which AdGuard Home must switch to on
-	// startup.  Empty string means no switching.
-	User string `yaml:"user"`
-	// RlimitNoFile is the maximum number of opened fd's per process.  Zero
-	// means use the default value.
-	RlimitNoFile uint64 `yaml:"rlimit_nofile"`
-}
-
 // configuration is loaded from YAML.
 //
 // Field ordering is important, YAML fields better not to be reordered, if it's
@@ -127,7 +114,8 @@ type configuration struct {
 	// Log is a block with log configuration settings.
 	Log *configmgr.LogConfig `yaml:"log"`
 
-	OSConfig *osConfig `yaml:"os"`
+	// OSConfig is a block with OS-related configuration settings.
+	OSConfig *configmgr.OSConfig `yaml:"os"`
 
 	sync.RWMutex `yaml:"-"`
 
@@ -379,7 +367,7 @@ var config = &configuration{
 			HostsFile: true,
 		},
 	},
-	OSConfig:      &osConfig{},
+	OSConfig:      &configmgr.OSConfig{},
 	SchemaVersion: configmigrate.LastSchemaVersion,
 	Theme:         ThemeAuto,
 }
