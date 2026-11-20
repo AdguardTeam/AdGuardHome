@@ -15,13 +15,15 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
-	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/urlfilter"
 	"github.com/AdguardTeam/urlfilter/filterlist"
 	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/c2h5oh/datasize"
 	"github.com/miekg/dns"
+
+	//lint:ignore SA1019 TODO(f.setrakov): Use bytecache instead.
+	"github.com/AdguardTeam/golibs/cache"
 )
 
 // Attribute keys and values for logging.

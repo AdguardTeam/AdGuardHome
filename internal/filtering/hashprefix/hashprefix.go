@@ -12,12 +12,14 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/dnsproxy/upstream"
-	"github.com/AdguardTeam/golibs/cache"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/miekg/dns"
 	"golang.org/x/net/publicsuffix"
+
+	//lint:ignore SA1019 TODO(f.setrakov): Use bytecache instead.
+	"github.com/AdguardTeam/golibs/cache"
 )
 
 const (
