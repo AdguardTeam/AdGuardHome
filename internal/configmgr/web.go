@@ -101,3 +101,10 @@ func NewTheme(s string) (t Theme, err error) {
 		)
 	}
 }
+
+// UnmarshalText implements [encoding.TextUnmarshaler] interface for *Theme.
+func (t *Theme) UnmarshalText(b []byte) (err error) {
+	*t, err = NewTheme(string(b))
+
+	return err
+}

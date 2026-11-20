@@ -2,49 +2,19 @@ package home
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/golibs/validate"
 )
-
-// Theme is an enum of all allowed UI themes.
-//
-// TODO(d.kolyshev):  Use [configmgr.Theme].
-type Theme string
-
-// Allowed [Theme] values.
-//
-// Keep in sync with client/src/helpers/constants.ts.
-const (
-	ThemeAuto  Theme = "auto"
-	ThemeLight Theme = "light"
-	ThemeDark  Theme = "dark"
-)
-
-// UnmarshalText implements [encoding.TextUnmarshaler] interface for *Theme.
-func (t *Theme) UnmarshalText(b []byte) (err error) {
-	switch string(b) {
-	case "auto":
-		*t = ThemeAuto
-	case "dark":
-		*t = ThemeDark
-	case "light":
-		*t = ThemeLight
-	default:
-		return fmt.Errorf("invalid theme %q, supported: %q, %q, %q", b, ThemeAuto, ThemeDark, ThemeLight)
-	}
-
-	return nil
-}
 
 // profileJSON is an object for /control/profile and /control/profile/update
 // endpoints.
 type profileJSON struct {
-	Name     string `json:"name"`
-	Language string `json:"language"`
-	Theme    Theme  `json:"theme"`
+	Name     string          `json:"name"`
+	Language string          `json:"language"`
+	Theme    configmgr.Theme `json:"theme"`
 }
 
 // handleGetProfile is the handler for GET /control/profile endpoint.
@@ -69,10 +39,15 @@ func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		config.RLock()
 		defer config.RUnlock()
 
+		theme, err := configmgr.NewTheme(config.Theme)
+		if err != nil {
+			theme = configmgr.ThemeAuto
+		}
+
 		resp = profileJSON{
 			Name:     name,
 			Language: config.Language,
-			Theme:    config.Theme,
+			Theme:    theme,
 		}
 	}()
 
@@ -113,7 +88,7 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 		config.Lock()
 		defer config.Unlock()
 
-		if config.Language == lang && config.Theme == theme {
+		if config.Language == lang && config.Theme == string(theme) {
 			l.DebugContext(ctx, "updating profile; no changes")
 
 			return
@@ -121,7 +96,7 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 
 		changed = true
 		config.Language = lang
-		config.Theme = theme
+		config.Theme = string(theme)
 		l.InfoContext(ctx, "profile updated", "lang", lang, "theme", theme)
 	}()
 

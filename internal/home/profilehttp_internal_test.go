@@ -166,8 +166,8 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 	}, {
 		req:  newProfileUpdateRequest(http.MethodPut, dataInvalidTheme, true),
 		name: "invalid_theme",
-		wantBody: `reading req: invalid theme "invalid_theme", ` +
-			`supported: "auto", "dark", "light"` + "\n",
+		wantBody: `reading req: bad enum value: "invalid_theme", ` +
+			`supported: ["auto" "light" "dark"]` + "\n",
 		wantCode: http.StatusBadRequest,
 	}}
 

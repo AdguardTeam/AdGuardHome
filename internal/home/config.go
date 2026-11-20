@@ -69,12 +69,15 @@ type configuration struct {
 	// AuthBlockMin is the duration, in minutes, of the block of new login
 	// attempts after AuthAttempts unsuccessful login attempts.
 	AuthBlockMin uint `yaml:"block_auth_min"`
+
 	// ProxyURL is the address of proxy server for the internal HTTP client.
 	ProxyURL string `yaml:"http_proxy"`
+
 	// Language is a two-letter ISO 639-1 language code.
 	Language string `yaml:"language"`
+
 	// Theme is a UI theme for current user.
-	Theme Theme `yaml:"theme"`
+	Theme string `yaml:"theme"`
 
 	// TODO(a.garipov): Make DNS and the fields below pointers and validate
 	// and/or reset on explicit nulling.
@@ -369,7 +372,7 @@ var config = &configuration{
 	},
 	OSConfig:      &configmgr.OSConfig{},
 	SchemaVersion: configmigrate.LastSchemaVersion,
-	Theme:         ThemeAuto,
+	Theme:         string(configmgr.ThemeAuto),
 }
 
 // configFilePath returns the absolute, symlink-resolved path to the current
@@ -561,6 +564,7 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	errs = validate.Append(errs, "http", &config.HTTPConfig)
 	errs = validate.Append(errs, "clients", config.Clients)
 	errs = validate.Append(errs, "users", config.Users)
+	errs = validateTheme(errs, config.Theme)
 
 	if len(errs) > 0 {
 		return errors.Join(errs...)
@@ -577,6 +581,23 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	validateLanguage(ctx, l)
 
 	return nil
+}
+
+// validateTheme appends an error to the given errs if the given theme is not
+// valid.
+func validateTheme(errs []error, theme string) (res []error) {
+	res = errs
+
+	if theme == "" {
+		return res
+	}
+
+	_, err := configmgr.NewTheme(theme)
+	if err != nil {
+		res = append(res, fmt.Errorf("theme: %w", err))
+	}
+
+	return res
 }
 
 // validateLanguage validates the specified language and clears it with a
