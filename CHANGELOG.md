@@ -36,7 +36,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
 
-[#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
+[#8728]: https://github.com/AdguardTeam/AdGuardHome/issues/8728
 
 ## [v1.0.0] - 2026-11-19
 
