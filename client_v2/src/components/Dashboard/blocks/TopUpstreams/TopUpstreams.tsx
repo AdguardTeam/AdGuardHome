@@ -1,7 +1,7 @@
 import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import { formatCompactNumber } from 'panel/helpers/helpers';
-import { computePercent } from 'panel/helpers/statistics';
+import { computePercent, sumUpstreamResponses } from 'panel/helpers/statistics';
 import theme from 'panel/lib/theme';
 import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { TruncatedText } from 'panel/common/ui/TruncatedText';
@@ -31,12 +31,7 @@ export const TopUpstreams = (props: Props) => {
 
     const hasStats = createMemo(() => props.topUpstreamsResponses.length > 0);
 
-    // Upstream response counts leave out cache hits and blocked or rewritten
-    // queries, so the share has to be taken from the upstream-answered queries
-    // themselves.  Otherwise the rows never add up to 100%.
-    const totalResponses = createMemo(() =>
-        props.topUpstreamsResponses.reduce((sum, upstream) => sum + upstream.count, 0),
-    );
+    const totalResponses = createMemo(() => sumUpstreamResponses(props.topUpstreamsResponses));
 
     return (
         <div class={s.card}>

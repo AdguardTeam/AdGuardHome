@@ -4,7 +4,7 @@ import intl from 'panel/common/intl';
 import type { TableColumn } from 'panel/common/ui/Table';
 import { statsState } from 'panel/stores/stats';
 import { LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
-import { computePercent } from 'panel/helpers/statistics';
+import { computePercent, sumUpstreamResponses } from 'panel/helpers/statistics';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { StatsPage } from '../StatsPage';
 import { CountWithPercent } from '../blocks/CountWithPercent';
@@ -23,11 +23,7 @@ export const TopUpstreamsPage = () => {
         [...statsState.topUpstreamsResponses].toSorted((a, b) => a.name.localeCompare(b.name)),
     );
 
-    // Cache hits and blocked or rewritten queries never reach an upstream, so
-    // the share is taken from the upstream responses themselves.
-    const totalResponses = createMemo(() =>
-        statsState.topUpstreamsResponses.reduce((sum, upstream) => sum + upstream.count, 0),
-    );
+    const totalResponses = createMemo(() => sumUpstreamResponses(statsState.topUpstreamsResponses));
 
     const columns = (): TableColumn<UpstreamStat>[] => [
         {

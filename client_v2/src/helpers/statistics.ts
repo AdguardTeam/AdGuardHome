@@ -62,3 +62,11 @@ export const resolveStatsPeriod = (params: { period?: string }, maxInterval: num
 /** Percentage of a part in a total; 0 when the total is 0 (never NaN). */
 export const computePercent = (count: number, total: number): number =>
     total > 0 ? (count / total) * 100 : 0;
+
+/**
+ * Sum of the response counts in a top-upstreams list.  Cache hits and queries
+ * answered without an upstream are not part of the list, so a share taken from
+ * this total adds up to 100%.
+ */
+export const sumUpstreamResponses = (responses: { count: number }[]): number =>
+    responses.reduce((sum, upstream) => sum + upstream.count, 0);
