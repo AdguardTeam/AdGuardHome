@@ -3,7 +3,7 @@ import { HashRouter, Route } from '@solidjs/router';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { TopUpstreamsPage } from 'panel/components/Stats/TopUpstreamsPage';
-import { mockMatchMedia } from 'panel/__tests__/helpers/matchMedia';
+import { byViewportWidth, mockMatchMedia } from 'panel/__tests__/helpers/matchMedia';
 
 const mocks = vi.hoisted(() => ({ getStats: vi.fn(), getStatsConfig: vi.fn() }));
 
@@ -39,11 +39,16 @@ describe('TopUpstreamsPage percentages', () => {
         localStorage.clear();
         window.location.hash = '#/';
         vi.clearAllMocks();
-        mockMatchMedia(true);
+        mockMatchMedia(byViewportWidth(1300));
     });
 
     it('takes the table shares from the upstream responses', () => {
         renderPage();
+
+        // Pin the desktop branch: `stats-percent` exists in the mobile cards
+        // too, so without this the test could turn into a copy of the mobile
+        // one if the media semantics changed.
+        expect(screen.queryByTestId('stats-mobile-card')).toBeNull();
 
         const shares = screen.getAllByTestId('stats-percent').map((el) => el.textContent);
 
@@ -52,16 +57,15 @@ describe('TopUpstreamsPage percentages', () => {
     });
 
     it('uses the same total for the mobile progress bar', () => {
-        mockMatchMedia(false);
+        mockMatchMedia(byViewportWidth(375));
         renderPage();
 
-        const cards = screen.getAllByTestId('stats-mobile-card');
-        expect(cards).toHaveLength(3);
-
-        const widths = cards
-            .map((card) => card.querySelector<HTMLElement>('div[style*="width"]'))
-            .map((fill) => (fill ? Number.parseFloat(fill.style.width) : Number.NaN))
+        const widths = screen
+            .getAllByTestId('stats-mobile-progress-fill')
+            .map((fill) => Number.parseFloat(fill.style.width))
             .sort((a, b) => b - a);
+
+        expect(widths).toHaveLength(3);
 
         expect(widths[0]).toBeCloseTo(46.1538, 3);
         expect(widths[1]).toBeCloseTo(38.4615, 3);

@@ -66,6 +66,7 @@ export const StatMobileCard = (props: Props) => {
                                         item.tone === 'danger' && s.progressFillDanger,
                                     )}
                                     style={{ width: `${item.progress}%` }}
+                                    data-testid="stats-mobile-progress-fill"
                                 />
                             </div>
                         </Show>
