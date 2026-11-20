@@ -28,9 +28,15 @@ See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+### Fixed
+
+- Renaming a blocklist in the new web interface disabling it ([#8728]).
+
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
 -->
+
+[#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
 
 ## [v1.0.0] - 2026-11-19
 
