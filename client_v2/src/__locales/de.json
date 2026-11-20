@@ -466,7 +466,7 @@
   "ip_address": "IP-Adresse",
   "known_tracker": "Bekannte Tracker",
   "language": "Sprache",
-  "last_days": "Letzter %count% Tag | Letzte %count% Tage",
+  "last_days": "| Letzter %count% Tag | Letzte %count% Tage",
   "last_hours": "| Letzte %count% Stunde | Letzte %count% Stunden",
   "last_updated_label": "Zuletzt aktualisiert",
   "light_theme": "Helles Design",
