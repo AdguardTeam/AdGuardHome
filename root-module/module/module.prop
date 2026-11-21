@@ -1,0 +1,6 @@
+id=adguardhome_superuser
+name=AdGuardHome for Superuser
+version=v1.0.6
+versionCode=7
+author=tnyfishy
+description=AdGuardHome: chặn quảng cáo và đổi DNS toàn thiết bị / network-wide ad blocking and DNS

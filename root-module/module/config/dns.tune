@@ -1,0 +1,12 @@
+# Tinh chỉnh độ trễ DNS, áp dụng một lần cho cấu hình đã có khi dns.rev đổi: <mục> <khóa> <giá trị>
+dns upstream_mode parallel
+dns upstream_timeout 5s
+dns cache_size 67108864
+dns cache_ttl_min 300
+dns cache_optimistic true
+dns edns_cs_enabled false
+dns use_http3_upstreams true
+dns use_private_ptr_resolvers false
+dns enable_dnssec false
+dns ratelimit 0
+filtering filters_update_interval 24

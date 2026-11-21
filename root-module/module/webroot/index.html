@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>AdGuardHome for Superuser</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="stale">
+  <div id="progress" class="progress" aria-hidden="true"></div>
+
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 2.5 4.5 6.6v8.2c0 7.1 4.7 12.3 11.5 14.7 6.8-2.4 11.5-7.6 11.5-14.7V6.6z" fill="currentColor"/>
+        <path d="m10.8 16.2 3.7 3.7 7-7.2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1 data-i18n="app.title"></h1>
+        <p class="sub" data-i18n="app.subtitle"></p>
+      </div>
+    </div>
+  </header>
+
+  <div id="banners" aria-live="polite"></div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="overview" class="active" data-i18n="tab.overview"></button>
+    <button role="tab" data-tab="dns" data-i18n="tab.dns"></button>
+    <button role="tab" data-tab="settings" data-i18n="tab.settings"></button>
+    <button role="tab" data-tab="logs" data-i18n="tab.logs"></button>
+  </nav>
+
+  <main>
+    <!-- Tổng quan -->
+    <section id="tab-overview" class="tab active">
+      <div class="card status-card" id="status-card" aria-busy="false">
+        <div class="status-row">
+          <span id="status-dot" class="dot"></span>
+          <div class="status-main">
+            <strong id="status-text" class="status-text"></strong>
+            <small id="status-sub" class="status-sub"></small>
+          </div>
+        </div>
+        <dl class="facts">
+          <div><dt data-i18n="fact.pid"></dt><dd id="fact-pid" class="skel">0000</dd></div>
+          <div><dt data-i18n="fact.version"></dt><dd id="fact-version" class="skel">v0.000.00</dd></div>
+          <div><dt data-i18n="fact.redirect"></dt><dd id="fact-redirect" class="skel">Đang bật</dd></div>
+          <div><dt data-i18n="fact.dnsPort"></dt><dd id="fact-port" class="skel">0000</dd></div>
+          <div class="wide"><dt data-i18n="fact.filters"></dt><dd id="fact-filters" class="skel">Sẵn sàng sẵn sàng</dd></div>
+          <div class="wide"><dt data-i18n="fact.panel"></dt><dd id="fact-panel" class="skel">127.0.0.1:3000</dd></div>
+        </dl>
+        <div class="actions">
+          <button id="btn-start" class="btn primary" data-i18n="btn.start"></button>
+          <button id="btn-stop" class="btn danger" data-i18n="btn.stop"></button>
+          <button id="btn-restart" class="btn" data-i18n="btn.restart"></button>
+        </div>
+        <button id="btn-panel" class="btn block" data-i18n="btn.openPanel"></button>
+      </div>
+    </section>
+
+    <!-- DNS upstream và bộ lọc -->
+    <section id="tab-dns" class="tab">
+      <div class="card">
+        <h2 data-i18n="dns.title"></h2>
+        <p class="muted" data-i18n="dns.desc"></p>
+        <label class="label" data-i18n="dns.presets"></label>
+        <div id="presets" class="chips"></div>
+        <label class="label" for="upstream-list" data-i18n="dns.list"></label>
+        <textarea id="upstream-list" rows="5" spellcheck="false" autocapitalize="off" autocomplete="off" data-i18n-placeholder="dns.placeholder"></textarea>
+        <button id="btn-dns-save" class="btn primary block" data-i18n="dns.save"></button>
+        <p class="muted small" data-i18n="dns.hint"></p>
+        <label class="switch-row">
+          <span><strong data-i18n="dns.parallel"></strong><small data-i18n="dns.parallel.hint"></small></span>
+          <input type="checkbox" id="set-parallel" class="switch">
+        </label>
+      </div>
+
+      <div class="card" id="filters-card">
+        <div class="head-row">
+          <h2 data-i18n="filters.title"></h2>
+          <span id="filters-unsaved" class="pill warn" hidden data-i18n="filters.unsaved"></span>
+        </div>
+        <p class="muted" data-i18n="filters.desc"></p>
+        <p id="filters-current" class="current-line"></p>
+        <div id="filter-presets" class="chips"></div>
+        <div id="filters-list"></div>
+        <button id="btn-filters-save" class="btn primary block" data-i18n="filters.save" disabled></button>
+        <p class="muted small" data-i18n="filters.hint"></p>
+      </div>
+    </section>
+
+    <!-- Cài đặt -->
+    <section id="tab-settings" class="tab">
+      <div class="card">
+        <h2 data-i18n="set.redirect.title"></h2>
+        <label class="switch-row">
+          <span><strong data-i18n="set.iptables"></strong><small data-i18n="set.iptables.hint"></small></span>
+          <input type="checkbox" id="set-iptables" class="switch">
+        </label>
+        <label class="switch-row">
+          <span><strong data-i18n="set.blockV6"></strong><small data-i18n="set.blockV6.hint"></small></span>
+          <input type="checkbox" id="set-blockv6" class="switch">
+        </label>
+        <label class="switch-row">
+          <span><strong data-i18n="set.watchdog"></strong><small data-i18n="set.watchdog.hint"></small></span>
+          <input type="checkbox" id="set-watchdog" class="switch">
+        </label>
+        <label class="label" for="set-port" data-i18n="set.port"></label>
+        <input id="set-port" type="number" inputmode="numeric" min="1" max="65535">
+        <p class="muted small" data-i18n="set.port.hint"></p>
+        <label class="label" for="set-ignore-dest" data-i18n="set.ignoreDest"></label>
+        <input id="set-ignore-dest" type="text" spellcheck="false" autocapitalize="off" autocomplete="off">
+        <label class="label" for="set-ignore-src" data-i18n="set.ignoreSrc"></label>
+        <input id="set-ignore-src" type="text" spellcheck="false" autocapitalize="off" autocomplete="off">
+        <p class="muted small" data-i18n="set.ignore.hint"></p>
+        <button id="btn-set-save" class="btn primary block" data-i18n="set.save"></button>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="acc.title"></h2>
+        <p class="muted" data-i18n="acc.desc"></p>
+        <p class="pill-row"><span id="acc-state" class="pill"></span></p>
+        <label class="label" for="acc-user" data-i18n="acc.user"></label>
+        <input id="acc-user" type="text" value="admin" readonly>
+        <label class="label" for="acc-pass" data-i18n="acc.new"></label>
+        <input id="acc-pass" type="password" autocomplete="new-password">
+        <label class="label" for="acc-pass2" data-i18n="acc.confirm"></label>
+        <input id="acc-pass2" type="password" autocomplete="new-password">
+        <button id="btn-acc-set" class="btn primary block" data-i18n="acc.set"></button>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="lang.title"></h2>
+        <div class="chips" id="lang-chips">
+          <button class="chip" data-lang="vi">Tiếng Việt</button>
+          <button class="chip" data-lang="en">English</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="maint.title"></h2>
+        <button id="btn-debug" class="btn block" data-i18n="maint.debug"></button>
+        <button id="btn-reset" class="btn danger-outline block" data-i18n="maint.reset"></button>
+      </div>
+    </section>
+
+    <!-- Nhật ký -->
+    <section id="tab-logs" class="tab">
+      <div class="card">
+        <div class="chips" id="log-chips">
+          <button class="chip active" data-log="core" data-i18n="log.core"></button>
+          <button class="chip" data-log="history" data-i18n="log.history"></button>
+          <button class="chip" data-log="debug" data-i18n="log.debug"></button>
+        </div>
+        <pre id="log-view" tabindex="0"></pre>
+        <button id="btn-log-refresh" class="btn block" data-i18n="log.refresh"></button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"><span id="toast-text"></span><button id="toast-action" class="toast-action" hidden></button></div>
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <p id="modal-text"></p>
+      <div class="actions">
+        <button id="modal-cancel" class="btn" data-i18n="common.cancel"></button>
+        <button id="modal-ok" class="btn primary" data-i18n="common.ok"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/i18n.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
