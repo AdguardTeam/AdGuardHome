@@ -241,12 +241,20 @@ func newCookie(
 func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	redirectURL := "/login.html"
+	users, err := web.auth.users.All(ctx)
+	if err != nil {
+		web.logger.ErrorContext(ctx, "getting users", slogutil.KeyError, err)
+	} else if len(users) == 0 {
+		redirectURL = "/"
+	}
+
 	respHdr := w.Header()
 	c, err := r.Cookie(sessionCookieName)
 	if err != nil {
 		// The only error that is returned from r.Cookie is [http.ErrNoCookie].
 		// The user is already logged out.
-		respHdr.Set(httphdr.Location, "/login.html")
+		respHdr.Set(httphdr.Location, redirectURL)
 		w.WriteHeader(http.StatusFound)
 
 		return
@@ -276,7 +284,7 @@ func (web *webAPI) handleLogout(w http.ResponseWriter, r *http.Request) {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	respHdr.Set(httphdr.Location, "/login.html")
+	respHdr.Set(httphdr.Location, redirectURL)
 	respHdr.Set(httphdr.SetCookie, c.String())
 	w.WriteHeader(http.StatusFound)
 }

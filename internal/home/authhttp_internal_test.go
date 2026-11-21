@@ -765,3 +765,91 @@ func TestRealIP(t *testing.T) {
 		})
 	}
 }
+
+func TestWebAPI_handleLogout(t *testing.T) {
+	testCases := []struct {
+		name         string
+		wantLocation string
+		withUser     bool
+		withCookie   bool
+	}{{
+		name:         "auth_enabled_no_cookie",
+		wantLocation: "/login.html",
+		withUser:     true,
+		withCookie:   false,
+	}, {
+		name:         "auth_enabled_with_cookie",
+		wantLocation: "/login.html",
+		withUser:     true,
+		withCookie:   true,
+	}, {
+		name:         "auth_disabled_no_cookie",
+		wantLocation: "/",
+		withUser:     false,
+		withCookie:   false,
+	}, {
+		name:         "auth_disabled_with_cookie",
+		wantLocation: "/",
+		withUser:     false,
+		withCookie:   true,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+			var users []webUser
+			if tc.withUser {
+				users = []webUser{{
+					Name:         "name",
+					PasswordHash: "hash",
+				}}
+			}
+
+			sessionsDB := filepath.Join(t.TempDir(), "sessions.db")
+			auth, err := newAuth(ctx, &authConfig{
+				baseLogger:     testLogger,
+				rateLimiter:    emptyRateLimiter{},
+				trustedProxies: testTrustedProxies,
+				dbFilename:     sessionsDB,
+				users:          users,
+				sessionTTL:     time.Hour,
+				isGLiNet:       false,
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() { auth.close(testutil.ContextWithTimeout(t, testTimeout)) })
+
+			var tok aghuser.SessionToken
+			if tc.withCookie {
+				var sess *aghuser.Session
+				sess, err = auth.sessions.New(ctx, &aghuser.User{Login: "name"})
+				require.NoError(t, err)
+				tok = sess.Token
+			}
+
+			web := &webAPI{
+				logger: testLogger,
+				auth:   auth,
+			}
+
+			r := httptest.NewRequest(http.MethodGet, "/control/logout", nil)
+			if tc.withCookie {
+				r.AddCookie(&http.Cookie{
+					Name:  sessionCookieName,
+					Value: hex.EncodeToString(tok[:]),
+				})
+			}
+
+			rw := httptest.NewRecorder()
+			web.handleLogout(rw, r)
+
+			assert.Equal(t, http.StatusFound, rw.Code)
+			assert.Equal(t, tc.wantLocation, rw.Header().Get(httphdr.Location))
+
+			if tc.withCookie {
+				setCookie := rw.Header().Get(httphdr.SetCookie)
+				assert.Contains(t, setCookie, sessionCookieName+"=;")
+			}
+		})
+	}
+}
