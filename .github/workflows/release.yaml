@@ -227,6 +227,21 @@
           startsWith(github.ref_name, 'beta-v'), 'beta',
           'edge'
         ) }}-static
+  'RecordStaticVersion':
+    'if': |
+      ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
+    'needs':
+      - 'Build'
+      - 'DeployToStaticStorage'
+    'permissions':
+      'contents': 'read'
+    'runs-on': 'team-go'
+    'steps':
+      - 'name': 'Record the published static version'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/kv-set@master'
+        'with':
+          'key': 'adguard-home/${{ env.CHANNEL }}/static-version'
+          'value': ${{ needs.Build.outputs.app_version }}
   'PublishDocker':
     'if': |
       ${{ github.repository_owner == 'AdGuardSoftwareLimited' }}
