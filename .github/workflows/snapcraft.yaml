@@ -28,8 +28,6 @@ jobs:
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
-      - 'name': 'Build'
-        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
       - 'name': 'Read the expected version'
         'id': 'static-version'
         'uses': 'AdGuardSoftwareLimited/actions/actions/kv-get@master'
@@ -48,6 +46,8 @@ jobs:
           fi
 
           printf 'EXPECTED_VERSION=%s\n' "$VALUE" >> "$GITHUB_ENV"
+      - 'name': 'Build'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
           'dockerfile': 'docker/snapcraft.Dockerfile'
           'context': '.'
