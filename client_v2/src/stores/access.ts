@@ -50,23 +50,25 @@ export const setAccessList = async (values: {
 }) => {
     setState('processingSet', true);
     try {
+        // The backend replaces all three lists on every save, so an omitted
+        // field must keep its current value instead of being dropped.
+        const allowedClients = values.allowed_clients ?? state.allowed_clients;
+        const disallowedClients = values.disallowed_clients ?? state.disallowed_clients;
+        const blockedHosts = values.blocked_hosts ?? state.blocked_hosts;
+
         const config: AccessList = {
-            allowed_clients:
-                values.allowed_clients !== undefined
-                    ? splitByNewLine(values.allowed_clients)
-                    : undefined,
-            disallowed_clients:
-                values.disallowed_clients !== undefined
-                    ? splitByNewLine(values.disallowed_clients)
-                    : undefined,
-            blocked_hosts:
-                values.blocked_hosts !== undefined
-                    ? splitByNewLine(values.blocked_hosts)
-                    : undefined,
+            allowed_clients: splitByNewLine(allowedClients),
+            disallowed_clients: splitByNewLine(disallowedClients),
+            blocked_hosts: splitByNewLine(blockedHosts),
         };
 
         await accessSet(config);
-        setState({ ...values, processingSet: false });
+        setState({
+            allowed_clients: splitByNewLine(allowedClients).join('\n'),
+            disallowed_clients: splitByNewLine(disallowedClients).join('\n'),
+            blocked_hosts: splitByNewLine(blockedHosts).join('\n'),
+            processingSet: false,
+        });
         addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
     } catch (error) {
         addErrorToast({ error });

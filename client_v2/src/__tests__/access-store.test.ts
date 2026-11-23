@@ -80,7 +80,15 @@ describe('toggleClientBlock', () => {
 });
 
 describe('setAccessList', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        mocks.accessList.mockResolvedValue({
+            allowed_clients: ['10.0.0.1'],
+            disallowed_clients: ['10.0.0.2'],
+            blocked_hosts: ['blocked.example'],
+        });
+        await getAccessList();
+    });
 
     it('splits newline-delimited strings into arrays', async () => {
         await setAccessList({
@@ -95,22 +103,31 @@ describe('setAccessList', () => {
         });
     });
 
-    it('handles single values correctly', async () => {
+    it('keeps the lists that the caller did not pass', async () => {
         await setAccessList({ allowed_clients: '1.1.1.1' });
         expect(mocks.accessSet).toHaveBeenCalledWith({
             allowed_clients: ['1.1.1.1'],
-            disallowed_clients: undefined,
-            blocked_hosts: undefined,
+            disallowed_clients: ['10.0.0.2'],
+            blocked_hosts: ['blocked.example'],
         });
     });
 
-    it('handles empty values', async () => {
+    it('treats an empty string as an intentionally emptied list', async () => {
         await setAccessList({ allowed_clients: '' });
         expect(mocks.accessSet).toHaveBeenCalledWith({
             allowed_clients: [],
-            disallowed_clients: undefined,
-            blocked_hosts: undefined,
+            disallowed_clients: ['10.0.0.2'],
+            blocked_hosts: ['blocked.example'],
         });
+        expect(accessState.allowed_clients).toBe('');
+    });
+
+    it('writes the saved lists back to the store', async () => {
+        await setAccessList({ blocked_hosts: 'badhost.com\nevil.com' });
+
+        expect(accessState.blocked_hosts).toBe('badhost.com\nevil.com');
+        expect(accessState.allowed_clients).toBe('10.0.0.1');
+        expect(accessState.disallowed_clients).toBe('10.0.0.2');
     });
 });
 
