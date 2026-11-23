@@ -40,6 +40,7 @@ export const RulesEditor = (props: Props) => {
                             }
                             highlightComments
                             commentPrefixes={COMMENT_LINE_TOKENS}
+                            resizable
                         />
                     </div>
                 </div>

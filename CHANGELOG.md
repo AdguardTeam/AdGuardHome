@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The custom filtering rules editor in the new web interface no longer being resizable ([#8730]).
+
 - The dashboard percentages in the new web interface being formatted with a different number of decimals in each card ([#8763]).
 
 - The *Log out* button in the new web interface being shown when authentication is disabled ([#8746]).
@@ -63,6 +65,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8726]:       https://github.com/AdguardTeam/AdGuardHome/issues/8726
 [#8727]:       https://github.com/AdguardTeam/AdGuardHome/issues/8727
 [#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
+[#8730]:       https://github.com/AdguardTeam/AdGuardHome/issues/8730
 [#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
 [#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
 [#8746]:       https://github.com/AdguardTeam/AdGuardHome/issues/8746
