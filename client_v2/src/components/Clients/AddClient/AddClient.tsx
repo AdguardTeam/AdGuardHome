@@ -7,7 +7,6 @@ import { Input } from 'panel/common/controls/Input';
 import { Select } from 'panel/common/controls/Select';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { Textarea } from 'panel/common/controls/Textarea';
-import { Button } from 'panel/common/ui/Button';
 import { PageLoader } from 'panel/common/ui/Loader';
 import { SettingLink } from 'panel/common/ui/SettingLink';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
@@ -15,7 +14,6 @@ import {
     clientFormState,
     updateClientFormField,
     clearClientForm,
-    saveClient,
     setFormErrors,
 } from 'panel/stores/clientForm';
 import { dashboardState } from 'panel/stores/dashboard';
@@ -25,6 +23,7 @@ import { RoutePath, Paths } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import { ClientsHeader } from './blocks/ClientsHeader';
+import { ClientFormActions } from './blocks/ClientFormActions';
 import { Identifiers } from './blocks/Identifiers/Identifiers';
 
 import s from './AddClient.module.pcss';
@@ -75,16 +74,8 @@ export const AddClient = () => {
         navigate(Paths.Clients);
     };
 
-    const handleSave = async () => {
-        const err = validateUpstreams(clientFormState.upstreams);
-        if (err) {
-            setFormErrors({ ...clientFormState.formErrors, upstreams: err });
-            return;
-        }
-        const result = await saveClient();
-        if (result) {
-            navigate(Paths.Clients);
-        }
+    const handleSaved = () => {
+        navigate(Paths.Clients);
     };
 
     const handleUseGlobalSettings = (e: Event) => {
@@ -289,27 +280,7 @@ export const AddClient = () => {
                         )}
                     </SwitchGroup>
 
-                    <div class={s.actions}>
-                        <Button
-                            variant="primary"
-                            size="small"
-                            onClick={handleSave}
-                            disabled={clientFormState.processingSave}
-                            data-testid="client-form-save"
-                            class={s.actionButton}
-                        >
-                            {intl.getMessage('save_btn')}
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="small"
-                            onClick={handleCancel}
-                            data-testid="client-form-cancel"
-                            class={s.actionButton}
-                        >
-                            {intl.getMessage('cancel_btn')}
-                        </Button>
-                    </div>
+                    <ClientFormActions onCancel={handleCancel} onSaved={handleSaved} />
                 </Show>
             </div>
         </div>

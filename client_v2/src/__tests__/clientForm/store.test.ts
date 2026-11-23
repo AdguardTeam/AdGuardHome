@@ -159,4 +159,15 @@ describe('saveClient cross-client validation', () => {
         expect(result).toBe(false);
         expect(clientFormState.formErrors.upstreams_cache_size).toBeDefined();
     });
+
+    it('rejects invalid upstreams', async () => {
+        clearClientForm();
+        updateClientFormField({ field: 'name', value: 'Test' });
+        updateClientFormField({ field: 'ids', value: ['192.168.1.1'] });
+        updateClientFormField({ field: 'upstreams', value: 'not a server' });
+
+        const result = await saveClient();
+        expect(result).toBe(false);
+        expect(clientFormState.formErrors.upstreams).toBeDefined();
+    });
 });

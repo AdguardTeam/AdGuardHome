@@ -1,4 +1,4 @@
-import { createSignal, createEffect, createMemo, onMount, Show, For } from 'solid-js';
+import { createSignal, createEffect, createMemo, onMount, Show, For, type JSX } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
@@ -33,6 +33,7 @@ type WebService = {
 type Props = {
     clientScope?: boolean;
     class?: string;
+    actions?: JSX.Element;
     breadcrumbs?: {
         parentLinks: {
             path: RoutePathKey;
@@ -357,6 +358,8 @@ export const BlockedServices = (props: Props) => {
                             </Show>
                         </div>
                     </Show>
+
+                    {props.actions}
                 </div>
             </div>
         </Show>

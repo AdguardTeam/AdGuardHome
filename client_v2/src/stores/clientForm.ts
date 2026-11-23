@@ -3,7 +3,7 @@ import { untrack } from 'solid-js';
 import type { ClientFormState, Client } from 'panel/initialState';
 import { clientsUpdate, clientsAdd } from 'panel/api/generated';
 import intl from 'panel/common/intl';
-import { validateIdentifier, validateCacheSize } from 'panel/helpers/validators';
+import { validateIdentifier, validateCacheSize, validateUpstreams } from 'panel/helpers/validators';
 import { DEFAULT_DNS_CACHE_SIZE } from 'panel/helpers/constants';
 import { DAYS_OF_WEEK } from 'panel/helpers/schedule';
 import { addErrorToast, addSuccessToast } from './toasts';
@@ -215,6 +215,11 @@ export const saveClient = async (): Promise<boolean> => {
         if (cacheErr) {
             errors.upstreams_cache_size = cacheErr;
         }
+    }
+
+    const upstreamsError = validateUpstreams(state.upstreams);
+    if (upstreamsError) {
+        errors.upstreams = upstreamsError;
     }
 
     if (Object.keys(errors).length > 0) {

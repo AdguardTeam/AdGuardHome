@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The per-client settings in the new web interface being discarded when they were changed on the Protection, Blocked services, or Inactivity schedule sub-page ([#8752]).
+
 - The access settings in the new web interface resetting each other when one of them was saved ([#8748]).
 
 - The query log in the new web interface crashing on queries received over DNSCrypt ([#8754]).
@@ -60,6 +62,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
 [#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
 [#8748]:       https://github.com/AdguardTeam/AdGuardHome/issues/8748
+[#8752]:       https://github.com/AdguardTeam/AdGuardHome/issues/8752
 [#8754]:       https://github.com/AdguardTeam/AdGuardHome/issues/8754
 
 <!--
