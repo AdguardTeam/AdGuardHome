@@ -4,13 +4,13 @@
   'CHANNEL': |-
     ${{ case(
       startsWith(github.ref_name, 'release-v'), 'release',
-      startsWith(github.ref_name, 'beta-v'), 'beta',
+      contains(github.ref_name, '-b.'), 'beta',
       'edge'
     ) }}
   'SNAPCRAFT_CHANNEL': |-
     ${{ case(
       startsWith(github.ref_name, 'release-v'), 'candidate',
-      startsWith(github.ref_name, 'beta-v'), 'beta',
+      contains(github.ref_name, '-b.'), 'beta',
       'edge'
     ) }}
 jobs:
