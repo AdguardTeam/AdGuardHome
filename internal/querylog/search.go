@@ -346,6 +346,8 @@ func (l *queryLog) readNextEntry(
 	e = &logEntry{}
 	l.decodeLogEntry(ctx, e, line)
 
+	ts = e.Time.UnixNano()
+
 	if l.isIgnored(e.QHost) {
 		return nil, ts, nil
 	}
@@ -368,7 +370,6 @@ func (l *queryLog) readNextEntry(
 		return nil, ts, nil
 	}
 
-	ts = e.Time.UnixNano()
 	if !params.match(e) {
 		return nil, ts, nil
 	}
