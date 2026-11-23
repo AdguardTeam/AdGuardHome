@@ -49,6 +49,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
 
+- The upstream test error message in the legacy web interface no longer telling the user to check the spelling when the server is valid but unreachable.
+
 [#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
 [#8726]:       https://github.com/AdguardTeam/AdGuardHome/issues/8726
 [#8727]:       https://github.com/AdguardTeam/AdGuardHome/issues/8727
