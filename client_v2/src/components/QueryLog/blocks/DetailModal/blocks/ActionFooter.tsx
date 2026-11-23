@@ -114,7 +114,7 @@ export const ActionFooter = (props: Props) => {
     const ACTION_CONFIG: Record<DetailModalActionId, ActionConfig> = {
         block: {
             variant: 'danger',
-            secondaryVariant: 'secondary-danger',
+            secondaryVariant: 'secondary',
             testId: 'query-log-detail-action-block',
             dataAction: 'block',
             label: () => intl.getMessage('block'),

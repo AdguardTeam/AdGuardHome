@@ -217,7 +217,6 @@ export const Dashboard = () => {
 
                             <TopUpstreams
                                 topUpstreamsResponses={statsState.topUpstreamsResponses}
-                                numDnsQueries={statsState.numDnsQueries}
                                 period={effectivePeriod()}
                             />
 

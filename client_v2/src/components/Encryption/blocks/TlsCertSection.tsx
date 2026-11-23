@@ -1,4 +1,4 @@
-import { Show, createSignal } from 'solid-js';
+import { Show, createSignal, type JSX } from 'solid-js';
 import { Icon } from 'panel/common/ui/Icon';
 import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import intl from 'panel/common/intl';
@@ -29,36 +29,57 @@ export const TlsCertSection = () => {
         setShowDeleteConfirm(false);
     };
 
+    const renderCertificateStatus = () => (
+        <CertificateStatus
+            validChain={enc().valid_chain}
+            validCert={enc().valid_cert}
+            subject={enc().subject}
+            issuer={enc().issuer}
+            notAfter={enc().not_after}
+            dnsNames={enc().dns_names}
+            keyType={enc().valid_key ? enc().key_type : undefined}
+        />
+    );
+
+    const hasCertificate = () => !!(enc().certificate_chain || enc().certificate_path);
+
+    // A validation message does not make the certificate's own data
+    // unreadable, so the details stay visible above it, as in the legacy UI.
+    const renderWithMessage = (message: JSX.Element) => {
+        if (!hasCertificate()) {
+            return message;
+        }
+
+        return (
+            <>
+                {renderCertificateStatus()}
+                {message}
+            </>
+        );
+    };
+
     const renderStatus = () => {
         if (enc().valid_cert && enc().valid_key && !enc().valid_pair) {
-            return (
+            return renderWithMessage(
                 <ValidationStatus
                     type="error"
                     message={intl.getMessage('encryption_key_cert_mismatch')}
-                />
+                />,
             );
         }
         if (enc().warning_validation) {
             const isWarning = enc().valid_key && enc().valid_cert && enc().valid_pair;
-            return (
+
+            return renderWithMessage(
                 <ValidationStatus
                     type={isWarning ? 'warning' : 'error'}
                     message={enc().warning_validation}
-                />
+                />,
             );
         }
-        if (!enc().certificate_chain && !enc().certificate_path) return null;
-        return (
-            <CertificateStatus
-                validChain={enc().valid_chain}
-                validCert={enc().valid_cert}
-                subject={enc().subject}
-                issuer={enc().issuer}
-                notAfter={enc().not_after}
-                dnsNames={enc().dns_names}
-                keyType={enc().valid_key ? enc().key_type : undefined}
-            />
-        );
+        if (!hasCertificate()) return null;
+
+        return renderCertificateStatus();
     };
 
     return (

@@ -29,7 +29,15 @@ See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
+
 ### Fixed
+
+- The *Top upstreams* percentages in the new web interface not adding up to 100% ([#8738]).
+
+- The certificate details in the new web interface being hidden by a validation warning or a key/certificate mismatch ([#8727]).
 
 - The stats period labels in the new web interface showing the `last_days` key instead of the text in German and Slovak ([#8736]).
 
@@ -43,8 +51,10 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 [#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
 [#8726]:       https://github.com/AdguardTeam/AdGuardHome/issues/8726
+[#8727]:       https://github.com/AdguardTeam/AdGuardHome/issues/8727
 [#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
 [#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
+[#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
@@ -69,6 +79,8 @@ See also the [v1.0.0 GitHub milestone][ms-v1.0.0].
 - Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
 
 ### Fixed
+
+- The new web interface blanking out or silently reloading itself when the DNS server was not running or its status check failed; it now explains the state, lists the likely causes of a stopped DNS server, and offers a retry when the check itself failed.
 
 - The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does.
 

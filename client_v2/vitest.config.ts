@@ -35,5 +35,12 @@ export default defineConfig({
         include: ['src/__tests__/**/*.{test,spec}.{ts,tsx}'],
         setupFiles: ['src/__tests__/setup.ts'],
         css: false,
+        // Node 25+ enables Web Storage by default, so `globalThis` already has a
+        // `localStorage` that stays undefined without `--localstorage-file`.
+        // Vitest only installs jsdom's storage for keys missing from the global
+        // (see `getWindowKeys`), so jsdom's `localStorage` never replaces it and
+        // every test sees `undefined`. Turn Node's implementation off for the
+        // workers; jsdom's own storage is then installed as before.
+        execArgv: ['--no-experimental-webstorage'],
     },
 });
