@@ -21,6 +21,7 @@ For code guidelines, architecture, and project structure, see
         - [Branching and Pull Requests](#branching-and-pull-requests)
         - [Code Style and Formatting](#code-style-and-formatting)
         - [Type Checking](#type-checking)
+        - [Component Catalog](#component-catalog)
         - [Running Tests](#running-tests)
         - [Translations](#translations)
     - [Common Tasks](#common-tasks)
@@ -167,6 +168,26 @@ Watch mode for continuous type checking:
 
 ```sh
 npm run typecheck:watch
+```
+
+### Component Catalog
+
+Browse the common controls and UI primitives in Storybook:
+
+```sh
+npm run storybook
+```
+
+It opens on http://localhost:6006, with a `Theme` toolbar that switches
+between the light and dark themes. Stories live next to their component
+(`<Component>.stories.tsx`); the design-token and icon pages live in
+`src/stories/`. Storybook runs on Vite and is development-only — the
+production build stays on Webpack.
+
+Build the catalog as a static site into `storybook-static/` (git-ignored):
+
+```sh
+npm run build-storybook
 ```
 
 ### Running Tests
@@ -352,7 +373,9 @@ DEV_SERVER_PORT=8080 npm run dev
 
 Use the `panel/*` alias (`panel/api/Api`, `panel/initialState`, etc.) instead
 of deep relative paths. The alias is defined in `tsconfig.json` and consumed
-by Webpack, Vitest, and ESLint.
+by Webpack, Storybook, and Vitest through the shared
+`scripts/tsconfig-aliases.js` reader, and by ESLint through its TypeScript
+import resolver.
 
 ## Additional Resources
 

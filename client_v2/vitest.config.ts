@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 import solid from 'vite-plugin-solid';
 import { defineConfig } from 'vitest/config';
 
+import { getAliasesFromTsconfig } from './scripts/tsconfig-aliases.js';
+
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
@@ -13,8 +15,7 @@ export default defineConfig({
         // preventing "multiple instances of Solid" from @zag-js/solid, etc.
         dedupe: ['solid-js', 'solid-js/web', 'solid-js/store'],
         alias: {
-            panel: path.resolve(rootDir, 'src'),
-            Twosky: path.resolve(rootDir, '../.twosky.json'),
+            ...getAliasesFromTsconfig(path.resolve(rootDir, 'tsconfig.json'), rootDir),
             'solid-js': path.resolve(rootDir, 'node_modules/solid-js'),
             'solid-js/web': path.resolve(rootDir, 'node_modules/solid-js/web'),
             'solid-js/store': path.resolve(rootDir, 'node_modules/solid-js/store'),
