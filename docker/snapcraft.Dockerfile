@@ -34,6 +34,7 @@ ARG BASE_IMAGE=adguard/snap-builder:2.1
 FROM "$BASE_IMAGE" AS builder
 ARG CACHE_BUSTER=0
 ARG CHANNEL=development
+ARG EXPECTED_VERSION=
 ADD snap /app/snap
 ADD scripts /app/scripts
 WORKDIR /app
@@ -49,7 +50,9 @@ env \
 	sh ./scripts/snap/download.sh \
 	;
 
-sh ./scripts/snap/build.sh
+env \
+	EXPECTED_VERSION="${EXPECTED_VERSION}" \
+	sh ./scripts/snap/build.sh
 EOF
 
 # builder-exporter exports the build artifacts to the host machine so that they
