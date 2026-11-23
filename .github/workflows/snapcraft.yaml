@@ -39,8 +39,7 @@ jobs:
           'VALUE': ${{ steps.static-version.outputs.value }}
         'run': |
           if [ "$FOUND" != 'true' ]; then
-            printf 'no static version recorded for the %s channel\n' "$CHANNEL" 1>&2
-            printf 'the release build has not published it yet\n' 1>&2
+            printf 'no static version recorded for the %s channel\n the release build has not published it yet\n' "$CHANNEL" 1>&2
 
             exit 1
           fi
