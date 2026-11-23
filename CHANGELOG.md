@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The *Log out* button in the new web interface being shown when authentication is disabled ([#8746]).
+
 - The per-client settings in the new web interface being discarded when they were changed on the Protection, Blocked services, or Inactivity schedule sub-page ([#8752]).
 
 - The access settings in the new web interface resetting each other when one of them was saved ([#8748]).
@@ -61,6 +63,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
 [#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
 [#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
+[#8746]:       https://github.com/AdguardTeam/AdGuardHome/issues/8746
 [#8748]:       https://github.com/AdguardTeam/AdGuardHome/issues/8748
 [#8752]:       https://github.com/AdguardTeam/AdGuardHome/issues/8752
 [#8754]:       https://github.com/AdguardTeam/AdGuardHome/issues/8754

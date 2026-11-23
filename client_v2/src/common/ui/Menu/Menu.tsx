@@ -1,3 +1,4 @@
+import { Show } from 'solid-js';
 import { useLocation } from '@solidjs/router';
 import cn from 'clsx';
 import { Icon } from 'panel/common/ui/Icon';
@@ -6,6 +7,7 @@ import { Paths, RoutePath } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 import intl from 'panel/common/intl';
 import { getLogoutUrl } from 'panel/api/generated';
+import { dashboardState } from 'panel/stores/dashboard';
 import { AccordionSection } from './AccordionSection';
 
 import s from './styles.module.pcss';
@@ -141,19 +143,23 @@ export const Menu = (props: Props) => {
                     </Link>
                 </div>
             </nav>
-            <div class={s.referenceWrapper}>
-                <div class={cn(s.menuLinkWrapper)}>
-                    <a
-                        href={getLogoutUrl()}
-                        rel="external"
-                        class={s.menuLink}
-                        id="sign_out"
-                    >
-                        <Icon class={s.linkIcon} icon="logout" />
-                        <span class={theme.common.textOverflow}>{intl.getMessage('logout')}</span>
-                    </a>
+            <Show when={!dashboardState.processingProfile && dashboardState.name}>
+                <div class={s.referenceWrapper}>
+                    <div class={cn(s.menuLinkWrapper)}>
+                        <a
+                            href={getLogoutUrl()}
+                            rel="external"
+                            class={s.menuLink}
+                            id="sign_out"
+                        >
+                            <Icon class={s.linkIcon} icon="logout" />
+                            <span class={theme.common.textOverflow}>
+                                {intl.getMessage('logout')}
+                            </span>
+                        </a>
+                    </div>
                 </div>
-            </div>
+            </Show>
         </div>
     );
 };
