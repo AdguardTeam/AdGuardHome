@@ -152,6 +152,91 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 	}
 }
 
+func TestDNSFilter_handleSettingsRequest(t *testing.T) {
+	t.Parallel()
+
+	applyChan := make(chan struct{}, 1)
+
+	confModifier := &aghtest.ConfigModifier{}
+	confModifier.OnApply = func(_ context.Context) {
+		applyChan <- struct{}{}
+	}
+
+	d, err := New(&Config{
+		Logger:       testLogger,
+		ConfModifier: confModifier,
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(d.Close)
+
+	testCases := []struct {
+		name                    string
+		handler                 http.HandlerFunc
+		wantParentalEnabled     assert.BoolAssertionFunc
+		wantSafeBrowsingEnabled assert.BoolAssertionFunc
+		enabled                 bool
+	}{{
+		name:                    "disable_safebrowsing",
+		handler:                 d.handleSafeBrowsingSettings,
+		enabled:                 false,
+		wantParentalEnabled:     assert.True,
+		wantSafeBrowsingEnabled: assert.False,
+	}, {
+		name:                    "enable_safebrowsing",
+		handler:                 d.handleSafeBrowsingSettings,
+		enabled:                 true,
+		wantParentalEnabled:     assert.False,
+		wantSafeBrowsingEnabled: assert.True,
+	}, {
+		name:                    "disable_parental",
+		handler:                 d.handleParentalSettings,
+		enabled:                 false,
+		wantParentalEnabled:     assert.False,
+		wantSafeBrowsingEnabled: assert.True,
+	}, {
+		name:                    "enable_parental",
+		handler:                 d.handleParentalSettings,
+		enabled:                 true,
+		wantParentalEnabled:     assert.True,
+		wantSafeBrowsingEnabled: assert.False,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			d.conf.ParentalEnabled = !tc.enabled
+			d.conf.SafeBrowsingEnabled = !tc.enabled
+
+			req := struct {
+				Enabled bool `json:"enabled"`
+			}{
+				Enabled: tc.enabled,
+			}
+
+			var reqBody []byte
+			reqBody, err = json.Marshal(req)
+			require.NoError(t, err)
+
+			ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+			w := httptest.NewRecorder()
+			r := httptest.NewRequestWithContext(
+				ctx,
+				http.MethodPut,
+				"/",
+				bytes.NewReader(reqBody),
+			)
+
+			tc.handler.ServeHTTP(w, r)
+			require.Equal(t, http.StatusOK, w.Code)
+
+			testutil.RequireReceive(t, applyChan, testTimeout)
+
+			tc.wantParentalEnabled(t, d.conf.ParentalEnabled)
+			tc.wantSafeBrowsingEnabled(t, d.conf.SafeBrowsingEnabled)
+		})
+	}
+}
+
 func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
 	const (
 		testTimeout = time.Second

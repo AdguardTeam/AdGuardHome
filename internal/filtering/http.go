@@ -642,8 +642,41 @@ func protectedBool(mu *sync.RWMutex, ptr *bool) (val bool) {
 	return *ptr
 }
 
+// handleSettings parses the request and sets the enabled to parsed value
+// w, r and enabled must not be nil.
+func (d *DNSFilter) handleSettings(w http.ResponseWriter, r *http.Request, enabled *bool) {
+	ctx := r.Context()
+
+	var settings struct {
+		Enabled bool `json:"enabled"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&settings)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, d.logger, r, w, http.StatusBadRequest, "parsing request: %s", err)
+
+		return
+	}
+
+	setProtectedBool(d.confMu, enabled, settings.Enabled)
+
+	d.conf.ConfModifier.Apply(ctx)
+
+	aghhttp.WriteJSONResponseOK(ctx, d.logger, w, r, settings)
+}
+
+// handleSafeBrowsingSettings is the handler for the PUT /control/safebrowsing
+// HTTP API.
+func (d *DNSFilter) handleSafeBrowsingSettings(w http.ResponseWriter, r *http.Request) {
+	d.handleSettings(w, r, &d.conf.SafeBrowsingEnabled)
+}
+
 // handleSafeBrowsingEnable is the handler for the POST
 // /control/safebrowsing/enable HTTP API.
+//
+// Deprecated: Use PUT /control/safebrowsing instead.
+//
+// TODO(f.setrakov): Remove in v1.2.0.
 func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeBrowsingEnabled, true)
 	d.conf.ConfModifier.Apply(r.Context())
@@ -651,6 +684,10 @@ func (d *DNSFilter) handleSafeBrowsingEnable(w http.ResponseWriter, r *http.Requ
 
 // handleSafeBrowsingDisable is the handler for the POST
 // /control/safebrowsing/disable HTTP API.
+//
+// Deprecated: Use PUT /control/safebrowsing instead.
+//
+// TODO(f.setrakov): Remove in v1.2.0.
 func (d *DNSFilter) handleSafeBrowsingDisable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.SafeBrowsingEnabled, false)
 	d.conf.ConfModifier.Apply(r.Context())
@@ -668,8 +705,18 @@ func (d *DNSFilter) handleSafeBrowsingStatus(w http.ResponseWriter, r *http.Requ
 	aghhttp.WriteJSONResponseOK(r.Context(), d.logger, w, r, resp)
 }
 
+// handleParentalSettings is the handler for the PUT /control/parental HTTP
+// API.
+func (d *DNSFilter) handleParentalSettings(w http.ResponseWriter, r *http.Request) {
+	d.handleSettings(w, r, &d.conf.ParentalEnabled)
+}
+
 // handleParentalEnable is the handler for the POST /control/parental/enable
 // HTTP API.
+//
+// Deprecated: Use PUT /control/parental instead.
+//
+// TODO(f.setrakov): Remove in v1.2.0.
 func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.ParentalEnabled, true)
 	d.conf.ConfModifier.Apply(r.Context())
@@ -677,6 +724,10 @@ func (d *DNSFilter) handleParentalEnable(w http.ResponseWriter, r *http.Request)
 
 // handleParentalDisable is the handler for the POST /control/parental/disable
 // HTTP API.
+//
+// Deprecated: Use PUT /control/parental instead.
+//
+// TODO(f.setrakov): Remove in v1.2.0.
 func (d *DNSFilter) handleParentalDisable(w http.ResponseWriter, r *http.Request) {
 	setProtectedBool(d.confMu, &d.conf.ParentalEnabled, false)
 	d.conf.ConfModifier.Apply(r.Context())
@@ -698,10 +749,12 @@ func (d *DNSFilter) handleParentalStatus(w http.ResponseWriter, r *http.Request)
 func (d *DNSFilter) RegisterFilteringHandlers() {
 	registerHTTP := d.conf.HTTPReg.Register
 
+	registerHTTP(http.MethodPut, "/control/safebrowsing", d.handleSafeBrowsingSettings)
 	registerHTTP(http.MethodPost, "/control/safebrowsing/enable", d.handleSafeBrowsingEnable)
 	registerHTTP(http.MethodPost, "/control/safebrowsing/disable", d.handleSafeBrowsingDisable)
 	registerHTTP(http.MethodGet, "/control/safebrowsing/status", d.handleSafeBrowsingStatus)
 
+	registerHTTP(http.MethodPut, "/control/parental", d.handleParentalSettings)
 	registerHTTP(http.MethodPost, "/control/parental/enable", d.handleParentalEnable)
 	registerHTTP(http.MethodPost, "/control/parental/disable", d.handleParentalDisable)
 	registerHTTP(http.MethodGet, "/control/parental/status", d.handleParentalStatus)

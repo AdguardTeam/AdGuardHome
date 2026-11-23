@@ -706,8 +706,28 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/FilterCheckHostResponse'
+  '/safebrowsing':
+    'put':
+      'tags':
+      - 'safebrowsing'
+      'operationId': 'safebrowsingSettings'
+      'summary': 'Replace safebrowsing settings'
+      'requestBody':
+        'required': true
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/SafeBrowsingConfig'
+      'responses':
+        '200':
+          'description': 'Updated settings.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/SafeBrowsingConfig'
   '/safebrowsing/enable':
     'post':
+      'deprecated': true
       'tags':
       - 'safebrowsing'
       'operationId': 'safebrowsingEnable'
@@ -717,6 +737,7 @@
           'description': 'OK.'
   '/safebrowsing/disable':
     'post':
+      'deprecated': true
       'tags':
       - 'safebrowsing'
       'operationId': 'safebrowsingDisable'
@@ -744,8 +765,28 @@
                 'response':
                   'value':
                     'enabled': false
+  '/parental':
+    'put':
+      'tags':
+      - 'parental'
+      'operationId': 'parentalSettings'
+      'summary': 'Replace parental filtering settings'
+      'requestBody':
+        'required': true
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/ParentalConfig'
+      'responses':
+        '200':
+          'description': 'Updated settings.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/ParentalConfig'
   '/parental/enable':
     'post':
+      'deprecated': true
       'tags':
       - 'parental'
       'operationId': 'parentalEnable'
@@ -755,6 +796,7 @@
           'description': 'OK.'
   '/parental/disable':
     'post':
+      'deprecated': true
       'tags':
       - 'parental'
       'operationId': 'parentalDisable'
@@ -1259,6 +1301,22 @@
             '$ref': '#/components/schemas/RewriteUpdate'
       'required': true
   'schemas':
+    'SafeBrowsingConfig':
+      'type': 'object'
+      'required':
+      - 'enabled'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+          'description': 'Enables or disables safe browsing.'
+    'ParentalConfig':
+      'type': 'object'
+      'required':
+      - 'enabled'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+          'description': 'Enables or disables parental control.'
     'FilteringReason':
       'type': 'string'
       'description': 'Request filtering status.'
