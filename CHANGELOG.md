@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The per-client settings in the new web interface being discarded when they were changed on the Protection, Blocked services, or Inactivity schedule sub-page ([#8752]).
+
 - The *Top upstreams* percentages in the new web interface not adding up to 100% ([#8738]).
 
 - The certificate details in the new web interface being hidden by a validation warning or a key/certificate mismatch ([#8727]).
@@ -55,6 +57,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
 [#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
 [#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
+[#8752]:       https://github.com/AdguardTeam/AdGuardHome/issues/8752
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
