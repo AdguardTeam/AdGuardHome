@@ -64,6 +64,13 @@ export const computePercent = (count: number, total: number): number =>
     total > 0 ? (count / total) * 100 : 0;
 
 /**
+ * Formats a percentage for the stats surfaces: whole numbers for zero and for
+ * shares of at least 10%, one decimal for smaller non-zero shares.
+ */
+export const formatPercent = (percent: number): string =>
+    percent >= 10 || percent === 0 ? String(Math.round(percent)) : percent.toFixed(1);
+
+/**
  * Sum of the response counts in a top-upstreams list.  Cache hits and queries
  * answered without an upstream are not part of the list, so a share taken from
  * this total adds up to 100%.

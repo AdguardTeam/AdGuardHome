@@ -1,7 +1,7 @@
 import { Show, For, createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import { formatCompactNumber } from 'panel/helpers/helpers';
-import { computePercent, sumUpstreamResponses } from 'panel/helpers/statistics';
+import { computePercent, formatPercent, sumUpstreamResponses } from 'panel/helpers/statistics';
 import theme from 'panel/lib/theme';
 import { QueriesTooltip } from 'panel/common/ui/QueriesTooltip';
 import { TruncatedText } from 'panel/common/ui/TruncatedText';
@@ -91,7 +91,7 @@ export const TopUpstreams = (props: Props) => {
                                                             s.queryPercent,
                                                         )}
                                                     >
-                                                        ({percent().toFixed(2)}%)
+                                                        ({formatPercent(percent())}%)
                                                     </div>
                                                 </div>
                                             </QueriesTooltip>

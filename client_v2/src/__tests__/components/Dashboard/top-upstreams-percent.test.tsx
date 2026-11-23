@@ -26,9 +26,9 @@ describe('TopUpstreams percentages', () => {
             />
         ));
 
-        expect(screen.getByText('(46.15%)')).toBeInTheDocument();
-        expect(screen.getByText('(38.46%)')).toBeInTheDocument();
-        expect(screen.getByText('(15.38%)')).toBeInTheDocument();
+        expect(screen.getByText('(46%)')).toBeInTheDocument();
+        expect(screen.getByText('(38%)')).toBeInTheDocument();
+        expect(screen.getByText('(15%)')).toBeInTheDocument();
     });
 
     it('shows a lone upstream as 100%', () => {
@@ -36,6 +36,6 @@ describe('TopUpstreams percentages', () => {
             <TopUpstreams topUpstreamsResponses={[{ name: 'tls://x:853', count: 7 }]} />
         ));
 
-        expect(screen.getByText('(100.00%)')).toBeInTheDocument();
+        expect(screen.getByText('(100%)')).toBeInTheDocument();
     });
 });

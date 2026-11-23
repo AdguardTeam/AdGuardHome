@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The dashboard percentages in the new web interface being formatted with a different number of decimals in each card ([#8763]).
+
 - The *Log out* button in the new web interface being shown when authentication is disabled ([#8746]).
 
 - The per-client settings in the new web interface being discarded when they were changed on the Protection, Blocked services, or Inactivity schedule sub-page ([#8752]).
@@ -67,6 +69,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8748]:       https://github.com/AdguardTeam/AdGuardHome/issues/8748
 [#8752]:       https://github.com/AdguardTeam/AdGuardHome/issues/8752
 [#8754]:       https://github.com/AdguardTeam/AdGuardHome/issues/8754
+[#8763]:       https://github.com/AdguardTeam/AdGuardHome/issues/8763
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.
