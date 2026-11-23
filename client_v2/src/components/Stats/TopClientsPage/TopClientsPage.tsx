@@ -297,7 +297,9 @@ export const TopClientsPage = () => {
     const filterPill = (
         <button
             type="button"
-            class={cn(s.filterPill, showOnlyBlocked() && s.filterPillActive)}
+            class={cn(s.filterPill, theme.text.t3, {
+                [s.filterPillActive]: showOnlyBlocked(),
+            })}
             data-testid="stats-show-blocked-button"
             aria-pressed={showOnlyBlocked()}
             onClick={() => setShowOnlyBlocked((value) => !value)}

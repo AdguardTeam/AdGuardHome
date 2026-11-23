@@ -307,7 +307,7 @@ export const BlockedServices = (props: Props) => {
                         >
                             <button
                                 type="button"
-                                class={cn(s.groupButton, {
+                                class={cn(s.groupButton, theme.text.t3, {
                                     [s.groupButtonActive]: showBlockedOnly(),
                                 })}
                                 onClick={() => handleToggleStateFilter('blocked')}
@@ -318,7 +318,7 @@ export const BlockedServices = (props: Props) => {
                             </button>
                             <button
                                 type="button"
-                                class={cn(s.groupButton, {
+                                class={cn(s.groupButton, theme.text.t3, {
                                     [s.groupButtonActive]: showUnblockedOnly(),
                                 })}
                                 onClick={() => handleToggleStateFilter('unblocked')}

@@ -81,7 +81,6 @@
 .groupButton {
     min-height: 33px;
     padding: 4px 16px;
-    font-size: 14px;
     color: var(--default-main-text);
     border: 1px solid var(--default-inactive-input-stroke);
     border-radius: 200px;
@@ -92,18 +91,29 @@
     cursor: pointer;
     outline: none;
 
-    &:hover,
     &:focus-visible {
         background-color: var(--page-background-additional);
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--page-background-additional);
+        }
     }
 }
 
 .groupButtonActive {
     border-color: var(--default-link);
+    background-color: var(--fills-backgrounds-recent-activity);
 
-    &:hover,
     &:focus-visible {
-        background-color: transparent;
+        background-color: var(--fills-backgrounds-recent-activity);
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-backgrounds-recent-activity);
+        }
     }
 }
 
