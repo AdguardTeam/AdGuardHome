@@ -74,10 +74,6 @@ export const AddClient = () => {
         navigate(Paths.Clients);
     };
 
-    const handleSaved = () => {
-        navigate(Paths.Clients);
-    };
-
     const handleUseGlobalSettings = (e: Event) => {
         updateClientFormField({
             field: 'use_global_settings',
@@ -280,7 +276,7 @@ export const AddClient = () => {
                         )}
                     </SwitchGroup>
 
-                    <ClientFormActions onCancel={handleCancel} onSaved={handleSaved} />
+                    <ClientFormActions onCancel={handleCancel} />
                 </Show>
             </div>
         </div>

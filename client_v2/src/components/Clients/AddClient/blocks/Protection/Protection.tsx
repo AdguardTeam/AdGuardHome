@@ -1,17 +1,15 @@
 import { createMemo, For, Show } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Checkbox } from 'panel/common/controls/Checkbox';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
-import { clientFormState, clearClientForm, updateClientFormField } from 'panel/stores/clientForm';
+import { clientFormState, updateClientFormField } from 'panel/stores/clientForm';
 import { useInitClientFormFromRoute } from 'panel/hooks/useInitClientFormFromRoute';
 import {
     SAFE_SEARCH_PROVIDERS,
     SAFE_SEARCH_PROVIDER_KEYS,
     type SafeSearchProviderKey,
 } from 'panel/helpers/constants';
-import { Paths, RoutePath, linkPathBuilder } from 'panel/components/Routes/Paths';
 import theme from 'panel/lib/theme';
 
 import { ClientsHeader } from '../ClientsHeader';
@@ -22,25 +20,9 @@ import s from './Protection.module.pcss';
 export const Protection = () => {
     useInitClientFormFromRoute();
 
-    const navigate = useNavigate();
-
     const isEdit = createMemo(() => clientFormState.mode === 'edit');
 
     const disabled = createMemo(() => clientFormState.use_global_settings);
-
-    const handleCancel = () => {
-        const clientName = clientFormState.originalName;
-        clearClientForm();
-        navigate(
-            linkPathBuilder(RoutePath.ClientsEdit, {
-                clientName: encodeURIComponent(clientName),
-            }),
-        );
-    };
-
-    const handleSaved = () => {
-        navigate(Paths.Clients);
-    };
 
     const handleToggle = (field: keyof typeof clientFormState) => (e: Event) => {
         updateClientFormField(field, (e.target as HTMLInputElement).checked);
@@ -152,7 +134,7 @@ export const Protection = () => {
                 />
 
                 <Show when={isEdit()}>
-                    <ClientFormActions onCancel={handleCancel} onSaved={handleSaved} />
+                    <ClientFormActions />
                 </Show>
             </div>
         </div>

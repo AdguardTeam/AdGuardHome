@@ -50,7 +50,9 @@ import {
     clearClientForm,
     clientFormState,
     initClientForm,
+    updateClientFormField,
 } from 'panel/stores/clientForm';
+import { copy } from 'panel/__tests__/helpers/copy';
 
 const renderProtection = (edit = true) => {
     const history = createMemoryHistory();
@@ -141,6 +143,19 @@ describe('client sub-page saves', () => {
         expect(clientFormState.name).toBe('Test');
         expect(clientFormState.blocked_services).toEqual(['youtube']);
         expect(screen.getByTestId('client-form-save')).toBeInTheDocument();
+    });
+
+    it('surfaces a validation failure from the shared draft', async () => {
+        seedEditForm();
+        updateClientFormField({ field: 'name', value: '' });
+
+        renderProtection();
+        fireEvent.click(screen.getByTestId('client-form-save'));
+
+        await waitFor(() => expect(mocks.addErrorToast).toHaveBeenCalledTimes(1));
+        const [payload] = mocks.addErrorToast.mock.calls[0] as [{ error: Error }];
+        expect(payload.error.message).toBe(copy('form_error_required'));
+        expect(mocks.clientsUpdate).not.toHaveBeenCalled();
     });
 
     it('renders no save footer in add mode and creates nothing', () => {
