@@ -192,7 +192,7 @@ func (s *server) handleDHCPStatus(w http.ResponseWriter, r *http.Request) {
 func (s *server) enableDHCP(ctx context.Context, ifaceName string) (code int, err error) {
 	var hasStaticIP bool
 	cmdCons := s.conf.CommandConstructor
-	hasStaticIP, err = aghnet.IfaceHasStaticIP(ctx, cmdCons, ifaceName)
+	hasStaticIP, err = aghnet.IfaceHasStaticIP(ctx, s.conf.Logger, cmdCons, ifaceName)
 	if err != nil {
 		if errors.Is(err, os.ErrPermission) {
 			// ErrPermission may happen here on Linux systems where AdGuard Home
@@ -615,7 +615,7 @@ func (s *server) handleDHCPFindActiveServer(w http.ResponseWriter, r *http.Reque
 	}
 
 	cmdCons := s.conf.CommandConstructor
-	if isStaticIP, serr := aghnet.IfaceHasStaticIP(ctx, cmdCons, ifaceName); serr != nil {
+	if isStaticIP, serr := aghnet.IfaceHasStaticIP(ctx, l, cmdCons, ifaceName); serr != nil {
 		result.V4.StaticIP.Static = "error"
 		result.V4.StaticIP.Error = serr.Error()
 	} else if !isStaticIP {
