@@ -19,5 +19,5 @@
       "panel/*": ["./src/*"]
     }
   },
-  "include": ["src", "global.d.ts", "src/types/**/*.d.ts"]
+  "include": ["src", ".storybook", "global.d.ts", "src/types/**/*.d.ts"]
 }

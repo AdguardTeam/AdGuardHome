@@ -92,7 +92,8 @@ func (ci *index) add(c *Persistent) {
 }
 
 // clashesUID returns existing persistent client with the same UID as c.  Note
-// that this is only possible when configuration contains duplicate fields.
+// that this is only possible when configuration contains duplicate fields.  c
+// must not be nil.
 func (ci *index) clashesUID(c *Persistent) (err error) {
 	p, ok := ci.uidToClient[c.UID]
 	if ok {
@@ -103,7 +104,7 @@ func (ci *index) clashesUID(c *Persistent) (err error) {
 }
 
 // clashes returns an error if the index contains a different persistent client
-// with at least a single identifier contained by c.  c must be non-nil.
+// with at least a single identifier contained by c.  c must not be nil.
 func (ci *index) clashes(c *Persistent) (err error) {
 	if p := ci.clashesName(c); p != nil {
 		return fmt.Errorf("another client uses the same name %q", p.Name)
@@ -136,8 +137,8 @@ func (ci *index) clashes(c *Persistent) (err error) {
 	return nil
 }
 
-// clashesName returns existing persistent client with the same name as c or
-// nil.  c must be non-nil.
+// clashesName returns existing persistent client with the same name as c.  If
+// no such client exists, it returns nil.  c must not be nil.
 func (ci *index) clashesName(c *Persistent) (existing *Persistent) {
 	existing, ok := ci.findByName(c.Name)
 	if !ok {
@@ -151,8 +152,8 @@ func (ci *index) clashesName(c *Persistent) (existing *Persistent) {
 	return nil
 }
 
-// clashesIP returns a previous client with the same IP address as c.  c must be
-// non-nil.
+// clashesIP returns a previous client with the same IP address as c.  c must
+// not be nil.
 func (ci *index) clashesIP(c *Persistent) (p *Persistent, ip netip.Addr) {
 	for _, ip := range c.IPs {
 		existing, ok := ci.ipToUID[ip]
@@ -164,8 +165,8 @@ func (ci *index) clashesIP(c *Persistent) (p *Persistent, ip netip.Addr) {
 	return nil, netip.Addr{}
 }
 
-// clashesSubnet returns a previous client with the same subnet as c.  c must be
-// non-nil.
+// clashesSubnet returns a previous client with the same subnet as c.  c must
+// not be nil.
 func (ci *index) clashesSubnet(c *Persistent) (p *Persistent, s netip.Prefix) {
 	for _, s = range c.Subnets {
 		var existing UID
@@ -191,7 +192,7 @@ func (ci *index) clashesSubnet(c *Persistent) (p *Persistent, s netip.Prefix) {
 }
 
 // clashesMAC returns a previous client with the same MAC address as c.  c must
-// be non-nil.
+// not be nil.
 func (ci *index) clashesMAC(c *Persistent) (p *Persistent, mac net.HardwareAddr) {
 	for _, mac = range c.MACs {
 		k := macToKey(mac)
@@ -326,8 +327,8 @@ func (ci *index) findByIPWithoutZone(ip netip.Addr) (c *Persistent) {
 	return nil
 }
 
-// remove removes information about persistent client from the index.  c must be
-// non-nil.
+// remove removes information about persistent client from the index.  c must
+// not be nil.
 func (ci *index) remove(c *Persistent) {
 	delete(ci.nameToUID, c.Name)
 

@@ -188,6 +188,8 @@ Builds the Snapcraft packages from the binaries created by `download.sh`.
 
 Optional environment:
 
+- `EXPECTED_VERSION`: the version that the release build has recorded for the channel.  If set and the binaries have a different version, `build.sh` fails instead of packing the snaps.  By default it’s empty, which means that no check is performed.
+
 - `SNAPCRAFT_CMD`: Overrides the Snapcraft command. Default: `snapcraft`.
 
 ### `download.sh`

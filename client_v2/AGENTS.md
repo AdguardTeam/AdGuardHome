@@ -16,6 +16,7 @@
     - [Architecture](#architecture)
     - [Code Quality](#code-quality)
     - [Testing](#testing)
+    - [Storybook](#storybook)
     - [Dependency Management](#dependency-management)
     - [Configuration \& Documentation](#configuration--documentation)
     - [Markdown Formatting](#markdown-formatting)
@@ -61,6 +62,9 @@ Playwright (e2e).
   (generated from `.twosky.json` via `npm run locales:generate`)
 - **Testing**: Vitest 4 + `@solidjs/testing-library` (unit);
   Playwright 1.56 (e2e against a real backend)
+- **Component catalog**: Storybook 10 with `storybook-solidjs-vite` on a Vite
+  builder — development/documentation only, the production build stays on
+  Webpack
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
   `eslint-plugin-prettier`), Prettier 3
 - **Storage**: Browser `localStorage` (language, theme); no database.  The theme
@@ -104,8 +108,10 @@ client_v2/
 │   ├── install/                   # Standalone install-wizard entry
 │   ├── forgot_password/           # Standalone password-reset entry
 │   ├── __locales/                 # Translation JSON (en, ru, de, …)
+│   ├── stories/                   # Storybook docs pages (theme tokens, icon gallery)
 │   └── __tests__/                 # Vitest unit/integration tests
 ├── tests/e2e/                     # Playwright e2e specs
+├── .storybook/                    # Storybook config (Vite preview, docs)
 ├── public/                        # HTML entry points + `theme-bootstrap.js` (inlined pre-paint theme script)
 ├── scripts/                       # check-translations.js, translation-audit.js, theme-bootstrap-template.js
 ├── webpack.common.js              # 4 entry points, loaders, path aliases
@@ -131,6 +137,8 @@ never run `npm`/`npx` from the repo root.
 | Production build                     | `npm run build-prod`           |
 | Dev build (no server)                | `npm run build-dev`            |
 | Watch build                          | `npm run watch`                |
+| Storybook (component catalog)        | `npm run storybook`            |
+| Storybook static build               | `npm run build-storybook`      |
 | Type check                           | `npm run typecheck`            |
 | Lint                                 | `npm run lint`                 |
 | Lint + format fix                    | `npm run lint:fix`             |
@@ -474,6 +482,45 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   `npm run test:e2e`.
 - **All unit tests must pass before merge** (`npm run test`).
 
+### Storybook
+
+- Storybook is a **development and documentation** build on Vite. Webpack
+  stays the production build; never import Storybook-only code from
+  application modules.
+- A component's story sits next to it as `<Component>.stories.tsx`
+  (e.g. `src/common/ui/Button/Button.stories.tsx`). The glob loads every
+  `*.stories.tsx` under `src/`; pages and store-backed components are out of
+  scope. The sidebar group comes from the story `title`, not from the file
+  location — `Controls/*` for `src/common/controls/`, `UI/*` for
+  `src/common/ui/`.
+- Docs-only pages with no component behind them live in `src/stories/`, next
+  to the shared story layout helpers in `src/stories/Stories.module.pcss`.
+  The design tokens are grouped as `Theme/*`, the icon gallery as `UI/Icons`.
+- Add or update a story when a common component's props or states change.
+  Stories are typechecked and linted with the rest of `src`, so a broken
+  story fails `npm run check`.
+- Storybook does not type `argTypes`, so a select control's `options` must
+  come from the component, never from a hand-copied list: export the values
+  as an `as const` list and derive the prop union from it
+  (`BUTTON_VARIANTS`/`BUTTON_SIZES`, `SELECT_SIZES`, `SELECT_MENU_SIZES`,
+  `TOOLTIP_POSITIONS`, `INPUT_SIZES`, `TEXTAREA_SIZES`), then spread it in
+  the story. A typed hand-copy only rejects invalid values; a newly added
+  member is still missed. Controls whose values are a curated subset of a
+  DOM union (e.g. `Input`'s `type`) keep a literal list.
+- The preview imports `src/index.pcss`, mounts the `<Icons/>` sprite once and
+  pins the locale to English from `.storybook/preview-head.html`. Switch the
+  theme with the `Theme` toolbar, which sets `data-theme` on `<html>`.
+- CSS-module class names are exported as-is, matching webpack
+  (`s.height_xs`). Vite has no `localsConvention: 'asIs'` value and setting
+  it empties the class map; Vite's default already matches webpack.
+- `storybook-solidjs-vite` ships its own TypeScript 6 for docgen, which takes
+  over the `node_modules/.bin/tsc` link, so `npm run typecheck` runs the
+  project compiler directly
+  (`node ./node_modules/typescript/bin/tsc`). Keep it that way.
+- `npm run build-storybook` writes `storybook-static/` (git-ignored). It is a
+  local development tool: nothing from it ships and it is not run in CI.
+  Stories are still covered there by `npm run typecheck` and `npm run lint`.
+
 ## Dependency Management
 
 - **Pin all dependency versions explicitly.** Do not introduce version ranges
@@ -514,8 +561,9 @@ vulnerabilities, supply-chain risk, and long-term maintenance cost.
   in npm scripts and read from `constants.js`. `BASE_URL = 'control'` is the
   API path prefix.
 - **Path aliases**: Defined in `tsconfig.json` (`panel/*`, `Twosky`) and
-  consumed by Webpack, Vitest, and ESLint. Update `tsconfig.json` when adding
-  new aliases.
+  consumed by Webpack, Storybook, and Vitest (all read `compilerOptions.paths`
+  through `scripts/tsconfig-aliases.js`) and by ESLint (through its TypeScript
+  import resolver). Update `tsconfig.json` when adding new aliases.
 - **i18n**: Locale JSON files live in `src/__locales/`. The base locale and
   language list come from the root `.twosky.json` (via the `Twosky` alias in
   `src/helpers/twosky.ts`). Run `npm run translations:check` after editing

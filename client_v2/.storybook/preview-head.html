@@ -1,0 +1,7 @@
+<script>
+    // `panel/common/intl` reads the locale from localStorage before the preview
+    // bundle evaluates, so pin English here instead of racing it later.  The
+    // value is JSON because LocalStorageHelper parses it.
+    // Keep the key in sync with LOCAL_STORAGE_KEYS.LANGUAGE.
+    window.localStorage.setItem('language', JSON.stringify('en'));
+</script>

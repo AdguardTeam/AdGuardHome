@@ -22,7 +22,13 @@ import { QueryLog } from 'panel/components/QueryLog';
 import { Toasts } from 'panel/components/Toasts';
 import { THEMES } from '../../helpers/constants';
 import { getTheme, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
-import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashboard';
+import {
+    getDnsStatus,
+    getTimerStatus,
+    dashboardState,
+    stopStatusChecks,
+} from '../../stores/dashboard';
+import { StatusError } from './blocks/StatusError/StatusError';
 
 import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
@@ -57,7 +63,14 @@ const App = () => {
         getDnsStatus();
 
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+            // A failed bootstrap or a stopped core left the store without a
+            // usable status, so only the full check can restore the page.
+            if (dashboardState.statusFailed || !dashboardState.isCoreRunning) {
+                getDnsStatus();
+            } else {
                 getTimerStatus();
             }
         };
@@ -66,6 +79,7 @@ const App = () => {
 
         onCleanup(() => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            stopStatusChecks();
         });
     });
 
@@ -121,7 +135,39 @@ const App = () => {
                     <div class={s.wrapper}>
                         <Sidebar />
 
-                        <Show when={!dashboardState.processing && dashboardState.isCoreRunning}>
+                        <Show when={dashboardState.statusFailed || !dashboardState.isCoreRunning}>
+                            <Show
+                                when={dashboardState.statusFailed}
+                                fallback={
+                                    <StatusError
+                                        message={intl.getMessage('dns_start_error_title')}
+                                        processing={dashboardState.processing}
+                                        reasons={[
+                                            intl.getMessage('dns_start_error_port', {
+                                                port: dashboardState.dnsPort,
+                                            }),
+                                            intl.getMessage('dns_start_error_permission'),
+                                            intl.getMessage('dns_start_error_address'),
+                                        ]}
+                                        action={intl.getMessage('dns_start_error_action')}
+                                    />
+                                }
+                            >
+                                <StatusError
+                                    message={intl.getMessage('dns_status_error_short')}
+                                    processing={dashboardState.processing}
+                                    onRetry={() => getDnsStatus()}
+                                />
+                            </Show>
+                        </Show>
+
+                        <Show
+                            when={
+                                !dashboardState.processing &&
+                                !dashboardState.statusFailed &&
+                                dashboardState.isCoreRunning
+                            }
+                        >
                             <div class={s.bodyWrapper}>{props.children}</div>
                         </Show>
                     </div>

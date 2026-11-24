@@ -4,7 +4,7 @@ import intl from 'panel/common/intl';
 import type { TableColumn } from 'panel/common/ui/Table';
 import { statsState } from 'panel/stores/stats';
 import { LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
-import { computePercent } from 'panel/helpers/statistics';
+import { computePercent, sumUpstreamResponses } from 'panel/helpers/statistics';
 import type { IOption } from 'panel/lib/helpers/utils';
 import { StatsPage } from '../StatsPage';
 import { CountWithPercent } from '../blocks/CountWithPercent';
@@ -23,6 +23,8 @@ export const TopUpstreamsPage = () => {
         [...statsState.topUpstreamsResponses].toSorted((a, b) => a.name.localeCompare(b.name)),
     );
 
+    const totalResponses = createMemo(() => sumUpstreamResponses(statsState.topUpstreamsResponses));
+
     const columns = (): TableColumn<UpstreamStat>[] => [
         {
             key: 'upstream',
@@ -37,9 +39,7 @@ export const TopUpstreamsPage = () => {
             accessor: 'count',
             sortable: true,
             sortFn: (a: number, b: number) => a - b,
-            render: (_v, row) => (
-                <CountWithPercent count={row.count} total={statsState.numDnsQueries} />
-            ),
+            render: (_v, row) => <CountWithPercent count={row.count} total={totalResponses()} />,
         },
     ];
 
@@ -71,12 +71,9 @@ export const TopUpstreamsPage = () => {
                         {
                             label: intl.getMessage('queries'),
                             value: (
-                                <CountWithPercent
-                                    count={row.count}
-                                    total={statsState.numDnsQueries}
-                                />
+                                <CountWithPercent count={row.count} total={totalResponses()} />
                             ),
-                            progress: computePercent(row.count, statsState.numDnsQueries),
+                            progress: computePercent(row.count, totalResponses()),
                         },
                     ]}
                 />

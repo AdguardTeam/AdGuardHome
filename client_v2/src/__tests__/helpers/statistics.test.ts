@@ -7,6 +7,7 @@ import {
     getEffectiveStatsPeriod,
     getStoredStatsPeriod,
     resolveStatsPeriod,
+    sumUpstreamResponses,
 } from 'panel/helpers/statistics';
 
 const storePeriod = (period: number) =>
@@ -73,5 +74,17 @@ describe('resolveStatsPeriod', () => {
     it('falls back to the stored period when the URL period is invalid', () => {
         storePeriod(DAY * 7);
         expect(resolveStatsPeriod({ period: 'nope' }, DAY * 30)).toBe(DAY * 7);
+    });
+});
+
+describe('sumUpstreamResponses', () => {
+    it('adds the response counts', () => {
+        expect(sumUpstreamResponses([{ count: 600 }, { count: 500 }, { count: 200 }])).toBe(
+            1300,
+        );
+    });
+
+    it('returns 0 for an empty list', () => {
+        expect(sumUpstreamResponses([])).toBe(0);
     });
 });

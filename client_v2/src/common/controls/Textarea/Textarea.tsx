@@ -3,6 +3,7 @@ import cn from 'clsx';
 
 import { Icon } from 'panel/common/ui/Icon';
 import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
 
 import s from './styles.module.pcss';
 import { TextareaHighlight } from './TextareaHighlight';
@@ -14,12 +15,14 @@ type TextareaChangeEvent = Event & {
     target: HTMLTextAreaElement;
 };
 
+export const TEXTAREA_SIZES = ['medium', 'large', 'compact'] as const;
+
 type Props = Omit<
     JSX.TextareaHTMLAttributes<HTMLTextAreaElement>,
     'onChange' | 'onBlur' | 'onInput' | 'onScroll'
 > & {
     label?: JSX.Element;
-    size?: 'small' | 'medium' | 'large' | 'compact';
+    size?: (typeof TEXTAREA_SIZES)[number];
     errorMessage?: string;
     onCard?: boolean;
     highlightComments?: boolean;
@@ -50,6 +53,9 @@ export const Textarea = (props: Props) => {
     });
 
     const highlightEnabled = () => !!props.highlightComments;
+    // Without explicit rows the size class bounds the field so long content
+    // scrolls inside it instead of stretching the whole dialog.
+    const isBoundedBySize = () => props.rows == null;
 
     // Convert rows to CSS height for the shared scroll container.
     // line-height: 1.3 * font-size: 16px = 20.8px per row.
@@ -118,6 +124,7 @@ export const Textarea = (props: Props) => {
                         <textarea
                             class={cn(
                                 s.textarea,
+                                theme.common.scrollable,
                                 props.size && s[props.size],
                                 { [s.error]: !!props.errorMessage },
                                 { [s.clearable]: showClearButton() },
@@ -143,10 +150,16 @@ export const Textarea = (props: Props) => {
                     }
                 >
                     <div
-                        class={cn(s.scrollArea, props.size && s[props.size], {
-                            [s.error]: !!props.errorMessage,
-                            [s.onCard]: props.onCard,
-                        })}
+                        class={cn(
+                            s.scrollArea,
+                            theme.common.scrollable,
+                            props.size && s[props.size],
+                            {
+                                [s.error]: !!props.errorMessage,
+                                [s.onCard]: props.onCard,
+                                [s.bounded]: isBoundedBySize(),
+                            },
+                        )}
                         style={scrollAreaStyle()}
                     >
                         <div class={s.contentWrapper}>
