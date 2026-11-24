@@ -105,6 +105,15 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		wantBody:    append(rewritesJSON, '\n'),
 		wantList:    testRewrites,
 	}, {
+		name:        "add_duplicate_normalized",
+		url:         addURL,
+		method:      http.MethodPost,
+		reqData:     rewriteJSON{Domain: "EXAMPLE.LOCAL", Answer: exampleAnswer},
+		wantConfMod: false,
+		wantStatus:  http.StatusOK,
+		wantBody:    []byte{},
+		wantList:    testRewrites,
+	}, {
 		name:        "add_enabled_null",
 		url:         addURL,
 		method:      http.MethodPost,
