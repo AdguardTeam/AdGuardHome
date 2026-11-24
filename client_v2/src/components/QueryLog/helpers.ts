@@ -132,12 +132,16 @@ const STATUS_COLOR_TO_CLASS: Record<string, string> = {
     [QUERY_STATUS_COLORS.BLUE]: theme.status.statusBlue,
 };
 
-const PROTOCOL_LABEL_GETTERS = {
+const PROTOCOL_LABEL_GETTERS: Record<
+    (typeof SCHEME_TO_PROTOCOL_MAP)[keyof typeof SCHEME_TO_PROTOCOL_MAP],
+    () => string
+> = {
+    dnscrypt: () => intl.getMessage('dnscrypt'),
     dns_over_https: () => intl.getMessage('dns_over_https'),
     dns_over_quic: () => intl.getMessage('dns_over_quic'),
     dns_over_tls: () => intl.getMessage('dns_over_tls'),
     plain_dns: () => intl.getMessage('plain_dns'),
-} as const;
+};
 
 export const getStatusClassName = (reason?: string): string =>
     STATUS_COLOR_TO_CLASS[
@@ -150,7 +154,7 @@ export const isBlockedReason = (reason?: string): boolean =>
 export const getProtocolName = (clientProto: string): string => {
     const key = SCHEME_TO_PROTOCOL_MAP[clientProto as keyof typeof SCHEME_TO_PROTOCOL_MAP];
     if (key) {
-        return PROTOCOL_LABEL_GETTERS[key as keyof typeof PROTOCOL_LABEL_GETTERS]();
+        return PROTOCOL_LABEL_GETTERS[key]();
     }
 
     return PROTOCOL_LABEL_GETTERS.plain_dns();

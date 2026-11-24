@@ -33,6 +33,7 @@ import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStora
 import { STANDARD_DNS_PORT } from 'panel/helpers/constants';
 import {
     getDnsStatus,
+    getProfileData,
     getTimerStatus,
     getClients,
     getVersion,
@@ -51,7 +52,6 @@ describe('getDnsStatus', () => {
             disabled: true,
             new_version: 'x',
         });
-        mocks.getProfile.mockResolvedValue({ name: 'n', theme: 't' });
         mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
         vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -69,70 +69,32 @@ describe('getDnsStatus', () => {
         );
 
         await getDnsStatus();
-        // allow microtasks for chained getVersion/getTlsStatus/getProfile
+        // allow microtasks for chained getVersion/getTlsStatus
         await new Promise((r) => setTimeout(r, 0));
         expect(mocks.tlsStatus).toHaveBeenCalled();
     });
+});
 
+describe('getProfileData', () => {
     it('loads the profile so the name and theme are available', async () => {
-        mocks.getVersionJson.mockResolvedValue({
-            disabled: true,
-            new_version: 'x',
-        });
         mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
-        mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-            new Response(
-                JSON.stringify({
-                    running: true,
-                    version: 'v',
-                    dns_port: 53,
-                    dns_addresses: [],
-                    protection_enabled: true,
-                    http_port: 80,
-                }),
-                { status: 200 },
-            ),
-        );
-
-        await getDnsStatus();
-        await new Promise((r) => setTimeout(r, 0));
+        await getProfileData();
 
         // The profile drives the footer's "logged in" state and the stored
         // theme, so it must land in the store rather than be discarded.
         expect(dashboardState.name).toBe('admin');
         expect(dashboardState.theme).toBe('dark');
         expect(dashboardState.processingProfile).toBe(false);
+        expect(dashboardState.profileFailed).toBe(false);
     });
 
     it('keeps the server theme out of the store for a userless install', async () => {
-
-        mocks.getVersionJson.mockResolvedValue({
-            disabled: true,
-            new_version: 'x',
-        });
         // A userless install returns the config default for the theme, not a
         // preference of the guest.
         mocks.getProfile.mockResolvedValue({ name: '', theme: 'auto' });
-        mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-            new Response(
-                JSON.stringify({
-                    running: true,
-                    version: 'v',
-                    dns_port: 53,
-                    dns_addresses: [],
-                    protection_enabled: true,
-                    http_port: 80,
-                }),
-                { status: 200 },
-            ),
-        );
-
-        await getDnsStatus();
-        await new Promise((r) => setTimeout(r, 0));
+        await getProfileData();
 
         expect(dashboardState.name).toBe('');
         expect(dashboardState.theme).toBeUndefined();
@@ -140,32 +102,21 @@ describe('getDnsStatus', () => {
     });
 
     it('falls back to the auto theme when the profile has no valid one', async () => {
-        mocks.getVersionJson.mockResolvedValue({
-            disabled: true,
-            new_version: 'x',
-        });
         // An older server may return null instead of a theme from the enum.
         mocks.getProfile.mockResolvedValue({ name: 'admin', theme: null });
-        mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-            new Response(
-                JSON.stringify({
-                    running: true,
-                    version: 'v',
-                    dns_port: 53,
-                    dns_addresses: [],
-                    protection_enabled: true,
-                    http_port: 80,
-                }),
-                { status: 200 },
-            ),
-        );
-
-        await getDnsStatus();
-        await new Promise((r) => setTimeout(r, 0));
+        await getProfileData();
 
         expect(dashboardState.theme).toBe('auto');
+    });
+
+    it('marks the profile as failed so the menu keeps the logout link', async () => {
+        mocks.getProfile.mockRejectedValue(new Error('offline'));
+
+        await getProfileData();
+
+        expect(dashboardState.processingProfile).toBe(false);
+        expect(dashboardState.profileFailed).toBe(true);
     });
 });
 

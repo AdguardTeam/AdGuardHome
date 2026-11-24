@@ -162,6 +162,10 @@
         height: 116px;
     }
 
+    &.resizable {
+        padding-right: 4px;
+    }
+
     &.onCard:not(:has(:disabled)) {
         background-color: var(--page-background-additional);
 
@@ -178,6 +182,10 @@
 .contentWrapper {
     position: relative;
     flex: 1 0 auto;
+}
+
+.resizable {
+    resize: vertical;
 }
 
 .overlay {

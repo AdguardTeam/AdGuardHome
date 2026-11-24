@@ -6,6 +6,7 @@ import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
 import { formatCompactNumber } from 'panel/helpers/helpers';
+import { computePercent, formatPercent } from 'panel/helpers/statistics';
 import theme from 'panel/lib/theme';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import { TableHeader } from '../TableHeader';
@@ -66,9 +67,7 @@ export const TopBlockedDomains = (props: Props) => {
                     <For each={sortedDomains()}>
                         {(domain) => {
                             const percent = createMemo(() =>
-                                props.numBlockedFiltering > 0
-                                    ? (domain.count / props.numBlockedFiltering) * 100
-                                    : 0,
+                                computePercent(domain.count, props.numBlockedFiltering),
                             );
                             const trackerData = getTrackerData(domain.name);
 
@@ -137,7 +136,7 @@ export const TopBlockedDomains = (props: Props) => {
                                                             s.queryPercent,
                                                         )}
                                                     >
-                                                        ({percent().toFixed(2)}%)
+                                                        ({formatPercent(percent())}%)
                                                     </div>
                                                 </div>
                                             </div>

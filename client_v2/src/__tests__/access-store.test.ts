@@ -80,7 +80,15 @@ describe('toggleClientBlock', () => {
 });
 
 describe('setAccessList', () => {
-    beforeEach(() => vi.clearAllMocks());
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        mocks.accessList.mockResolvedValue({
+            allowed_clients: ['10.0.0.1'],
+            disallowed_clients: ['10.0.0.2'],
+            blocked_hosts: ['blocked.example'],
+        });
+        await getAccessList();
+    });
 
     it('splits newline-delimited strings into arrays', async () => {
         await setAccessList({
@@ -95,22 +103,63 @@ describe('setAccessList', () => {
         });
     });
 
-    it('handles single values correctly', async () => {
+    it('keeps the lists that the caller did not pass', async () => {
         await setAccessList({ allowed_clients: '1.1.1.1' });
         expect(mocks.accessSet).toHaveBeenCalledWith({
             allowed_clients: ['1.1.1.1'],
-            disallowed_clients: undefined,
-            blocked_hosts: undefined,
+            disallowed_clients: ['10.0.0.2'],
+            blocked_hosts: ['blocked.example'],
         });
     });
 
-    it('handles empty values', async () => {
+    it('reads the server lists before saving instead of trusting the store', async () => {
+        // The store still holds the lists loaded in `beforeEach`, but the
+        // server has moved on; composing the payload from the store would
+        // revert the lists the operator did not change.
+        mocks.accessList.mockResolvedValue({
+            allowed_clients: ['10.0.0.9'],
+            disallowed_clients: ['10.0.0.8'],
+            blocked_hosts: ['new.example'],
+        });
+
+        await setAccessList({ allowed_clients: '1.1.1.1' });
+
+        expect(mocks.accessSet).toHaveBeenCalledWith({
+            allowed_clients: ['1.1.1.1'],
+            disallowed_clients: ['10.0.0.8'],
+            blocked_hosts: ['new.example'],
+        });
+    });
+
+    it('treats an empty string as an intentionally emptied list', async () => {
         await setAccessList({ allowed_clients: '' });
         expect(mocks.accessSet).toHaveBeenCalledWith({
             allowed_clients: [],
-            disallowed_clients: undefined,
-            blocked_hosts: undefined,
+            disallowed_clients: ['10.0.0.2'],
+            blocked_hosts: ['blocked.example'],
         });
+        expect(accessState.allowed_clients).toBe('');
+    });
+
+    it('does not save when the pre-save read fails', async () => {
+        mocks.accessList.mockRejectedValue(new Error('network'));
+
+        const saved = await setAccessList({ allowed_clients: '1.1.1.1' });
+
+        expect(saved).toBe(false);
+        expect(mocks.accessSet).not.toHaveBeenCalled();
+        expect(mocks.addSuccessToast).not.toHaveBeenCalled();
+        expect(mocks.addErrorToast).toHaveBeenCalled();
+        expect(accessState.processingSet).toBe(false);
+        expect(accessState.allowed_clients).toBe('10.0.0.1');
+    });
+
+    it('writes the saved lists back to the store', async () => {
+        await setAccessList({ blocked_hosts: 'badhost.com\nevil.com' });
+
+        expect(accessState.blocked_hosts).toBe('badhost.com\nevil.com');
+        expect(accessState.allowed_clients).toBe('10.0.0.1');
+        expect(accessState.disallowed_clients).toBe('10.0.0.2');
     });
 });
 
@@ -123,16 +172,18 @@ describe('getAccessList — initialized flag', () => {
     it('marks initialized after a successful request', async () => {
         mocks.accessList.mockResolvedValue({});
 
-        await getAccessList();
+        const loaded = await getAccessList();
 
+        expect(loaded).toBe(true);
         expect(accessState.initialized).toBe(true);
     });
 
     it('marks initialized after a failed request so the loader cannot get stuck', async () => {
         mocks.accessList.mockRejectedValue(new Error('network'));
 
-        await getAccessList();
+        const loaded = await getAccessList();
 
+        expect(loaded).toBe(false);
         expect(accessState.initialized).toBe(true);
         expect(mocks.addErrorToast).toHaveBeenCalled();
     });

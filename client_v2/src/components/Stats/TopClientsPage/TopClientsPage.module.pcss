@@ -9,12 +9,9 @@
     border-radius: 200px;
     background-color: var(--default-secondary-button);
     color: var(--default-secondary-button-stroke);
-    font-size: 14px;
-    line-height: 1.5;
     white-space: nowrap;
     cursor: pointer;
 
-    &:hover,
     &:focus-visible {
         background-color: var(--hovered-secondary-button);
     }
@@ -22,10 +19,31 @@
     &:active {
         background-color: var(--pressed-secondary-button);
     }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--hovered-secondary-button);
+        }
+    }
 }
 
 .filterPillActive {
     border-color: var(--product-primary-50);
+    background-color: var(--fills-backgrounds-recent-activity);
+
+    &:focus-visible {
+        background-color: var(--fills-backgrounds-recent-activity);
+    }
+
+    &:active {
+        background-color: var(--fills-backgrounds-recent-activity);
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-backgrounds-recent-activity);
+        }
+    }
 }
 
 .filterPillCross {
