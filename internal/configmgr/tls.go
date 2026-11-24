@@ -1,6 +1,10 @@
 package configmgr
 
 import (
+	"fmt"
+	"slices"
+
+	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/validate"
 )
@@ -71,7 +75,52 @@ func (c *TLSConfig) Validate() (err error) {
 		return errors.ErrNoValue
 	}
 
-	// TODO(d.kolyshev):  Add more validations.
+	_, err = aghtls.ParseCiphers(c.OverrideTLSCiphers)
+	if err != nil {
+		return fmt.Errorf("override_tls_ciphers: %w", err)
+	}
 
 	return nil
+}
+
+// ToInternal converts the on-disk TLS configuration to the internal TLS
+// configuration version.  c must not be nil.
+func (c *TLSConfig) ToInternal() (conf *aghtls.ExtendedTLSConfig) {
+	return &aghtls.ExtendedTLSConfig{
+		PrivateKeyPath:     c.PrivateKeyPath,
+		PrivateKey:         c.PrivateKey,
+		ServerName:         c.ServerName,
+		DNSCryptConfigFile: c.DNSCryptConfigFile,
+		CertificatePath:    c.CertificatePath,
+		CertificateChain:   c.CertificateChain,
+		OverrideTLSCiphers: slices.Clone(c.OverrideTLSCiphers),
+		PortDNSCrypt:       c.PortDNSCrypt,
+		PortDNSOverQUIC:    c.PortDNSOverQUIC,
+		PortDNSOverTLS:     c.PortDNSOverTLS,
+		PortHTTPS:          c.PortHTTPS,
+		Enabled:            c.Enabled,
+		ForceHTTPS:         c.ForceHTTPS,
+		StrictSNICheck:     c.StrictSNICheck,
+	}
+}
+
+// NewTLSConfig converts the internal TLS configuration to the on-disk TLS
+// configuration.  conf must not be nil.
+func NewTLSConfig(conf *aghtls.ExtendedTLSConfig) (c *TLSConfig) {
+	return &TLSConfig{
+		CertificateChain:   conf.CertificateChain,
+		CertificatePath:    conf.CertificatePath,
+		DNSCryptConfigFile: conf.DNSCryptConfigFile,
+		ServerName:         conf.ServerName,
+		PrivateKey:         conf.PrivateKey,
+		PrivateKeyPath:     conf.PrivateKeyPath,
+		OverrideTLSCiphers: slices.Clone(conf.OverrideTLSCiphers),
+		PortDNSCrypt:       conf.PortDNSCrypt,
+		PortDNSOverQUIC:    conf.PortDNSOverQUIC,
+		PortDNSOverTLS:     conf.PortDNSOverTLS,
+		PortHTTPS:          conf.PortHTTPS,
+		Enabled:            conf.Enabled,
+		ForceHTTPS:         conf.ForceHTTPS,
+		StrictSNICheck:     conf.StrictSNICheck,
+	}
 }

@@ -49,7 +49,58 @@ type tlsConfigStatus struct {
 	ValidPair bool `json:"valid_pair"`
 }
 
+// tlsConfigSettings is the TLS configuration for DNS-over-TLS, DNS-over-QUIC,
+// and HTTPS.
+type tlsConfigSettings struct {
+	// CertificateChain is the PEM-encoded certificate chain.  Must be empty if
+	// [tlsConfigSettings.CertificatePath] is provided.
+	CertificateChain string `json:"certificate_chain"`
+
+	// CertificatePath is the path to the certificate file.  Must be empty if
+	// [tlsConfigSettings.CertificateChain] is provided.
+	CertificatePath string `json:"certificate_path"`
+
+	// DNSCryptConfigFile is the path to the DNSCrypt config file.  Must be set
+	// if PortDNSCrypt is not zero.
+	//
+	// See https://github.com/AdguardTeam/dnsproxy and
+	// https://github.com/AdguardTeam/dnscrypt.
+	DNSCryptConfigFile string `json:"dnscrypt_config_file"`
+
+	// ServerName is the hostname of the HTTPS/TLS server.
+	ServerName string `json:"server_name,omitempty"`
+
+	// PrivateKey is the PEM-encoded private key.  Must be empty if
+	// [tlsConfigSettings.PrivateKeyPath] is provided.
+	PrivateKey string `json:"private_key"`
+
+	// PrivateKeyPath is the path to the private key file.  Must be empty if
+	// [tlsConfigSettings.PrivateKey] is provided.
+	PrivateKeyPath string `json:"private_key_path"`
+
+	// PortDNSCrypt is the port for DNSCrypt requests.  If it's zero, DNSCrypt
+	// is disabled.
+	PortDNSCrypt uint16 `json:"port_dnscrypt"`
+
+	// PortDNSOverQUIC is the DNS-over-QUIC port.  If 0, DoQ will be disabled.
+	PortDNSOverQUIC uint16 `json:"port_dns_over_quic,omitempty"`
+
+	// PortDNSOverTLS is the DNS-over-TLS port.  If 0, DoT will be disabled.
+	PortDNSOverTLS uint16 `json:"port_dns_over_tls,omitempty"`
+
+	// PortHTTPS is the HTTPS port.  If 0, HTTPS will be disabled.
+	PortHTTPS uint16 `json:"port_https,omitempty"`
+
+	// Enabled indicates whether encryption (DoT/DoH/HTTPS) is enabled.
+	Enabled bool `json:"enabled"`
+
+	// ForceHTTPS, if true, forces an HTTP to HTTPS redirect.
+	ForceHTTPS bool `json:"force_https"`
+}
+
 // tlsConfig is the TLS configuration and status response.
+//
+// TODO(d.kolyshev): Consider renaming to JSON DTO.
 type tlsConfig struct {
 	*tlsConfigStatus     `json:",inline"`
 	tlsConfigSettingsExt `json:",inline"`
@@ -57,82 +108,63 @@ type tlsConfig struct {
 
 // tlsConfigSettingsExt is used to (un)marshal PrivateKeySaved field and
 // ServePlainDNS field.
+//
+// TODO(d.kolyshev): Consider renaming to JSON DTO.
 type tlsConfigSettingsExt struct {
 	tlsConfigSettings `json:",inline"`
 
 	// PrivateKeySaved is true if the private key is saved as a string and omit
 	// key from answer.  It is used to ensure that clients don't send and
 	// receive previously saved private keys.
-	PrivateKeySaved bool `yaml:"-" json:"private_key_saved"`
+	PrivateKeySaved bool `json:"private_key_saved"`
 
 	// ServePlainDNS defines if plain DNS is allowed for incoming requests.  It
 	// is an [aghalg.NullBool] to be able to tell when it's set without using
 	// pointers.
-	ServePlainDNS aghalg.NullBool `yaml:"-" json:"serve_plain_dns"`
+	ServePlainDNS aghalg.NullBool `json:"serve_plain_dns"`
 }
 
 // confFromTLSSettings converts the TLS settings to the TLS configuration
-// version.  s must not be nil.
-func confFromTLSSettings(s *tlsConfigSettings) (conf *aghtls.ExtendedTLSConfig) {
-	conf = &aghtls.ExtendedTLSConfig{
-		PrivateKeyPath:       s.PrivateKeyPath,
-		PrivateKey:           s.PrivateKey,
-		ServerName:           s.ServerName,
-		DNSCryptConfigFile:   s.DNSCryptConfigFile,
-		CertificatePath:      s.CertificatePath,
-		CertificateChain:     s.CertificateChain,
-		OverrideTLSCiphers:   slices.Clone(s.OverrideTLSCiphers),
-		CertificateChainData: slices.Clone(s.CertificateChainData),
-		PrivateKeyData:       slices.Clone(s.PrivateKeyData),
-		PortDNSCrypt:         s.PortDNSCrypt,
-		PortDNSOverQUIC:      s.PortDNSOverQUIC,
-		PortDNSOverTLS:       s.PortDNSOverTLS,
-		PortHTTPS:            s.PortHTTPS,
-		Enabled:              s.Enabled,
-		ForceHTTPS:           s.ForceHTTPS,
-		StrictSNICheck:       s.StrictSNICheck,
-		ServePlainDNS:        s.ServePlainDNS,
-	}
+// version.  It starts from curr, and overrides only the settings that are
+// exposed by the HTTP API.  DNSCryptConfigFile and PortDNSCrypt are
+// intentionally kept from curr and are not taken from s.  s and curr must not
+// be nil.
+func confFromTLSSettings(
+	s *tlsConfigSettings,
+	curr *aghtls.ExtendedTLSConfig,
+) (conf *aghtls.ExtendedTLSConfig) {
+	conf = curr.Clone()
 
-	conf.Status = aghtls.TLSConfigStatus{
-		Subject:           s.Status.Subject,
-		Issuer:            s.Status.Issuer,
-		KeyType:           s.Status.KeyType,
-		NotBefore:         s.Status.NotBefore,
-		NotAfter:          s.Status.NotAfter,
-		WarningValidation: s.Status.WarningValidation,
-		DNSNames:          slices.Clone(s.Status.DNSNames),
-		ValidCert:         s.Status.ValidCert,
-		ValidChain:        s.Status.ValidChain,
-		ValidKey:          s.Status.ValidKey,
-		ValidPair:         s.Status.ValidPair,
-	}
+	conf.PrivateKeyPath = s.PrivateKeyPath
+	conf.PrivateKey = s.PrivateKey
+	conf.ServerName = s.ServerName
+	conf.CertificatePath = s.CertificatePath
+	conf.CertificateChain = s.CertificateChain
+	conf.PortDNSOverQUIC = s.PortDNSOverQUIC
+	conf.PortDNSOverTLS = s.PortDNSOverTLS
+	conf.PortHTTPS = s.PortHTTPS
+	conf.Enabled = s.Enabled
+	conf.ForceHTTPS = s.ForceHTTPS
 
 	return conf
 }
 
 // confToTLSSettings converts the TLS configuration to the TLS settings.  conf
 // must not be nil.
-func confToTLSSettings(conf *aghtls.ExtendedTLSConfig) (s tlsConfigSettings) {
-	return tlsConfigSettings{
-		PrivateKeyPath:       conf.PrivateKeyPath,
-		PrivateKey:           conf.PrivateKey,
-		ServerName:           conf.ServerName,
-		DNSCryptConfigFile:   conf.DNSCryptConfigFile,
-		CertificatePath:      conf.CertificatePath,
-		CertificateChain:     conf.CertificateChain,
-		OverrideTLSCiphers:   slices.Clone(conf.OverrideTLSCiphers),
-		CertificateChainData: slices.Clone(conf.CertificateChainData),
-		PrivateKeyData:       slices.Clone(conf.PrivateKeyData),
-		Status:               *tlsConfigStatusFromConf(&conf.Status),
-		PortDNSCrypt:         conf.PortDNSCrypt,
-		PortDNSOverQUIC:      conf.PortDNSOverQUIC,
-		PortDNSOverTLS:       conf.PortDNSOverTLS,
-		PortHTTPS:            conf.PortHTTPS,
-		Enabled:              conf.Enabled,
-		ForceHTTPS:           conf.ForceHTTPS,
-		StrictSNICheck:       conf.StrictSNICheck,
-		ServePlainDNS:        conf.ServePlainDNS,
+func confToTLSSettings(conf *aghtls.ExtendedTLSConfig) (s *tlsConfigSettings) {
+	return &tlsConfigSettings{
+		CertificateChain:   conf.CertificateChain,
+		CertificatePath:    conf.CertificatePath,
+		DNSCryptConfigFile: conf.DNSCryptConfigFile,
+		ServerName:         conf.ServerName,
+		PrivateKey:         conf.PrivateKey,
+		PrivateKeyPath:     conf.PrivateKeyPath,
+		PortDNSCrypt:       conf.PortDNSCrypt,
+		PortDNSOverQUIC:    conf.PortDNSOverQUIC,
+		PortDNSOverTLS:     conf.PortDNSOverTLS,
+		PortHTTPS:          conf.PortHTTPS,
+		Enabled:            conf.Enabled,
+		ForceHTTPS:         conf.ForceHTTPS,
 	}
 }
 

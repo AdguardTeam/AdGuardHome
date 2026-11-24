@@ -128,7 +128,7 @@ func (mgr *DefaultManager) parseCustomCiphers(ctx context.Context) {
 	mgr.customCipherIDs, err = ParseCiphers(mgr.extTLSConf.OverrideTLSCiphers)
 	if err != nil {
 		// Should not happen because upstreams are already validated.  See
-		// [validateTLSCipherIDs].
+		// configmgr.TLSConfig.Validate.
 		panic(err)
 	}
 

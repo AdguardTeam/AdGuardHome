@@ -19,6 +19,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/updater"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
@@ -578,7 +579,7 @@ func (web *webAPI) handleTLSStatus(w http.ResponseWriter, r *http.Request) {
 	tlsConf := web.tlsManager.ExtendedTLSConfig()
 
 	data := &tlsConfig{
-		tlsConfigSettings: confToTLSSettings(tlsConf),
+		tlsConfigSettings: *confToTLSSettings(tlsConf),
 		ServePlainDNS:     aghalg.BoolToNullBool(tlsConf.ServePlainDNS),
 		tlsConfigStatus:   tlsConfigStatusFromConf(&tlsConf.Status),
 	}
@@ -622,7 +623,7 @@ func (web *webAPI) handleTLSValidate(w http.ResponseWriter, r *http.Request) {
 		ctx,
 		web.logger,
 		web.tlsManager,
-		confFromTLSSettings(&setts.tlsConfigSettings),
+		confFromTLSSettings(&setts.tlsConfigSettings, extTLSConf),
 		status,
 	)
 	resp := &tlsConfig{
@@ -646,7 +647,7 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 	}
 
 	var (
-		tlsConf      tlsConfigSettings
+		tlsConf      *configmgr.TLSConfig
 		webAPIAddr   netip.Addr
 		webAPIPort   uint16
 		plainDNSPort uint16
@@ -656,7 +657,7 @@ func (web *webAPI) validateTLSSettings(setts *tlsConfigSettingsExt) (err error) 
 		config.Lock()
 		defer config.Unlock()
 
-		tlsConf = confToTLSSettings(web.tlsManager.ExtendedTLSConfig())
+		tlsConf = configmgr.NewTLSConfig(web.tlsManager.ExtendedTLSConfig())
 		webAPIAddr = config.HTTPConfig.Address.Addr()
 		webAPIPort = config.HTTPConfig.Address.Port()
 		plainDNSPort = config.DNS.Port
@@ -694,16 +695,21 @@ type bindingCheck struct {
 // best-effort check to prevent an "address already in use" error.  The checked
 // ports are:
 //
-//   - [tlsConfigSettings.PortHTTPS] (TCP)
-//   - [tlsConfigSettings.PortHTTPS] (UDP, if HTTP/3 is enabled)
-//   - [tlsConfigSettings.PortDNSOverTLS]
-//   - [tlsConfigSettings.PortDNSOverQUIC]
+//   - [configmgr.TLSConfig.PortHTTPS] and [tlsConfigSettings.PortHTTPS] (TCP)
+//   - [configmgr.TLSConfig.PortHTTPS] and [tlsConfigSettings.PortHTTPS] (UDP,
+//     if HTTP/3 is enabled)
+//   - [configmgr.TLSConfig.PortDNSOverTLS] and
+//     [tlsConfigSettings.PortDNSOverTLS]
+//   - [configmgr.TLSConfig.PortDNSOverQUIC] and
+//     [tlsConfigSettings.PortDNSOverQUIC]
+//
+// currConf must not be nil.
 //
 // TODO(m.kazantsev):  Base the port check on the ports actually held by the
 // DoH, DoT, and DoQ servers instead of comparing the current and the new
 // settings.
 func checkPortAvailability(
-	currConf tlsConfigSettings,
+	currConf *configmgr.TLSConfig,
 	newConf tlsConfigSettings,
 	addr netip.Addr,
 	useHTTP3 bool,
@@ -840,8 +846,6 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 		req.PrivateKey = extTLSConf.PrivateKey
 	}
 
-	req.StrictSNICheck = extTLSConf.StrictSNICheck
-
 	err = web.validateTLSSettings(req)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, web.logger, r, w, http.StatusBadRequest, "%s", err)
@@ -850,7 +854,7 @@ func (web *webAPI) handleTLSConfigure(w http.ResponseWriter, r *http.Request) {
 	}
 
 	status := &aghtls.TLSConfigStatus{}
-	conf := confFromTLSSettings(&req.tlsConfigSettings)
+	conf := confFromTLSSettings(&req.tlsConfigSettings, extTLSConf)
 	err = aghtls.LoadTLSConfig(ctx, web.logger, web.tlsManager, conf, status)
 	if err != nil {
 		resp := &tlsConfig{

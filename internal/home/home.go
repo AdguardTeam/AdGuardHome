@@ -972,7 +972,7 @@ func newTLSManager(
 	}
 
 	tlsMgr, err = aghtls.NewDefaultManager(ctx, &aghtls.DefaultManagerConfig{
-		ExtendedTLSConfig: confFromTLSSettings(&config.TLS),
+		ExtendedTLSConfig: config.TLS.ToInternal(),
 		ServePlainDNS:     config.DNS.ServePlainDNS,
 		Logger:            baseLogger.With(slogutil.KeyPrefix, "aghtls_manager"),
 		Watcher:           watcher,
