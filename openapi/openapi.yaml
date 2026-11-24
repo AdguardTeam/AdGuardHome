@@ -732,6 +732,7 @@
       - 'safebrowsing'
       'operationId': 'safebrowsingEnable'
       'summary': 'Enable safebrowsing'
+      'description': 'Deprecated: Use `PUT /control/safebrowsing` instead.'
       'responses':
         '200':
           'description': 'OK.'
@@ -742,6 +743,7 @@
       - 'safebrowsing'
       'operationId': 'safebrowsingDisable'
       'summary': 'Disable safebrowsing'
+      'description': 'Deprecated: Use `PUT /control/safebrowsing` instead.'
       'responses':
         '200':
           'description': 'OK.'
@@ -791,6 +793,7 @@
       - 'parental'
       'operationId': 'parentalEnable'
       'summary': 'Enable parental filtering'
+      'description': 'Deprecated: Use `PUT /control/parental` instead.'
       'responses':
         '200':
           'description': 'OK.'
@@ -801,6 +804,7 @@
       - 'parental'
       'operationId': 'parentalDisable'
       'summary': 'Disable parental filtering'
+      'description': 'Deprecated: Use `PUT /control/parental` instead.'
       'responses':
         '200':
           'description': 'OK.'

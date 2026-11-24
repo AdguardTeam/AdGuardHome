@@ -6,7 +6,7 @@
 
 - The new HTTP APIs `PUT /control/safebrowsing` and `PUT /control/parental`.
 
-- The following HTTP APIs are deprecated:
+- The following HTTP APIs are deprecated and will be removed in a future version:
     - `POST /control/safebrowsing/enable`
     - `POST /control/safebrowsing/disable`
     - `POST /control/parental/enable`

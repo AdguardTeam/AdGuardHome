@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering/rulelist"
 	"github.com/AdguardTeam/golibs/errors"
@@ -648,7 +649,7 @@ func (d *DNSFilter) handleSettings(w http.ResponseWriter, r *http.Request, enabl
 	ctx := r.Context()
 
 	var settings struct {
-		Enabled bool `json:"enabled"`
+		Enabled aghalg.NullBool `json:"enabled"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&settings)
@@ -658,7 +659,13 @@ func (d *DNSFilter) handleSettings(w http.ResponseWriter, r *http.Request, enabl
 		return
 	}
 
-	setProtectedBool(d.confMu, enabled, settings.Enabled)
+	if settings.Enabled == aghalg.NBNull {
+		aghhttp.ErrorAndLog(ctx, d.logger, r, w, http.StatusBadRequest, "'enabled' is required")
+
+		return
+	}
+
+	setProtectedBool(d.confMu, enabled, settings.Enabled == aghalg.NBTrue)
 
 	d.conf.ConfModifier.Apply(ctx)
 
