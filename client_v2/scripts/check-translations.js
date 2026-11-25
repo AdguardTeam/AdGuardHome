@@ -17,6 +17,8 @@ import {
     validatePlurals,
 } from './translation-audit.js';
 
+// Mirrors flattenServices in src/common/intl/index.ts.  This script runs on
+// plain Node and cannot import the TypeScript module.
 const flattenServices = (services) =>
     Object.fromEntries(
         Object.entries(services).map(([key, value]) => [

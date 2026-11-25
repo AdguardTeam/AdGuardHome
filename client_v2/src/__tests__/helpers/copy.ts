@@ -6,7 +6,8 @@ import servicesEnJson from 'panel/__locales-services/en.json';
 /**
  * Flattens the blocked-services locale format (`{ key: { message } }`) to the
  * strings the app exposes through `intl`, keeping the keys so `CopyKey` covers
- * them.
+ * them.  Mirrors `flattenServices` in `panel/common/intl`, which this helper
+ * must not import because component tests mock that module.
  */
 const flattenServices = <T extends Record<string, string | { message: string }>>(
     services: T,
