@@ -231,11 +231,6 @@ func (c *twoskyClient) unused(ctx context.Context, l *slog.Logger) (err error) {
 
 // findSourceFiles returns list of source files.  l must not be nil.
 func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fileNames []string, err error) {
-	locDirs := make([]string, len(c.localesDirs))
-	for i, dir := range c.localesDirs {
-		locDirs[i] = filepath.Clean(dir)
-	}
-
 	walkFn := func(name string, _ os.FileInfo, pErr error) (err error) {
 		if pErr != nil {
 			l.WarnContext(ctx, "accessing a path", slogutil.KeyError, pErr)
@@ -243,10 +238,8 @@ func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fil
 			return nil
 		}
 
-		for _, locDir := range locDirs {
-			if strings.HasPrefix(name, locDir) {
-				return nil
-			}
+		if c.inLocalesDir(name) {
+			return nil
 		}
 
 		ext := filepath.Ext(name)
@@ -263,6 +256,19 @@ func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fil
 	}
 
 	return fileNames, nil
+}
+
+// inLocalesDir returns true if name is inside one of the locales directories.
+// Those files hold the translations themselves and contain no text labels to
+// find, so the sources walk skips them.
+func (c *twoskyClient) inLocalesDir(name string) (ok bool) {
+	for _, dir := range c.localesDirs {
+		if strings.HasPrefix(name, filepath.Clean(dir)) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // findUnused prints unused text labels from fileNames.
