@@ -2,6 +2,7 @@ import { Show, For, type JSX } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { SERVICE_GROUP_KEYS } from 'panel/common/intl/locales.generated';
+import theme from 'panel/lib/theme';
 
 import s from './BlockedServices.module.pcss';
 
@@ -38,7 +39,7 @@ export const GroupFilter = (props: Props) => {
                             onClick={() => props.onToggleGroup(group.id)}
                             aria-pressed={props.activeGroups.includes(group.id)}
                             data-testid={`blocked-services-group-${group.id}`}
-                            class={cn(s.groupButton, {
+                            class={cn(s.groupButton, theme.text.t3, {
                                 [s.groupButtonActive]: props.activeGroups.includes(group.id),
                             })}
                         >

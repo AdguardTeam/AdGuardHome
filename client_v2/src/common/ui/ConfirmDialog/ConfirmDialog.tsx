@@ -66,7 +66,7 @@ export const ConfirmDialog = (props: Props) => (
                 </div>
             }
         >
-            {props.customFooter}
+            <div class={theme.dialog.footer}>{props.customFooter}</div>
         </Show>
     </Dialog>
 );

@@ -4,13 +4,13 @@
   'CHANNEL': |-
     ${{ case(
       startsWith(github.ref_name, 'release-v'), 'release',
-      startsWith(github.ref_name, 'beta-v'), 'beta',
+      contains(github.ref_name, '-b.'), 'beta',
       'edge'
     ) }}
   'SNAPCRAFT_CHANNEL': |-
     ${{ case(
       startsWith(github.ref_name, 'release-v'), 'candidate',
-      startsWith(github.ref_name, 'beta-v'), 'beta',
+      contains(github.ref_name, '-b.'), 'beta',
       'edge'
     ) }}
 jobs:
@@ -28,6 +28,23 @@ jobs:
           #
           # See https://github.com/actions/checkout/issues/485#issuecomment-934422611.
           'persist-credentials': false
+      - 'name': 'Read the expected version'
+        'id': 'static-version'
+        'uses': 'AdGuardSoftwareLimited/actions/actions/kv-get@master'
+        'with':
+          'key': 'adguard-home/${{ env.CHANNEL }}/static-version'
+      - 'name': 'Set the expected version'
+        'env':
+          'FOUND': ${{ steps.static-version.outputs.found }}
+          'VALUE': ${{ steps.static-version.outputs.value }}
+        'run': |
+          if [ "$FOUND" != 'true' ]; then
+            printf 'no static version recorded for the %s channel\nthe release build has not published it yet\n' "$CHANNEL" 1>&2
+
+            exit 1
+          fi
+
+          printf 'EXPECTED_VERSION=%s\n' "$VALUE" >> "$GITHUB_ENV"
       - 'name': 'Build'
         'uses': 'AdGuardSoftwareLimited/actions/actions/docker-build@master'
         'with':
@@ -39,6 +56,7 @@ jobs:
             BASE_IMAGE=${{ env.BASE_IMAGE }}
             CACHE_BUSTER=${{ inputs.cache_buster || '0' }}
             CHANNEL=${{ env.CHANNEL }}
+            EXPECTED_VERSION=${{ env.EXPECTED_VERSION }}
       - 'uses': 'actions/upload-artifact@v7'
         'with':
           'name': 'adguardhome'

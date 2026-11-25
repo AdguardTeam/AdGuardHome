@@ -23,13 +23,16 @@ beforeAll(() => {
 vi.mock('panel/stores/dashboard', () => ({
     dashboardState: {
         processing: false,
+        statusFailed: false,
         isCoreRunning: true,
         language: 'en',
         theme: undefined,
         protectionEnabled: false,
     },
     getDnsStatus: vi.fn(),
+    getProfileData: vi.fn(),
     getTimerStatus: vi.fn(),
+    stopStatusChecks: vi.fn(),
 }));
 
 vi.mock('panel/common/ui/Header', () => ({

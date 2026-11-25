@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     tlsStatus: vi.fn(),
     getVersionJson: vi.fn(),
     getProfile: vi.fn(),
+    updateProfile: vi.fn(),
     clientsStatus: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
@@ -15,6 +16,7 @@ vi.mock('panel/api/generated', () => ({
     getStatusUrl: () => 'control/status',
     getVersionJson: mocks.getVersionJson,
     getProfile: mocks.getProfile,
+    updateProfile: mocks.updateProfile,
     beginUpdate: vi.fn(),
     tlsStatus: mocks.tlsStatus,
     clientsStatus: mocks.clientsStatus,
@@ -27,11 +29,18 @@ vi.mock('panel/stores/toasts', () => ({
 
 import { resetStore } from 'panel/__tests__/helpers/resetStore';
 import { copy } from 'panel/__tests__/helpers/copy';
+import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+import { STANDARD_DNS_PORT } from 'panel/helpers/constants';
 import {
     getDnsStatus,
+    getProfileData,
+    getTimerStatus,
     getClients,
     getVersion,
     refreshDnsStatus,
+    stopStatusChecks,
+    changeTheme,
+    changeLanguage,
     dashboardState,
 } from 'panel/stores/dashboard';
 
@@ -43,7 +52,6 @@ describe('getDnsStatus', () => {
             disabled: true,
             new_version: 'x',
         });
-        mocks.getProfile.mockResolvedValue({ name: 'n', theme: 't' });
         mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
         vi.spyOn(globalThis, 'fetch').mockResolvedValue(
@@ -61,74 +69,54 @@ describe('getDnsStatus', () => {
         );
 
         await getDnsStatus();
-        // allow microtasks for chained getVersion/getTlsStatus/getProfile
+        // allow microtasks for chained getVersion/getTlsStatus
         await new Promise((r) => setTimeout(r, 0));
         expect(mocks.tlsStatus).toHaveBeenCalled();
     });
+});
 
+describe('getProfileData', () => {
     it('loads the profile so the name and theme are available', async () => {
-        mocks.getVersionJson.mockResolvedValue({
-            disabled: true,
-            new_version: 'x',
-        });
         mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
-        mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-            new Response(
-                JSON.stringify({
-                    running: true,
-                    version: 'v',
-                    dns_port: 53,
-                    dns_addresses: [],
-                    protection_enabled: true,
-                    http_port: 80,
-                }),
-                { status: 200 },
-            ),
-        );
-
-        await getDnsStatus();
-        await new Promise((r) => setTimeout(r, 0));
+        await getProfileData();
 
         // The profile drives the footer's "logged in" state and the stored
         // theme, so it must land in the store rather than be discarded.
         expect(dashboardState.name).toBe('admin');
         expect(dashboardState.theme).toBe('dark');
         expect(dashboardState.processingProfile).toBe(false);
+        expect(dashboardState.profileFailed).toBe(false);
     });
 
     it('keeps the server theme out of the store for a userless install', async () => {
-
-        mocks.getVersionJson.mockResolvedValue({
-            disabled: true,
-            new_version: 'x',
-        });
         // A userless install returns the config default for the theme, not a
         // preference of the guest.
         mocks.getProfile.mockResolvedValue({ name: '', theme: 'auto' });
-        mocks.tlsStatus.mockResolvedValue({ enabled: false });
 
-        vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-            new Response(
-                JSON.stringify({
-                    running: true,
-                    version: 'v',
-                    dns_port: 53,
-                    dns_addresses: [],
-                    protection_enabled: true,
-                    http_port: 80,
-                }),
-                { status: 200 },
-            ),
-        );
-
-        await getDnsStatus();
-        await new Promise((r) => setTimeout(r, 0));
+        await getProfileData();
 
         expect(dashboardState.name).toBe('');
         expect(dashboardState.theme).toBeUndefined();
         expect(dashboardState.processingProfile).toBe(false);
+    });
+
+    it('falls back to the auto theme when the profile has no valid one', async () => {
+        // An older server may return null instead of a theme from the enum.
+        mocks.getProfile.mockResolvedValue({ name: 'admin', theme: null });
+
+        await getProfileData();
+
+        expect(dashboardState.theme).toBe('auto');
+    });
+
+    it('marks the profile as failed so the menu keeps the logout link', async () => {
+        mocks.getProfile.mockRejectedValue(new Error('offline'));
+
+        await getProfileData();
+
+        expect(dashboardState.processingProfile).toBe(false);
+        expect(dashboardState.profileFailed).toBe(true);
     });
 });
 
@@ -271,5 +259,330 @@ describe('getVersion — update check failures', () => {
         expect(mocks.addSuccessToast).toHaveBeenCalledWith(copy('updates_checked'));
         expect(dashboardState.checkUpdateFlag).toBe(true);
         expect(dashboardState.isUpdateAvailable).toBe(true);
+    });
+});
+
+const runningStatus = {
+    running: true,
+    version: 'v',
+    dns_port: 53,
+    dns_addresses: [] as string[],
+    protection_enabled: true,
+    http_port: 80,
+};
+
+/** jsdom's own `location.reload` cannot be spied on, so swap the object. */
+const stubLocation = () => {
+    const reload = vi.fn();
+    vi.spyOn(window, 'location', 'get').mockReturnValue({ reload } as unknown as Location);
+    return reload;
+};
+
+describe('status checks — ownership of retries', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        resetStore(dashboardState, { processing: true, isCoreRunning: true, dnsVersion: '' });
+        mocks.getVersionJson.mockResolvedValue({ disabled: true, new_version: 'v' });
+        mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
+        mocks.tlsStatus.mockResolvedValue({ enabled: false });
+    });
+
+    afterEach(() => {
+        stopStatusChecks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('does not let a timer check cancel the DNS status retry', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        fetchMock.mockRejectedValueOnce(new Error('network'));
+        respondWith(fetchMock, runningStatus);
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        // The tab becomes visible while the DNS check is waiting to retry, so
+        // a second chain starts and must leave the first one's timer alone.
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.dnsVersion).toBe('v');
+    });
+
+    it('starts one chain per entry point instead of stacking them', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+
+        getTimerStatus();
+        await vi.advanceTimersByTimeAsync(0);
+        getTimerStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        // The second visibility event replaced the pending retry of the first.
+        await vi.advanceTimersByTimeAsync(1000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
+    it('stops every pending retry on request', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+
+        getDnsStatus();
+        getTimerStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        stopStatusChecks();
+        await vi.advanceTimersByTimeAsync(5000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+});
+
+describe('changeLanguage', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        LocalStorageHelper.clear();
+        resetStore(dashboardState, { language: '' });
+    });
+
+    it('replaces a null theme from the profile with a supported one', async () => {
+        // The update API requires a theme from the enum, so a profile value
+        // must not be sent back as is.
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: 'en', theme: null });
+
+        await changeLanguage('de');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'de',
+            theme: 'auto',
+        });
+        expect(dashboardState.language).toBe('de');
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+});
+
+/** A `Response` body is readable only once, so serve a fresh one per call. */
+const respondWith = (
+    fetchMock: { mockImplementation: (fn: () => Promise<Response>) => unknown },
+    body: Record<string, unknown>,
+) => {
+    fetchMock.mockImplementation(
+        async () => new Response(JSON.stringify(body), { status: 200 }),
+    );
+};
+
+/** Loads a running status so each test starts from a working dashboard. */
+const loadRunningStatus = async () => {
+    respondWith(vi.spyOn(globalThis, 'fetch'), runningStatus);
+    getDnsStatus();
+    await vi.advanceTimersByTimeAsync(0);
+    vi.clearAllMocks();
+};
+
+describe('status checks — all attempts failed', () => {
+    beforeEach(async () => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        // `loadRunningStatus` below writes `statusFailed` through the store's
+        // own setter, so it cannot leak from the test above; `resetStore`
+        // cannot do it, since a raw write bypasses Solid's signals.
+        resetStore(dashboardState, { processing: true, isCoreRunning: true, dnsVersion: '' });
+        mocks.getVersionJson.mockResolvedValue({ disabled: true, new_version: 'v' });
+        mocks.getProfile.mockResolvedValue({ name: 'admin', theme: 'dark' });
+        mocks.tlsStatus.mockResolvedValue({ enabled: false });
+        await loadRunningStatus();
+    });
+
+    afterEach(() => {
+        stopStatusChecks();
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('toasts a failed background check but not a failed bootstrap', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+        const reload = stubLocation();
+
+        // A failing timer chain must not replace a loaded dashboard.
+        getTimerStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(60);
+        expect(mocks.addErrorToast).toHaveBeenCalledWith({
+            error: copy('dns_status_error'),
+        });
+        expect(dashboardState.statusFailed).toBe(false);
+        expect(reload).not.toHaveBeenCalled();
+
+        fetchMock.mockClear();
+        mocks.addErrorToast.mockClear();
+
+        // A failing bootstrap leaves the dashboard unknown: the retry screen
+        // must show up instead of the route body, and it carries the message
+        // itself, so a toast would only repeat it.
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(60);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.statusFailed).toBe(true);
+        expect(reload).not.toHaveBeenCalled();
+    });
+
+    it('reports a stopped core instead of a failed check', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        respondWith(fetchMock, { running: false, dns_port: 5353 });
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(60);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.isCoreRunning).toBe(false);
+        expect(dashboardState.statusFailed).toBe(false);
+        // The start-error screen names the port, which comes from the config.
+        expect(dashboardState.dnsPort).toBe(5353);
+    });
+
+    it('does not toast a timer failure while the failure screen is up', async () => {
+        vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+
+        // The bootstrap chain raises the screen...
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+        expect(dashboardState.statusFailed).toBe(true);
+        mocks.addErrorToast.mockClear();
+
+        // ...while a timer chain that was started earlier keeps polling and
+        // runs out of attempts.  The screen already reports the failure.
+        getTimerStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the standard port when the config has none', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        respondWith(fetchMock, { running: false, dns_port: 0 });
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(dashboardState.dnsPort).toBe(STANDARD_DNS_PORT);
+    });
+
+    it('does not report a stopped core as a failed check from the timer chain', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+        respondWith(fetchMock, { running: false });
+
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+
+        expect(fetchMock).toHaveBeenCalledTimes(60);
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+        expect(dashboardState.isCoreRunning).toBe(false);
+        expect(dashboardState.statusFailed).toBe(false);
+    });
+
+    it('clears the not-running screen when the timer check sees the core again', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch');
+
+        respondWith(fetchMock, { running: false });
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(dashboardState.isCoreRunning).toBe(false);
+
+        // The timer chain observes the recovery while it is still polling.  It
+        // cannot fill the route body itself, so it must escalate to the full
+        // check, which is the only place the real status values come from.
+        respondWith(fetchMock, { ...runningStatus, version: 'v2' });
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(0);
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(dashboardState.isCoreRunning).toBe(true);
+        expect(dashboardState.dnsVersion).toBe('v2');
+    });
+
+    it('clears the failed flag when a retry succeeds', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+        expect(dashboardState.statusFailed).toBe(true);
+
+        respondWith(fetchMock, runningStatus);
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(dashboardState.statusFailed).toBe(false);
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.dnsVersion).toBe('v');
+    });
+
+    it('restores the dashboard when a background check succeeds after a failure', async () => {
+        const fetchMock = vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+
+        // The bootstrap check exhausts before the core recovers.
+        getDnsStatus();
+        await vi.advanceTimersByTimeAsync(61_000);
+        expect(dashboardState.statusFailed).toBe(true);
+
+        // The tab becomes visible, the backend answers now, and the timer
+        // chain must escalate to the full check instead of writing partial
+        // state or leaving the retry screen up.
+        respondWith(fetchMock, runningStatus);
+        await getTimerStatus();
+        await vi.advanceTimersByTimeAsync(0);
+
+        expect(fetchMock).toHaveBeenCalledTimes(62);
+        expect(dashboardState.statusFailed).toBe(false);
+        expect(dashboardState.processing).toBe(false);
+        expect(dashboardState.dnsVersion).toBe('v');
+    });
+});
+
+describe('changeTheme', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        LocalStorageHelper.clear();
+        resetStore(dashboardState, { theme: undefined });
+    });
+
+    it('sends a supported language when the profile has none', async () => {
+        // An installation that never selected a language returns an empty one,
+        // which the profile API rejects on update.
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, 'ru');
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: '', theme: 'auto' });
+
+        await changeTheme('dark');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'ru',
+            theme: 'dark',
+        });
+        expect(dashboardState.theme).toBe('dark');
+        expect(mocks.addErrorToast).not.toHaveBeenCalled();
+    });
+
+    it('keeps the language already selected in the profile', async () => {
+        LocalStorageHelper.setItem(LOCAL_STORAGE_KEYS.LANGUAGE, 'ru');
+        mocks.getProfile.mockResolvedValue({ name: 'admin', language: 'de', theme: 'auto' });
+
+        await changeTheme('light');
+
+        expect(mocks.updateProfile).toHaveBeenCalledWith({
+            name: 'admin',
+            language: 'de',
+            theme: 'light',
+        });
     });
 });

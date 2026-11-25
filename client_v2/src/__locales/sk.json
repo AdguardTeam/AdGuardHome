@@ -466,7 +466,7 @@
   "ip_address": "IP adresa",
   "known_tracker": "Známy sledovač",
   "language": "Jazyk",
-  "last_days": "Posledný %count% deň | Posledné %count% dni | Posledných %count% dní",
+  "last_days": "| Posledný %count% deň | Posledné %count% dni | Posledných %count% dní",
   "last_hours": "| Posledná %count% hodina | Posledné %count% hodiny | Posledných %count% hodín",
   "last_updated_label": "Posledná aktualizácia",
   "light_theme": "Svetlá téma",

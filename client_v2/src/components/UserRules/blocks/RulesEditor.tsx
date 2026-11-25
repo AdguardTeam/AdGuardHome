@@ -30,7 +30,7 @@ export const RulesEditor = (props: Props) => {
                     <div class={s.textEditContainer}>
                         <Textarea
                             data-testid="user-rules-editor-textarea"
-                            placeholder={`# ${intl.getMessage('user_rules_placeholder')}\n\n@@||example.org`}
+                            placeholder={`# ${intl.getMessage('user_rules_placeholder')}\n\n@@||example.org^`}
                             rows={12}
                             size="large"
                             class={s.editorTextarea}
@@ -40,6 +40,7 @@ export const RulesEditor = (props: Props) => {
                             }
                             highlightComments
                             commentPrefixes={COMMENT_LINE_TOKENS}
+                            resizable
                         />
                     </div>
                 </div>

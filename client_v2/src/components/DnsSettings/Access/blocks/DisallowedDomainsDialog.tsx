@@ -31,9 +31,11 @@ export const DisallowedDomainsDialog = (props: Props) => {
             }
             onClose={props.onClose}
             onSubmit={() => {
-                field.submitIfValid((v) => {
-                    setAccessList({ blocked_hosts: v });
-                    untrack(() => props.onClose());
+                field.submitIfValid(async (v) => {
+                    // Closing on a failed save would discard the edit.
+                    if (await setAccessList({ blocked_hosts: v })) {
+                        untrack(() => props.onClose());
+                    }
                 });
             }}
             processing={props.processing}

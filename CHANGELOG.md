@@ -18,24 +18,77 @@ The information about older versions may be migrated into a separate document in
 ## [Unreleased]
 
 <!--
-## [v1.0.0] – TBA
+## [v1.1.0] – TBA
 
-## [v0.107.80] - 2026-09-03 (APPROX.)
+## [v1.0.1] - 2026-12-01 (APPROX.)
 
-See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
+See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 
-[ms-v0.107.80]: https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
+[ms-v1.0.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/117?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
+
+### Changed
+
+- Blocked service group names in the new web interface now come from Hostlists Registry and match the legacy web interface.
+
+- Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
+
+### Fixed
+
+- The selected filter chips in the new web interface being hard to tell apart from the unselected ones ([#8745]).
+
+- The custom filtering rules editor in the new web interface no longer being resizable ([#8730]).
+
+- The dashboard percentages in the new web interface being formatted with a different number of decimals in each card ([#8763]).
+
+- The *Log out* button in the new web interface being shown when authentication is disabled ([#8746]).
+
+- The access settings in the new web interface resetting each other when one of them was saved ([#8748]).
+
+- The query log in the new web interface crashing on queries received over DNSCrypt ([#8754]).
+
+- The *Top upstreams* percentages in the new web interface not adding up to 100% ([#8738]).
+
+- The certificate details in the new web interface being hidden by a validation warning or a key/certificate mismatch ([#8727]).
+
+- The stats period labels in the new web interface showing the `last_days` key instead of the text in German and Slovak ([#8736]).
+
+- The custom rules examples and the rules editor placeholder in the new web interface missing the `^` at the end of block and allow rules ([#8726]).
+
+- Renaming a blocklist in the new web interface disabling it ([#8728]).
+
+- Caching behavior under reverse proxies ([#8599]).
+
+- Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
+
+[#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
+[#8726]:       https://github.com/AdguardTeam/AdGuardHome/issues/8726
+[#8727]:       https://github.com/AdguardTeam/AdGuardHome/issues/8727
+[#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
+[#8730]:       https://github.com/AdguardTeam/AdGuardHome/issues/8730
+[#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
+[#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
+[#8745]:       https://github.com/AdguardTeam/AdGuardHome/issues/8745
+[#8746]:       https://github.com/AdguardTeam/AdGuardHome/issues/8746
+[#8748]:       https://github.com/AdguardTeam/AdGuardHome/issues/8748
+[#8754]:       https://github.com/AdguardTeam/AdGuardHome/issues/8754
+[#8763]:       https://github.com/AdguardTeam/AdGuardHome/issues/8763
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v1.0.0] - 2026-11-19
+
+See also the [v1.0.0 GitHub milestone][ms-v1.0.0].
 
 ### Security
 
 - Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.4][go-1.27.4].
 
 ### Changed
-
-- Blocked service group names in the new web interface now come from Hostlists Registry and match the legacy web interface.
 
 - The default upstream and bootstrap addresses have been changed from Quad9 to Cloudflare DNS, since Quad9 is adding geography-based restrictions ([#8686]).
 
@@ -46,6 +99,14 @@ NOTE: Add new changes BELOW THIS COMMENT.
 - Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
 
 ### Fixed
+
+- The new web interface blanking out or silently reloading itself when the DNS server was not running or its status check failed; it now explains the state, lists the likely causes of a stopped DNS server, and offers a retry when the check itself failed.
+
+- The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does.
+
+- Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
+
+- Init script actions not being passed to System V and OpenWrt services.
 
 - DNS rewrites with trailing dots not matching ([#8674]).
 
@@ -137,7 +198,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
     - `--no-etc-hosts`.
     - `--port`/`-p`.
 
-[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
 [#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
 [#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
 [#8608]:       https://github.com/AdguardTeam/AdGuardHome/issues/8608
@@ -148,6 +208,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8637]:       https://github.com/AdguardTeam/AdGuardHome/issues/8637
 [#8638]:       https://github.com/AdguardTeam/AdGuardHome/issues/8638
 [#8644]:       https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
 [#8658]:       https://github.com/AdguardTeam/AdGuardHome/issues/8658
 [#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
 [#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
@@ -159,10 +220,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
 [dns-kb-list]: https://adguard-dns.io/kb/general/dns-providers/
 [go-1.27.4]:   https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[ms-v1.0.0]:   https://github.com/AdguardTeam/AdGuardHome/milestone/116?closed=1
 
 ## [v0.107.80] - 2026-11-03
 
@@ -3901,11 +3959,12 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.81...HEAD
-[v0.107.81]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...v0.107.81
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.1...HEAD
+[v1.0.1]:     https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.0...v1.0.1
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.0...HEAD
+[v1.0.0]:     https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...v1.0.0
 [v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
 [v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
 [v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78

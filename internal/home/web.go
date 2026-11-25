@@ -406,7 +406,11 @@ func (web *webAPI) setDoHServer(srv *doHServer) {
 
 // wrapMux wraps mux with common middlewares.  l must not be nil.
 func (web *webAPI) wrapMux(l *slog.Logger) (h http.Handler) {
-	h = httputil.Wrap(web.conf.mux, httputil.MiddlewareFunc(limitRequestBody))
+	h = httputil.Wrap(
+		web.conf.mux,
+		httputil.MiddlewareFunc(limitRequestBody),
+		httputil.MiddlewareFunc(noCacheHeaders),
+	)
 
 	// TODO(a.garipov):  Remove other logs like this in other code.
 	logMw := httputil.NewLogMiddleware(l, slog.LevelDebug)

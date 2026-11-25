@@ -45,7 +45,7 @@ let profileServed: Promise<void>;
  * Serves the endpoints the dashboard store hits during startup and records
  * when the profile request has been answered.
  */
-const mockStartupRequests = (profile: JsonBody) => {
+const mockStartupRequests = (profile: JsonBody, status: JsonBody = runningStatus) => {
     profileServed = new Promise((resolve) => {
         vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
             const url = String(input);
@@ -61,7 +61,7 @@ const mockStartupRequests = (profile: JsonBody) => {
                 return jsonResponse(profile);
             }
 
-            return jsonResponse(runningStatus);
+            return jsonResponse(status);
         });
     });
 };
@@ -70,8 +70,8 @@ const mockStartupRequests = (profile: JsonBody) => {
  * Renders the app and waits until the profile has been applied, so that the
  * assertions see the final theme rather than the pre-profile one.
  */
-const renderApp = async (profile: JsonBody) => {
-    mockStartupRequests(profile);
+const renderApp = async (profile: JsonBody, status?: JsonBody) => {
+    mockStartupRequests(profile, status);
 
     window.location.hash = '#/dashboard';
     render(() => <App />);
@@ -119,5 +119,14 @@ describe('App theme effect and the profile', () => {
         // pre-paint script applies it on the next load instead of the stale
         // theme.
         expect(getTheme()).toBe('light');
+    });
+
+    it('loads the profile when the core has stopped', async () => {
+        await renderApp({ name: 'admin', theme: 'light' }, { ...runningStatus, running: false });
+
+        // The menu tells a userless install from a signed-in operator by the
+        // profile, so it must load even though the core never reported running.
+        expect(dashboardState.name).toBe('admin');
+        expect(dashboardState.processingProfile).toBe(false);
     });
 });

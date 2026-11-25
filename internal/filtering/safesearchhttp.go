@@ -27,15 +27,14 @@ func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 	l := d.logger
 
-	req := &SafeSearchConfig{}
-	err := json.NewDecoder(r.Body).Decode(req)
+	conf := &SafeSearchConfig{}
+	err := json.NewDecoder(r.Body).Decode(conf)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "reading req: %s", err)
 
 		return
 	}
 
-	conf := *req
 	err = d.safeSearch.Update(ctx, conf)
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "updating: %s", err)
@@ -47,7 +46,7 @@ func (d *DNSFilter) handleSafeSearchSettings(w http.ResponseWriter, r *http.Requ
 		d.confMu.Lock()
 		defer d.confMu.Unlock()
 
-		d.conf.SafeSearchConf = conf
+		d.conf.SafeSearchConf = *conf
 	}()
 
 	d.conf.ConfModifier.Apply(ctx)

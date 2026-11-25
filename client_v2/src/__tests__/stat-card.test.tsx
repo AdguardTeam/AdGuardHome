@@ -70,7 +70,12 @@ vi.mock('chart.js', () => {
     };
 });
 
-const renderStatCard = () => {
+type RenderStatCardProps = {
+    color?: string;
+    fillColor?: string;
+};
+
+const renderStatCard = ({ color = '#7F7F7F', fillColor }: RenderStatCardProps = {}) => {
     const result = render(() => (
         <HashRouter>
             <Route
@@ -81,7 +86,8 @@ const renderStatCard = () => {
                         label="DNS queries"
                         data={[1, 2, 3]}
                         timeUnits="hours"
-                        color="#7F7F7F"
+                        color={color}
+                        fillColor={fillColor}
                         cardTheme={CARDS_THEME.QUERIES}
                         linkTo={RoutePath.QueryLog}
                     />
@@ -146,6 +152,28 @@ describe('StatCard chart tooltip', () => {
         fireEvent.pointerDown(canvas);
 
         expect(setActiveElements).not.toHaveBeenCalled();
+    });
+
+    it('uses fillColor for the chart area gradient', () => {
+        const { chart } = renderStatCard({
+            color: '#5b5b5b',
+            fillColor: '#7f7f7f',
+        });
+        const dataset = (
+            chart as unknown as {
+                data: { datasets: Array<{ backgroundColor: (context: unknown) => void }> };
+            }
+        ).data.datasets[0];
+        const addColorStop = vi.fn();
+        const createLinearGradient = vi.fn(() => ({ addColorStop }));
+
+        dataset.backgroundColor({
+            chart: { ctx: { createLinearGradient }, height: 60 },
+        });
+
+        expect(createLinearGradient).toHaveBeenCalledWith(0, 0, 0, 60);
+        expect(addColorStop).toHaveBeenNthCalledWith(1, 0, 'rgba(127, 127, 127, 0.3)');
+        expect(addColorStop).toHaveBeenNthCalledWith(2, 1, 'rgba(127, 127, 127, 0)');
     });
 
     it('does not dismiss when no tooltip is visible', () => {
