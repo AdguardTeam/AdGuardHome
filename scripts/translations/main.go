@@ -231,7 +231,10 @@ func (c *twoskyClient) unused(ctx context.Context, l *slog.Logger) (err error) {
 
 // findSourceFiles returns list of source files.  l must not be nil.
 func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fileNames []string, err error) {
-	locDir := filepath.Clean(c.localesDir)
+	locDirs := make([]string, len(c.localesDirs))
+	for i, dir := range c.localesDirs {
+		locDirs[i] = filepath.Clean(dir)
+	}
 
 	walkFn := func(name string, _ os.FileInfo, pErr error) (err error) {
 		if pErr != nil {
@@ -240,8 +243,10 @@ func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fil
 			return nil
 		}
 
-		if strings.HasPrefix(name, locDir) {
-			return nil
+		for _, locDir := range locDirs {
+			if strings.HasPrefix(name, locDir) {
+				return nil
+			}
 		}
 
 		ext := filepath.Ext(name)
@@ -306,9 +311,13 @@ func (c *twoskyClient) autoAdd(ctx context.Context, l *slog.Logger) (err error) 
 		return err
 	}
 
-	basePath := filepath.Join(c.localesDir, defaultBaseFile)
-	if slices.Contains(dels, basePath) {
-		return errors.Error("base locale contains deletions")
+	// Every locales dir holds a copy of the base file, and a deletion in any of
+	// them means Twosky lost base translations, so it must not be restored
+	// silently.
+	for _, dir := range c.localesDirs {
+		if slices.Contains(dels, filepath.Join(dir, defaultBaseFile)) {
+			return errors.Error("base locale contains deletions")
+		}
 	}
 
 	err = handleAdds(ctx, l, cmdCons, adds)

@@ -241,7 +241,8 @@ Optional environment:
 After the download you’ll find the output locales in the configured directories.
 A project with several consumers, such as `hostlists-registry`, lists all of
 them in `metadata.locales_dirs` so that the same translations are downloaded
-into both `client/` and `client_v2/`.
+into both `client/` and `client_v2/`.  `metadata.locales_dir` must be one of
+the listed directories: the other commands read that copy.
 
 Optional environment:
 

@@ -54,6 +54,17 @@ func (t *twoskyConfig) Validate() (err error) {
 		}
 	}
 
+	// The other commands read the single locales_dir, while download writes to
+	// every locales_dirs entry, so a locales_dir outside the list would make
+	// download and the rest disagree about which copy is canonical.
+	if len(t.Metadata.LocalesDirs) > 0 &&
+		!slices.Contains(t.Metadata.LocalesDirs, t.Metadata.LocalesDir) {
+		errs = append(errs, fmt.Errorf(
+			"metadata.locales_dir: %q is not present in metadata.locales_dirs",
+			t.Metadata.LocalesDir,
+		))
+	}
+
 	if len(t.Languages) == 0 {
 		errs = append(errs, fmt.Errorf("languages: %w", errors.ErrEmptyValue))
 	}
