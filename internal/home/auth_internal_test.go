@@ -38,7 +38,7 @@ func TestAuth_UsersList(t *testing.T) {
 	require.Len(t, users, 1)
 
 	user := users[0]
-	assert.Equal(t, user.Name, testUsername)
+	assert.Equal(t, testUsername, user.Name)
 	assert.NoError(
 		t,
 		bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(testPassword)),

@@ -490,9 +490,10 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	}
 
 	var errs []error
+	errs = validate.Append(errs, "clients", config.Clients)
 	errs = validate.Append(errs, "dhcp", config.DHCP)
 	errs = validate.Append(errs, "http", &config.HTTPConfig)
-	errs = validate.Append(errs, "clients", config.Clients)
+	errs = validate.Append(errs, "os", config.OSConfig)
 	errs = validate.Append(errs, "tls", &config.TLS)
 	errs = validate.Append(errs, "users", config.Users)
 	errs = validateTheme(errs, config.Theme)
