@@ -131,6 +131,8 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 			Language: "en",
 			Theme:    "invalid_theme",
 		}))
+
+		dataNullTheme = []byte(`{"language":"en","theme":null}`)
 	)
 
 	testCases := []struct {
@@ -168,6 +170,11 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		name: "invalid_theme",
 		wantBody: `reading req: bad enum value: "invalid_theme", ` +
 			`supported: ["auto" "light" "dark"]` + "\n",
+		wantCode: http.StatusBadRequest,
+	}, {
+		req:      newProfileUpdateRequest(http.MethodPut, dataNullTheme, true),
+		name:     "null_theme",
+		wantBody: "theme: empty value\n",
 		wantCode: http.StatusBadRequest,
 	}}
 

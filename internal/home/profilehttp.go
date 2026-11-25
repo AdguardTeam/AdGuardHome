@@ -34,22 +34,28 @@ func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 		name = string(u.Login)
 	}
 
-	var resp profileJSON
+	var (
+		lang     string
+		themeStr string
+	)
 	func() {
 		config.RLock()
 		defer config.RUnlock()
 
-		theme, err := configmgr.NewTheme(config.Theme)
-		if err != nil {
-			theme = configmgr.ThemeAuto
-		}
-
-		resp = profileJSON{
-			Name:     name,
-			Language: config.Language,
-			Theme:    theme,
-		}
+		lang = config.Language
+		themeStr = config.Theme
 	}()
+
+	theme, err := configmgr.NewTheme(themeStr)
+	if err != nil {
+		theme = configmgr.ThemeAuto
+	}
+
+	resp := profileJSON{
+		Name:     name,
+		Language: lang,
+		Theme:    theme,
+	}
 
 	aghhttp.WriteJSONResponseOK(ctx, web.logger, w, r, resp)
 }
