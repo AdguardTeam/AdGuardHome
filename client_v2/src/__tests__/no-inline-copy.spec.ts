@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
-import en from 'panel/__locales/en.json';
+import { en } from 'panel/__tests__/helpers/copy';
 
 /**
  * Tests must not re-state user-facing copy: `en.json` owns the wording, and a
@@ -12,7 +12,8 @@ import en from 'panel/__locales/en.json';
  *
  * This guard fails on a literal that matches a base-locale value — verbatim, or
  * with its `%placeholder%`s filled in, or as the argument of a query that reads
- * rendered text.
+ * rendered text.  `en` also carries the blocked-services copy, which lives in
+ * its own Twosky project.
  */
 
 /**

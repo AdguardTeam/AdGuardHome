@@ -5,17 +5,18 @@ import servicesEnJson from 'panel/__locales-services/en.json';
 
 /**
  * Flattens the blocked-services locale format (`{ key: { message } }`) to the
- * strings the app exposes through `intl`.
+ * strings the app exposes through `intl`, keeping the keys so `CopyKey` covers
+ * them.
  */
-const flattenServices = (
-    services: Record<string, string | { message: string }>,
-): Record<string, string> =>
+const flattenServices = <T extends Record<string, string | { message: string }>>(
+    services: T,
+): { [K in keyof T]: string } =>
     Object.fromEntries(
         Object.entries(services).map(([key, value]) => [
             key,
             typeof value === 'string' ? value : value.message,
         ]),
-    );
+    ) as { [K in keyof T]: string };
 
 /**
  * The base locale, re-exported so tests can assert a key's copy without a

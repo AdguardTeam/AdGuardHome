@@ -6,7 +6,6 @@ import {
     LOCALE_CODES,
     SERVICES_BASE_LOCALE,
     SERVICES_LOCALE_LOADERS,
-    SERVICE_GROUP_KEYS,
 } from 'panel/common/intl/locales.generated';
 import twosky from 'Twosky';
 
@@ -32,14 +31,6 @@ describe('locales.generated.ts', () => {
 
     it('blocked-services base locale is present and non-empty', () => {
         expect(Object.keys(SERVICES_BASE_LOCALE).length).toBeGreaterThan(0);
-    });
-
-    it('SERVICE_GROUP_KEYS maps every services group to its translation key', () => {
-        const serviceKeys = Object.keys(SERVICES_BASE_LOCALE).filter((key) =>
-            key.startsWith('servicesgroup.'),
-        );
-
-        expect(Object.values(SERVICE_GROUP_KEYS).sort()).toEqual(serviceKeys.sort());
     });
 
     it('LOCALES only contains the base locale (en) initially', () => {

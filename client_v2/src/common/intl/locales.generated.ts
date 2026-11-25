@@ -56,21 +56,6 @@ export const LOCALES: Record<string, LocaleMessage> = {
 
 export const SERVICES_BASE_LOCALE: ServicesMessage = servicesEn;
 
-export const SERVICE_GROUP_KEYS: Record<string, string> = {
-    ai: 'servicesgroup.ai.name',
-    cdn: 'servicesgroup.cdn.name',
-    dating: 'servicesgroup.dating.name',
-    gambling: 'servicesgroup.gambling.name',
-    gaming: 'servicesgroup.gaming.name',
-    hosting: 'servicesgroup.hosting.name',
-    messenger: 'servicesgroup.messenger.name',
-    privacy: 'servicesgroup.privacy.name',
-    shopping: 'servicesgroup.shopping.name',
-    social_network: 'servicesgroup.social_network.name',
-    software: 'servicesgroup.software.name',
-    streaming: 'servicesgroup.streaming.name',
-};
-
 export const SERVICES_LOCALE_LOADERS: Record<string, () => Promise<any>> = {
     ar: () => import(/* webpackChunkName: "services-locale.ar" */ 'panel/__locales-services/ar.json'),
     be: () => import(/* webpackChunkName: "services-locale.be" */ 'panel/__locales-services/be.json'),

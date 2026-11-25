@@ -145,12 +145,9 @@ export const collectTranslationUsageFromSource = (source, filePath) => {
     };
 };
 
-export const auditTranslations = ({ localeMessages, usage, knownUsedKeys = [] }) => {
+export const auditTranslations = ({ localeMessages, usage }) => {
     const localeKeys = Object.keys(localeMessages);
-    const usedStaticKeySet = new Set([
-        ...usage.staticKeys.map((entry) => entry.key),
-        ...knownUsedKeys,
-    ]);
+    const usedStaticKeySet = new Set(usage.staticKeys.map((entry) => entry.key));
     const missingKeys = [...usedStaticKeySet]
         .filter((key) => !Object.hasOwn(localeMessages, key))
         .sort();

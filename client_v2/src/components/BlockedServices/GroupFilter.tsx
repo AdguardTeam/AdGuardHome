@@ -1,7 +1,6 @@
 import { Show, For, type JSX } from 'solid-js';
 import cn from 'clsx';
-import intl from 'panel/common/intl';
-import { SERVICE_GROUP_KEYS } from 'panel/common/intl/locales.generated';
+import { SERVICE_GROUP_MESSAGES } from 'panel/common/intl/services.groups.generated';
 import theme from 'panel/lib/theme';
 
 import s from './BlockedServices.module.pcss';
@@ -18,14 +17,10 @@ type Props = {
 };
 
 /**
- * Returns the localized name of a blocked-service group.  The names are owned
- * by Hostlists Registry and translated in a separate Twosky project.
+ * Returns the localized name of a blocked-service group, falling back to the
+ * raw ID for a group this build has no name for.
  */
-const getGroupName = (id: string): string => {
-    const key = SERVICE_GROUP_KEYS[id];
-
-    return key ? intl.getMessage(key) : id;
-};
+const getGroupName = (id: string): string => SERVICE_GROUP_MESSAGES[id]?.() ?? id;
 
 export const GroupFilter = (props: Props) => {
     return (

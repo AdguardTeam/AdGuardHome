@@ -46,14 +46,7 @@ export const runTranslationAudit = async ({
         };
         const usage = await collectTranslationUsageFromFiles(filePaths);
 
-        // The generated SERVICE_GROUP_KEYS map resolves every blocked-service
-        // group through a variable, so the static analysis cannot see those
-        // keys.  They are all reachable by group ID from the API.
-        const report = auditTranslations({
-            localeMessages,
-            usage,
-            knownUsedKeys: Object.keys(servicesMessages),
-        });
+        const report = auditTranslations({ localeMessages, usage });
 
         write(`${formatAuditReport(report, { rootDir })}\n\n`);
 
