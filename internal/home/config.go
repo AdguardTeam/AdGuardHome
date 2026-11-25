@@ -514,21 +514,20 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	return nil
 }
 
-// validateTheme appends an error to the given errs if the given theme is not
-// valid.
-func validateTheme(errs []error, theme string) (res []error) {
-	res = errs
+// validateTheme appends theme validation errors to orig.
+func validateTheme(orig []error, theme string) (errs []error) {
+	errs = orig
 
 	if theme == "" {
-		return res
+		return errs
 	}
 
 	_, err := configmgr.NewTheme(theme)
 	if err != nil {
-		res = append(res, fmt.Errorf("theme: %w", err))
+		errs = append(errs, fmt.Errorf("theme: %w", err))
 	}
 
-	return res
+	return errs
 }
 
 // validateLanguage validates the specified language and clears it with a
