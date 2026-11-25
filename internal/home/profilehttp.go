@@ -35,26 +35,21 @@ func (web *webAPI) handleGetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		lang     string
-		themeStr string
+		lang  string
+		theme string
 	)
 	func() {
 		config.RLock()
 		defer config.RUnlock()
 
 		lang = config.Language
-		themeStr = config.Theme
+		theme = config.Theme
 	}()
-
-	theme, err := configmgr.NewTheme(themeStr)
-	if err != nil {
-		theme = configmgr.ThemeAuto
-	}
 
 	resp := profileJSON{
 		Name:     name,
 		Language: lang,
-		Theme:    theme,
+		Theme:    configmgr.Theme(theme),
 	}
 
 	aghhttp.WriteJSONResponseOK(ctx, web.logger, w, r, resp)
