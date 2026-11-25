@@ -36,6 +36,8 @@ type DashboardState = {
     clientsInitialized: boolean;
     processingUpdate: boolean;
     processingProfile: boolean;
+    /** The last profile request failed, so the operator is unknown. */
+    profileFailed: boolean;
     protectionEnabled: boolean;
     protectionDisabledDuration: number | null;
     protectionCountdownActive: boolean;
@@ -67,6 +69,7 @@ const initialState: DashboardState = {
     clientsInitialized: false,
     processingUpdate: false,
     processingProfile: true,
+    profileFailed: false,
     protectionEnabled: false,
     protectionDisabledDuration: null,
     protectionCountdownActive: false,
@@ -215,8 +218,6 @@ export const getDnsStatus = async () => {
             });
             getVersion();
             getTlsStatus();
-            // The store wrapper, not the raw API call: it saves name and theme.
-            getProfileData();
         } else {
             // The status is learned even though the core is down, so the retry
             // loop must not keep the page blank while it polls.  The port comes
@@ -438,7 +439,7 @@ const getSupportedTheme = (theme: string | null | undefined): ProfileInfo['theme
         : THEMES.auto;
 
 export const getProfileData = async () => {
-    setState('processingProfile', true);
+    setState({ processingProfile: true, profileFailed: false });
     try {
         const profile: ProfileInfo = await getProfile();
         setState({
@@ -453,7 +454,8 @@ export const getProfileData = async () => {
         });
     } catch (error) {
         addErrorToast({ error });
-        setState('processingProfile', false);
+        // Without the profile the operator is unknown, not signed out.
+        setState({ processingProfile: false, profileFailed: true });
     }
 };
 

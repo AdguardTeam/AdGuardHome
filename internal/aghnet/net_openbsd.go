@@ -17,6 +17,7 @@ import (
 
 func ifaceHasStaticIP(
 	_ context.Context,
+	_ *slog.Logger,
 	_ executil.CommandConstructor,
 	ifaceName string,
 ) (ok bool, err error) {

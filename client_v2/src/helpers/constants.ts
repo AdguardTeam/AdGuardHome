@@ -379,7 +379,7 @@ export const SCHEME_TO_PROTOCOL_MAP = {
     dot: 'dns_over_tls',
     doq: 'dns_over_quic',
     '': 'plain_dns',
-};
+} as const;
 
 export const DNS_REQUEST_OPTIONS = {
     PARALLEL: 'parallel',

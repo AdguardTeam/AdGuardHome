@@ -199,6 +199,48 @@ describe('Textarea — comment highlight', () => {
     });
 });
 
+describe('Textarea — resizable', () => {
+    it('makes the scroll container resizable when asked', () => {
+        const { container } = render(() => (
+            <Textarea
+                value="# comment"
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+                rows={12}
+                resizable
+            />
+        ));
+
+        const scrollArea = container.querySelector('textarea')?.closest('[class*="scrollArea"]');
+        expect(scrollArea?.className).toContain('resizable');
+    });
+
+    it('makes the plain textarea resizable when asked', () => {
+        const { container } = render(() => <Textarea value="text" resizable />);
+
+        expect(container.querySelector('textarea')?.className).toContain('resizable');
+    });
+
+    it('keeps both field variants fixed by default', () => {
+        const { container } = render(() => <Textarea value="text" />);
+        expect(container.querySelector('textarea')?.className).not.toContain('resizable');
+
+        const { container: highlighted } = render(() => (
+            <Textarea
+                value="# comment"
+                highlightComments
+                commentPrefixes={COMMENT_LINE_TOKENS}
+                rows={12}
+            />
+        ));
+
+        const scrollArea = highlighted
+            .querySelector('textarea')
+            ?.closest('[class*="scrollArea"]');
+        expect(scrollArea?.className).not.toContain('resizable');
+    });
+});
+
 describe('Textarea — onCard', () => {
     it('applies the onCard class to the field when set', () => {
         const { container } = render(() => <Textarea value="text" onCard />);

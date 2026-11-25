@@ -4,6 +4,8 @@ import { DAY, HOUR } from 'panel/helpers/constants';
 import { LocalStorageHelper, LOCAL_STORAGE_KEYS } from 'panel/helpers/localStorageHelper';
 import {
     clampStatsPeriod,
+    computePercent,
+    formatPercent,
     getEffectiveStatsPeriod,
     getStoredStatsPeriod,
     resolveStatsPeriod,
@@ -74,6 +76,30 @@ describe('resolveStatsPeriod', () => {
     it('falls back to the stored period when the URL period is invalid', () => {
         storePeriod(DAY * 7);
         expect(resolveStatsPeriod({ period: 'nope' }, DAY * 30)).toBe(DAY * 7);
+    });
+});
+
+describe('computePercent', () => {
+    it('returns the part of the total as a percentage', () => {
+        expect(computePercent(1, 4)).toBe(25);
+    });
+
+    it('returns 0 instead of NaN for an empty total', () => {
+        expect(computePercent(5, 0)).toBe(0);
+    });
+});
+
+describe('formatPercent', () => {
+    it('prints whole numbers for zero and for large shares', () => {
+        expect(formatPercent(0)).toBe('0');
+        expect(formatPercent(10)).toBe('10');
+        expect(formatPercent(99.6)).toBe('100');
+        expect(formatPercent(100)).toBe('100');
+    });
+
+    it('keeps one decimal for small non-zero shares', () => {
+        expect(formatPercent(8.5)).toBe('8.5');
+        expect(formatPercent(9.99)).toBe('10.0');
     });
 });
 

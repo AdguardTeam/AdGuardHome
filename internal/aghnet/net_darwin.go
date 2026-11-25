@@ -14,11 +14,16 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/ioutil"
+	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // networkSetupCmd is the command to configure network settings.
 const networkSetupCmd = "networksetup"
+
+// stderrPeekSize is the maximum number of bytes to read from the stderr of a
+// failing command.
+const stderrPeekSize = 1024
 
 // hardwarePortInfo contains information about the current state of the internet
 // connection obtained from macOS networksetup.
@@ -31,13 +36,14 @@ type hardwarePortInfo struct {
 }
 
 // ifaceHasStaticIP reports whether ifaceName is configured with a static IP.
-// cmdCons must not be nil.
+// l and cmdCons must not be nil.
 func ifaceHasStaticIP(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (ok bool, err error) {
-	portInfo, err := getCurrentHardwarePortInfo(ctx, cmdCons, ifaceName)
+	portInfo, err := currentHardwarePortInfo(ctx, l, cmdCons, ifaceName)
 	if err != nil {
 		return false, err
 	}
@@ -45,46 +51,56 @@ func ifaceHasStaticIP(
 	return portInfo.static, nil
 }
 
-// getCurrentHardwarePortInfo returns information for the specified network
-// interface.  cmdCons must not be nil.
-func getCurrentHardwarePortInfo(
+// currentHardwarePortInfo returns information for the specified network
+// interface.  l and cmdCons must not be nil.
+func currentHardwarePortInfo(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
-) (hardwarePortInfo, error) {
-	// First, find the hardware port name.
-	m := getNetworkSetupHardwareReports(ctx, cmdCons)
+) (i hardwarePortInfo, err error) {
+	m := networkSetupHardwareReports(ctx, l, cmdCons)
 	hardwarePort, ok := m[ifaceName]
 	if !ok {
 		return hardwarePortInfo{}, fmt.Errorf("could not find hardware port for %s", ifaceName)
 	}
 
-	return getHardwarePortInfo(ctx, cmdCons, hardwarePort)
+	return newHardwarePortInfo(ctx, cmdCons, hardwarePort)
 }
 
 // hardwareReportsReg is the regular expression matching the lines of
 // networksetup command output lines containing the interface information.
 var hardwareReportsReg = regexp.MustCompile("Hardware Port: (.*?)\nDevice: (.*?)\n")
 
-// getNetworkSetupHardwareReports returns a map of interface names to hardware
-// port names.  It returns nil if parsing fails.  cmdCons must not be nil.
+// networkSetupHardwareReports returns a map of interface names to hardware port
+// names.  It returns nil if parsing fails.  l and cmdCons must not be nil.
 //
 // TODO(e.burkov):  There should be more proper approach than parsing the
 // command output.  For example, see
 // https://developer.apple.com/documentation/systemconfiguration.
-func getNetworkSetupHardwareReports(
+func networkSetupHardwareReports(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 ) (reports map[string]string) {
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	// TODO(a.garipov):  Consider a version of executil.RunWithPeek with
+	// different limits for stderr and stdout.
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 	err := executil.Run(ctx, cmdCons, &executil.CommandConfig{
-		Stderr: &stderr,
-		Stdout: ioutil.NewTruncatedWriter(&stdout, aghos.MaxCmdOutputSize),
+		Stderr: ioutil.NewTruncatedWriter(stderr, stderrPeekSize),
+		Stdout: ioutil.NewTruncatedWriter(stdout, aghos.MaxCmdOutputSize),
 		Path:   networkSetupCmd,
 		Args:   []string{"-listallhardwareports"},
 	})
 	if err != nil {
+		l.WarnContext(
+			ctx,
+			"getting network setup",
+			"stderr_peek", stderr,
+			slogutil.KeyError, err,
+		)
+
 		return nil
 	}
 
@@ -102,23 +118,23 @@ func getNetworkSetupHardwareReports(
 // command output lines containing the port information.
 var hardwarePortReg = regexp.MustCompile("IP address: (.*?)\nSubnet mask: (.*?)\nRouter: (.*?)\n")
 
-// getHardwarePortInfo returns IP, subnet, gateway, and static/dynamic status
+// newHardwarePortInfo returns IP, subnet, gateway, and static/dynamic status
 // for the given hardware port.  cmdCons must not be nil.
-func getHardwarePortInfo(
+func newHardwarePortInfo(
 	ctx context.Context,
 	cmdCons executil.CommandConstructor,
 	hardwarePort string,
 ) (h hardwarePortInfo, err error) {
-	stdout := bytes.Buffer{}
-	stderr := bytes.Buffer{}
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 	err = executil.Run(ctx, cmdCons, &executil.CommandConfig{
-		Stderr: &stderr,
-		Stdout: ioutil.NewTruncatedWriter(&stdout, aghos.MaxCmdOutputSize),
+		Stderr: ioutil.NewTruncatedWriter(stderr, stderrPeekSize),
+		Stdout: ioutil.NewTruncatedWriter(stdout, aghos.MaxCmdOutputSize),
 		Path:   networkSetupCmd,
 		Args:   []string{"-getinfo", hardwarePort},
 	})
 	if err != nil {
-		return h, err
+		return h, fmt.Errorf("%w; stderr peek: %q", err, stderr)
 	}
 
 	out := stdout.Bytes()
@@ -136,14 +152,15 @@ func getHardwarePortInfo(
 	}, nil
 }
 
-// ifaceSetStaticIP sets a static IP on ifaceName.  cmdCons must not be nil.
+// ifaceSetStaticIP sets a static IP on ifaceName.  l and cmdCons must not be
+// nil.
 func ifaceSetStaticIP(
 	ctx context.Context,
-	_ *slog.Logger,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (err error) {
-	portInfo, err := getCurrentHardwarePortInfo(ctx, cmdCons, ifaceName)
+	portInfo, err := currentHardwarePortInfo(ctx, l, cmdCons, ifaceName)
 	if err != nil {
 		return err
 	}
@@ -152,7 +169,7 @@ func ifaceSetStaticIP(
 		return errors.Error("ip address is already static")
 	}
 
-	dnsAddrs, err := getEtcResolvConfServers()
+	dnsAddrs, err := etcResolvConfServers()
 	if err != nil {
 		return err
 	}
@@ -162,7 +179,7 @@ func ifaceSetStaticIP(
 	// Setting DNS servers is necessary when configuring a static IP.
 	err = executil.RunWithPeek(ctx, cmdCons, aghos.MaxCmdOutputSize, networkSetupCmd, args...)
 	if err != nil {
-		return fmt.Errorf("networksetup failed to set dns servers: %w", err)
+		return fmt.Errorf("setting dns service with networksetup: %w", err)
 	}
 
 	// Actually configures hardware port to have static IP.
@@ -178,7 +195,7 @@ func ifaceSetStaticIP(
 		portInfo.gatewayIP,
 	)
 	if err != nil {
-		return fmt.Errorf("networksetup failed to configure dns servers: %w", err)
+		return fmt.Errorf("configuring static ip with networksetup: %w", err)
 	}
 
 	return nil
@@ -188,9 +205,8 @@ func ifaceSetStaticIP(
 // file containing a name server information.
 var etcResolvConfReg = regexp.MustCompile("nameserver ([a-zA-Z0-9.:]+)")
 
-// getEtcResolvConfServers returns a list of nameservers configured in
-// /etc/resolv.conf.
-func getEtcResolvConfServers() (addrs []string, err error) {
+// etcResolvConfServers returns the nameservers configured in /etc/resolv.conf.
+func etcResolvConfServers() (addrs []string, err error) {
 	const filename = "etc/resolv.conf"
 
 	_, err = aghos.FileWalker(func(r io.Reader) (_ []string, _ bool, err error) {

@@ -12,8 +12,10 @@ const mocks = vi.hoisted(() => ({
         language: 'en',
         theme: undefined as string | undefined,
         protectionEnabled: false,
+        profileFailed: false,
     },
     getDnsStatus: vi.fn(),
+    getProfileData: vi.fn(),
     getTimerStatus: vi.fn(),
     stopStatusChecks: vi.fn(),
 }));
@@ -21,6 +23,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('panel/stores/dashboard', () => ({
     dashboardState: mocks.state,
     getDnsStatus: mocks.getDnsStatus,
+    getProfileData: mocks.getProfileData,
     getTimerStatus: mocks.getTimerStatus,
     stopStatusChecks: mocks.stopStatusChecks,
 }));
@@ -57,6 +60,7 @@ describe('App status screens', () => {
         mocks.state.statusFailed = false;
         mocks.state.isCoreRunning = true;
         mocks.state.dnsPort = 53;
+        mocks.state.profileFailed = false;
     });
 
     it('explains a failed bootstrap and hides the route body', async () => {
@@ -115,6 +119,33 @@ describe('App status screens', () => {
         fireEvent.click(button);
 
         expect(mocks.getDnsStatus).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries the failed profile from the button', async () => {
+        mocks.state.statusFailed = true;
+        mocks.state.profileFailed = true;
+
+        renderApp();
+
+        const button = await screen.findByRole('button', { name: copy('try_again') });
+        mocks.getProfileData.mockClear();
+        mocks.getDnsStatus.mockClear();
+
+        fireEvent.click(button);
+
+        expect(mocks.getProfileData).toHaveBeenCalledTimes(1);
+        expect(mocks.getDnsStatus).toHaveBeenCalledTimes(1);
+    });
+
+    it('retries the failed profile when the tab becomes visible', async () => {
+        mocks.state.profileFailed = true;
+
+        renderApp();
+        mocks.getProfileData.mockClear();
+
+        document.dispatchEvent(new Event('visibilitychange'));
+
+        expect(mocks.getProfileData).toHaveBeenCalledTimes(1);
     });
 
     it('runs the full status check when the tab becomes visible after a failure', async () => {

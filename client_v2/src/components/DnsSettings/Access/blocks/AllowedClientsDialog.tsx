@@ -46,9 +46,11 @@ export const AllowedClientsDialog = (props: Props) => {
             }
             onClose={props.onClose}
             onSubmit={() => {
-                field.submitIfValid((v) => {
-                    setAccessList({ allowed_clients: v });
-                    untrack(() => props.onClose());
+                field.submitIfValid(async (v) => {
+                    // Closing on a failed save would discard the edit.
+                    if (await setAccessList({ allowed_clients: v })) {
+                        untrack(() => props.onClose());
+                    }
                 });
             }}
             processing={props.processing}

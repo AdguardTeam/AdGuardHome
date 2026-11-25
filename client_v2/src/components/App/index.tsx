@@ -24,6 +24,7 @@ import { THEMES } from '../../helpers/constants';
 import { getTheme, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
 import {
     getDnsStatus,
+    getProfileData,
     getTimerStatus,
     dashboardState,
     stopStatusChecks,
@@ -59,13 +60,31 @@ const ProtectionRoute = () => <Protection />;
 const AddClientRoute = () => <AddClient />;
 
 const App = () => {
+    // A failed profile request has no other retry path, and the operator's
+    // theme and profile edits depend on it.
+    const retryFailedProfile = () => {
+        if (dashboardState.profileFailed) {
+            getProfileData();
+        }
+    };
+
+    const handleStatusRetry = () => {
+        retryFailedProfile();
+        getDnsStatus();
+    };
+
     onMount(() => {
         getDnsStatus();
+        // The profile is an HTTP endpoint that works while the core is stopped,
+        // so load it here; `retryFailedProfile` refetches it after a failure.
+        // The menu reads it to hide the logout link on a userless install.
+        getProfileData();
 
         const handleVisibilityChange = () => {
             if (document.visibilityState !== 'visible') {
                 return;
             }
+            retryFailedProfile();
             // A failed bootstrap or a stopped core left the store without a
             // usable status, so only the full check can restore the page.
             if (dashboardState.statusFailed || !dashboardState.isCoreRunning) {
@@ -156,7 +175,7 @@ const App = () => {
                                 <StatusError
                                     message={intl.getMessage('dns_status_error_short')}
                                     processing={dashboardState.processing}
-                                    onRetry={() => getDnsStatus()}
+                                    onRetry={handleStatusRetry}
                                 />
                             </Show>
                         </Show>

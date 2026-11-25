@@ -15,6 +15,7 @@ import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Pat
 
 import { withAlpha } from 'panel/helpers/colors';
 import { formatNumber } from 'panel/helpers/helpers';
+import { formatPercent } from 'panel/helpers/statistics';
 import {
     useChart,
     createCursorLinePlugin,
@@ -156,7 +157,7 @@ export const StatCard = (props: StatCardProps) => {
     }));
 
     const percent = () => props.percentValue ?? 0;
-    const percentText = () => `${percent().toFixed(0)}%`;
+    const percentText = () => `${formatPercent(percent())}%`;
 
     const { setCanvasRef, hideTooltip } = untrack(() =>
         useChart(chartData, chartOptions, [cursorLinePlugin]),

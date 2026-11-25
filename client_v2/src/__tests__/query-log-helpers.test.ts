@@ -4,12 +4,14 @@ import intl from 'panel/common/intl';
 import { FILTERED_STATUS, SPECIAL_FILTER_ID } from '../helpers/constants';
 import {
     filterLogsByStatus,
+    getProtocolName,
     getQueryReasonLabel,
     getQueryReasonDetails,
     getQueryReasonKey,
     getQueryStatusLabel,
     getQueryStatusKey,
 } from '../components/QueryLog/helpers';
+import { copy } from './helpers/copy';
 
 afterEach(() => {
     vi.restoreAllMocks();
@@ -108,6 +110,20 @@ describe('query log label helpers', () => {
         expect(getMessageSpy).toHaveBeenNthCalledWith(7, 'dns_rewrites');
         expect(getMessageSpy).toHaveBeenNthCalledWith(8, 'allowlists');
         expect(getMessageSpy).toHaveBeenNthCalledWith(9, 'error');
+    });
+});
+
+describe('getProtocolName', () => {
+    test('maps every supported scheme to its label', () => {
+        expect(getProtocolName('doh')).toBe(copy('dns_over_https'));
+        expect(getProtocolName('dot')).toBe(copy('dns_over_tls'));
+        expect(getProtocolName('doq')).toBe(copy('dns_over_quic'));
+        expect(getProtocolName('dnscrypt')).toBe(copy('dnscrypt'));
+    });
+
+    test('falls back to plain DNS for an empty or unknown scheme', () => {
+        expect(getProtocolName('')).toBe(copy('plain_dns'));
+        expect(getProtocolName('sip')).toBe(copy('plain_dns'));
     });
 });
 

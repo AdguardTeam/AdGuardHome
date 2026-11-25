@@ -26,7 +26,7 @@ const initialState: AccessState = {
 
 const [state, setState] = createStore<AccessState>(initialState);
 
-export const getAccessList = async () => {
+export const getAccessList = async (): Promise<boolean> => {
     setState('processing', true);
     try {
         const data = await accessList();
@@ -37,9 +37,11 @@ export const getAccessList = async () => {
             processing: false,
             initialized: true,
         });
+        return true;
     } catch (error) {
         addErrorToast({ error });
         setState({ processing: false, initialized: true });
+        return false;
     }
 };
 
@@ -47,30 +49,42 @@ export const setAccessList = async (values: {
     allowed_clients?: string;
     disallowed_clients?: string;
     blocked_hosts?: string;
-}) => {
+}): Promise<boolean> => {
     setState('processingSet', true);
     try {
+        // The backend replaces all three lists on every save, so an omitted
+        // field must keep its current value.  Read it from the server: the
+        // store can be empty after a failed initial read.
+        const current = await accessList();
+        const allowedClients =
+            values.allowed_clients ?? (current.allowed_clients ?? []).join('\n');
+        const disallowedClients =
+            values.disallowed_clients ?? (current.disallowed_clients ?? []).join('\n');
+        const blockedHosts = values.blocked_hosts ?? (current.blocked_hosts ?? []).join('\n');
+
+        const allowed = splitByNewLine(allowedClients);
+        const disallowed = splitByNewLine(disallowedClients);
+        const blocked = splitByNewLine(blockedHosts);
+
         const config: AccessList = {
-            allowed_clients:
-                values.allowed_clients !== undefined
-                    ? splitByNewLine(values.allowed_clients)
-                    : undefined,
-            disallowed_clients:
-                values.disallowed_clients !== undefined
-                    ? splitByNewLine(values.disallowed_clients)
-                    : undefined,
-            blocked_hosts:
-                values.blocked_hosts !== undefined
-                    ? splitByNewLine(values.blocked_hosts)
-                    : undefined,
+            allowed_clients: allowed,
+            disallowed_clients: disallowed,
+            blocked_hosts: blocked,
         };
 
         await accessSet(config);
-        setState({ ...values, processingSet: false });
+        setState({
+            allowed_clients: allowed.join('\n'),
+            disallowed_clients: disallowed.join('\n'),
+            blocked_hosts: blocked.join('\n'),
+            processingSet: false,
+        });
         addSuccessToast(intl.getMessage('settings_notify_changes_saved'));
+        return true;
     } catch (error) {
         addErrorToast({ error });
         setState('processingSet', false);
+        return false;
     }
 };
 

@@ -85,7 +85,7 @@ describe('Dashboard general statistics row tooltips', () => {
         expect(dnsRow.querySelector('[class*="queryBar"]')).not.toBeNull();
 
         const blockedRow = rowTrigger(copy('ads_blocked'));
-        expect(within(blockedRow).getByText('(25.0%)')).toBeInTheDocument();
+        expect(within(blockedRow).getByText('(25%)')).toBeInTheDocument();
     });
 
     it('opens the description when hovering the value area of a row', async () => {

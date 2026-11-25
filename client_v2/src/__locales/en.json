@@ -336,6 +336,7 @@
   "dns_upstream_timeout": "Upstream timeout",
   "dns_upstream_timeout_desc": "Sets how long to wait for a response from upstream servers",
   "dns_upstream_timeout_placeholder": "Enter timeout in seconds",
+  "dnscrypt": "DNSCrypt",
   "domain": "Domain",
   "domain_or_client": "Domain or client",
   "download_mobileconfig": "Download configuration file",

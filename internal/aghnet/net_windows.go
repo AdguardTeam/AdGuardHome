@@ -21,6 +21,7 @@ func canBindPrivilegedPorts(_ context.Context, _ *slog.Logger) (can bool, err er
 
 func ifaceHasStaticIP(
 	_ context.Context,
+	_ *slog.Logger,
 	_ executil.CommandConstructor,
 	_ string,
 ) (ok bool, err error) {

@@ -1,7 +1,7 @@
 import { createMemo, Show } from 'solid-js';
 import cn from 'clsx';
 
-import { accessState } from 'panel/stores/access';
+import { accessState, getAccessList } from 'panel/stores/access';
 import intl from 'panel/common/intl';
 import { SettingRow } from 'panel/common/ui/SettingRow';
 import { useDialog } from 'panel/hooks/useDialog';
@@ -24,6 +24,15 @@ export const Access = () => {
     const disallowedClientsValue = createMemo(() => getListSummary(accessState.disallowed_clients));
     const disallowedDomainsValue = createMemo(() => getListSummary(accessState.blocked_hosts));
 
+    // A failed initial read still marks the store initialised, so seed the
+    // editor from the server: saving an editor opened with empty lists would
+    // replace the server's list with its contents.
+    const openAccessDialog = async (openDialog: () => void) => {
+        if (await getAccessList()) {
+            openDialog();
+        }
+    };
+
     return (
         <div>
             <h2 class={cn(theme.layout.subtitle, theme.title.h5, theme.title.h4_tablet)}>
@@ -36,7 +45,8 @@ export const Access = () => {
                 title={intl.getMessage('dns_allowed_clients')}
                 description={intl.getMessage('dns_allowed_clients_desc')}
                 value={allowedClientsValue()}
-                onClick={allowedDialog.openDialog}
+                disabled={accessState.processing}
+                onClick={() => void openAccessDialog(allowedDialog.openDialog)}
             />
 
             <SettingRow
@@ -54,8 +64,8 @@ export const Access = () => {
                     </>
                 }
                 value={disallowedClientsValue()}
-                disabled={allowedClientsOn()}
-                onClick={disallowedClientsDialog.openDialog}
+                disabled={accessState.processing || allowedClientsOn()}
+                onClick={() => void openAccessDialog(disallowedClientsDialog.openDialog)}
             />
 
             <SettingRow
@@ -64,7 +74,8 @@ export const Access = () => {
                 title={intl.getMessage('dns_disallowed_domains')}
                 description={intl.getMessage('dns_disallowed_domains_desc')}
                 value={disallowedDomainsValue()}
-                onClick={disallowedDomainsDialog.openDialog}
+                disabled={accessState.processing}
+                onClick={() => void openAccessDialog(disallowedDomainsDialog.openDialog)}
             />
 
             <AllowedClientsDialog

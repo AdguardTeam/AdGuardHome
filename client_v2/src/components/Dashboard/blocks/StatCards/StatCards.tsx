@@ -3,6 +3,7 @@ import { createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { QUERY_LOG_REASON_FILTER, QUERY_LOG_STATUS_FILTER } from 'panel/helpers/constants';
+import { computePercent } from 'panel/helpers/statistics';
 import { useIsDarkTheme } from 'panel/hooks/useTheme';
 
 import s from '../StatCard/StatCard.module.pcss';
@@ -48,12 +49,10 @@ export const StatCards = (props: Props) => {
 
     const colors = createMemo(() => (isDark() ? CHART_COLORS.dark : CHART_COLORS.light));
 
-    const blockedPercent = () =>
-        props.numDnsQueries > 0 ? (props.numBlockedFiltering / props.numDnsQueries) * 100 : 0;
+    const blockedPercent = () => computePercent(props.numBlockedFiltering, props.numDnsQueries);
     const threatsPercent = () =>
-        props.numDnsQueries > 0 ? (props.numReplacedSafebrowsing / props.numDnsQueries) * 100 : 0;
-    const parentalPercent = () =>
-        props.numDnsQueries > 0 ? (props.numReplacedParental / props.numDnsQueries) * 100 : 0;
+        computePercent(props.numReplacedSafebrowsing, props.numDnsQueries);
+    const parentalPercent = () => computePercent(props.numReplacedParental, props.numDnsQueries);
 
     return (
         <div class={s.statsCards}>

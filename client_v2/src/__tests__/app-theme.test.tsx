@@ -18,6 +18,7 @@ vi.mock('panel/stores/dashboard', () => ({
         protectionEnabled: false,
     },
     getDnsStatus: vi.fn(),
+    getProfileData: vi.fn(),
     getTimerStatus: vi.fn(),
     stopStatusChecks: vi.fn(),
 }));

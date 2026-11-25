@@ -38,6 +38,8 @@ type Props = Omit<
     isClearable?: boolean;
     /** Called after the field has been emptied via the clear button. */
     onClear?: () => void;
+    /** Lets the operator drag the field taller. */
+    resizable?: boolean;
     'data-testid'?: string;
 };
 
@@ -129,6 +131,7 @@ export const Textarea = (props: Props) => {
                                 { [s.error]: !!props.errorMessage },
                                 { [s.clearable]: showClearButton() },
                                 { [s.onCard]: props.onCard },
+                                { [s.resizable]: props.resizable },
                                 props.class,
                             )}
                             id={props.id}
@@ -158,6 +161,7 @@ export const Textarea = (props: Props) => {
                                 [s.error]: !!props.errorMessage,
                                 [s.onCard]: props.onCard,
                                 [s.bounded]: isBoundedBySize(),
+                                [s.resizable]: props.resizable,
                             },
                         )}
                         style={scrollAreaStyle()}

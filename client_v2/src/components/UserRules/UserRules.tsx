@@ -146,7 +146,7 @@ export const UserRules = () => {
 
     return (
         <Show when={!isInitialLoading()} fallback={<PageLoader />}>
-            <div class={theme.layout.container}>
+            <div class={cn(theme.layout.container, theme.layout.container_full)}>
                 <div class={s.container}>
                     <div class={s.wrapper}>
                         <h1 class={cn(theme.title.h4, theme.title.h3_tablet, s.pageTitle)}>

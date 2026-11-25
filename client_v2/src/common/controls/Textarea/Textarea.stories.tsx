@@ -51,6 +51,7 @@ const meta = {
         onCard: { control: 'boolean' },
         isClearable: { control: 'boolean' },
         highlightComments: { control: 'boolean' },
+        resizable: { control: 'boolean' },
         commentPrefixes: { control: false },
         class: { control: false },
         onChange: { action: 'changed' },
@@ -140,5 +141,15 @@ export const WithRows: Story = {
         highlightComments: true,
         commentPrefixes: COMMENT_LINE_TOKENS,
         value: rulesValue,
+    },
+};
+
+export const Resizable: Story = {
+    args: {
+        rows: 12,
+        highlightComments: true,
+        commentPrefixes: COMMENT_LINE_TOKENS,
+        value: rulesValue,
+        resizable: true,
     },
 };

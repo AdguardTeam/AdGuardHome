@@ -3,7 +3,7 @@ import cn from 'clsx';
 
 import theme from 'panel/lib/theme';
 import { formatCompactNumber } from 'panel/helpers/helpers';
-import { computePercent } from 'panel/helpers/statistics';
+import { computePercent, formatPercent } from 'panel/helpers/statistics';
 
 import s from './CountWithPercent.module.pcss';
 
@@ -16,11 +16,9 @@ type Props = {
 };
 
 export const CountWithPercent = (props: Props) => {
-    // Integer percent for large shares (>= 10% or 0), one decimal for small ones.
-    const percentText = createMemo(() => {
-        const percent = computePercent(props.count, props.total);
-        return percent >= 10 || percent === 0 ? String(Math.round(percent)) : percent.toFixed(1);
-    });
+    const percentText = createMemo(() =>
+        formatPercent(computePercent(props.count, props.total)),
+    );
 
     return (
         <span
