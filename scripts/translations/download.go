@@ -55,11 +55,9 @@ func (c *twoskyClient) download(ctx context.Context, l *slog.Logger) {
 		for _, lang := range c.langs {
 			uri := translationURL(downloadURI, file, c.projectID, lang)
 
-			for _, dir := range c.localesDirs {
-				reqCh <- downloadRequest{
-					uri: uri,
-					dir: dir,
-				}
+			reqCh <- downloadRequest{
+				uri:  uri,
+				dirs: c.localesDirs,
 			}
 		}
 	}
@@ -116,11 +114,11 @@ type downloadWorker struct {
 	reqCh  <-chan downloadRequest
 }
 
-// downloadRequest is a request to download a translation.  All fields must not
-// be empty.
+// downloadRequest is a request to download a translation and save it to every
+// directory in dirs.  All fields must not be empty.
 type downloadRequest struct {
-	uri *url.URL
-	dir string
+	uri  *url.URL
+	dirs []string
 }
 
 // run handles the channel of URLs, one by one.  It returns when the channel is
@@ -130,7 +128,7 @@ func (w *downloadWorker) run() {
 		q := req.uri.Query()
 		code := q.Get("language")
 
-		err := saveToFile(w.ctx, w.l, w.client, req.uri, code, req.dir)
+		err := saveToFile(w.ctx, w.l, w.client, req.uri, code, req.dirs)
 		if err != nil {
 			w.l.ErrorContext(w.ctx, "download worker", slogutil.KeyError, err)
 			w.failed.Store(code, struct{}{})
@@ -138,15 +136,16 @@ func (w *downloadWorker) run() {
 	}
 }
 
-// saveToFile downloads translation by url and saves it to a file, or returns
-// error.
+// saveToFile downloads translation by url and saves it to a file in every
+// directory in localesDirs, or returns error.  The translation is fetched and
+// encoded once, so that the copies stay identical.
 func saveToFile(
 	ctx context.Context,
 	l *slog.Logger,
 	client *http.Client,
 	uri *url.URL,
 	code string,
-	localesDir string,
+	localesDirs []string,
 ) (err error) {
 	data, err := getTranslation(ctx, l, client, uri.String())
 	if err != nil {
@@ -163,15 +162,20 @@ func saveToFile(
 		return fmt.Errorf("encoding translation %q: %w", code, err)
 	}
 
-	name := filepath.Join(localesDir, code+".json")
-	err = os.WriteFile(name, buf.Bytes(), 0o664)
-	if err != nil {
-		return fmt.Errorf("writing file: %w", err)
+	var errs []error
+	for _, localesDir := range localesDirs {
+		name := filepath.Join(localesDir, code+".json")
+		wErr := os.WriteFile(name, buf.Bytes(), 0o664)
+		if wErr != nil {
+			errs = append(errs, fmt.Errorf("writing %q: %w", name, wErr))
+
+			continue
+		}
+
+		fmt.Println(name)
 	}
 
-	fmt.Println(name)
-
-	return nil
+	return errors.Join(errs...)
 }
 
 // getTranslation returns received translation data and error.  If err is not

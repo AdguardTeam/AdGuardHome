@@ -242,7 +242,10 @@ After the download you’ll find the output locales in the configured directorie
 A project with several consumers, such as `hostlists-registry`, lists all of
 them in `metadata.locales_dirs` so that the same translations are downloaded
 into both `client/` and `client_v2/`.  `metadata.locales_dir` must be one of
-the listed directories: the other commands read that copy.
+the listed directories: the other commands read that copy.  Every directory
+receives every language of the project, which a consumer may not use:
+`hostlists-registry` has 36 languages, while `client_v2` bundles 35, so
+`client_v2/src/__locales-services/zh-hk.json` is downloaded and unused.
 
 Optional environment:
 
