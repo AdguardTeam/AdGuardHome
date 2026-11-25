@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil"
+	"github.com/c2h5oh/datasize"
 )
 
 // Service is the AdGuard Home DNS service.  A nil *Service is a valid
@@ -79,7 +80,7 @@ func New(c *Config) (svc *Service, err error) {
 		proxyConf: &proxy.Config{
 			UpstreamMode:   c.UpstreamMode,
 			DNS64Prefs:     c.DNS64Prefixes,
-			CacheSizeBytes: c.CacheSize,
+			CacheSizeBytes: datasize.ByteSize(c.CacheSize),
 			CacheEnabled:   c.CacheEnabled,
 			RefuseAny:      c.RefuseAny,
 			DNSSECEnabled:  c.DNSSECEnabled,
@@ -281,7 +282,7 @@ func (svc *Service) Config() (c *Config) {
 		UpstreamServers:     svc.upstreams,
 		DNS64Prefixes:       svc.proxyConf.DNS64Prefs,
 		UpstreamTimeout:     svc.upstreamTimeout,
-		CacheSize:           svc.proxyConf.CacheSizeBytes,
+		CacheSize:           int(svc.proxyConf.CacheSizeBytes),
 		BootstrapPreferIPv6: svc.bootstrapPreferIPv6,
 		CacheEnabled:        svc.proxyConf.CacheEnabled,
 		RefuseAny:           svc.proxyConf.RefuseAny,

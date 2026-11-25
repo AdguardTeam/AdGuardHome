@@ -4,7 +4,8 @@ go 1.27.4
 
 require (
 	github.com/AdguardTeam/dnscrypt v0.0.3
-	github.com/AdguardTeam/dnsproxy v0.86.0
+	// TODO(f.setrakov): !! Upd to tag.
+	github.com/AdguardTeam/dnsproxy v0.86.1-0.20261123110454-35bea3fc786d
 	github.com/AdguardTeam/golibs v0.35.20
 	github.com/AdguardTeam/urlfilter v0.23.4
 	github.com/NYTimes/gziphandler v1.1.1
@@ -76,7 +77,7 @@ require (
 	github.com/kisielk/errcheck v1.30.0 // indirect
 	github.com/mdlayher/socket v0.8.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/openai/openai-go/v3 v3.98.0 // indirect
+	github.com/openai/openai-go/v3 v3.99.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pb33f/go-yaml v0.1.1 // indirect
 	github.com/pb33f/ordered-map/v2 v2.3.2 // indirect
@@ -103,7 +104,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/exp v0.0.0-20261119141654-b15d094f3610 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20261109185158-a52e3aef5920 // indirect
+	golang.org/x/exp/typeparams v0.0.0-20261112173441-d10d3b464990 // indirect
 	golang.org/x/mod v0.43.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/telemetry v0.0.0-20261116191925-e77a43154acb // indirect
@@ -112,7 +113,7 @@ require (
 	golang.org/x/tools v0.53.0 // indirect
 	golang.org/x/vuln v1.9.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/api v0.312.0 // indirect
+	google.golang.org/api v0.314.0 // indirect
 	google.golang.org/genai v1.77.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261110000943-09e21b237f2c // indirect
 	google.golang.org/grpc v1.85.0 // indirect

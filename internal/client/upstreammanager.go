@@ -14,6 +14,7 @@ import (
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
+	"github.com/c2h5oh/datasize"
 )
 
 // CommonUpstreamConfig contains common settings for custom client upstream
@@ -235,7 +236,7 @@ func newCustomUpstreamConfig(
 	return proxy.NewCustomUpstreamConfig(
 		upsConf,
 		cliConf.upstreamsCacheEnabled,
-		int(cliConf.upstreamsCacheSize),
+		datasize.ByteSize(cliConf.upstreamsCacheSize),
 		conf.EDNSClientSubnetEnabled,
 	)
 }

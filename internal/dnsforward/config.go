@@ -28,6 +28,7 @@ import (
 	"github.com/AdguardTeam/golibs/stringutil"
 	"github.com/AdguardTeam/golibs/timeutil"
 	"github.com/AdguardTeam/golibs/validate"
+	"github.com/c2h5oh/datasize"
 )
 
 // Config represents the DNS filtering configuration of AdGuard Home.  The zero
@@ -431,14 +432,13 @@ func prepareCacheConfig(
 	maxTTL uint32,
 ) (prepared *proxy.Config, err error) {
 	if isEnabled {
-		cacheSize := int(size)
-		err = validate.Positive("cache_size", cacheSize)
+		err = validate.Positive("cache_size", size)
 		if err != nil {
 			return nil, fmt.Errorf("cache_enabled is true: %w", err)
 		}
 
 		conf.CacheEnabled = true
-		conf.CacheSizeBytes = cacheSize
+		conf.CacheSizeBytes = datasize.ByteSize(size)
 	}
 
 	err = validateCacheTTL(minTTL, maxTTL)
