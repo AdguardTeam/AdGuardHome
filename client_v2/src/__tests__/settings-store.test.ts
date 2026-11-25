@@ -5,11 +5,9 @@ const { mocks, capturedUndo } = vi.hoisted(() => {
 
     const mocks = {
         safebrowsingStatus: vi.fn(),
-        safebrowsingEnable: vi.fn(),
-        safebrowsingDisable: vi.fn(),
+        safebrowsingSettings: vi.fn(),
         parentalStatus: vi.fn(),
-        parentalEnable: vi.fn(),
-        parentalDisable: vi.fn(),
+        parentalSettings: vi.fn(),
         safesearchStatus: vi.fn(),
         safesearchSettings: vi.fn(),
         testUpstreamDNS: vi.fn(),
@@ -28,11 +26,9 @@ const { mocks, capturedUndo } = vi.hoisted(() => {
 
 vi.mock('panel/api/generated', () => ({
     safebrowsingStatus: mocks.safebrowsingStatus,
-    safebrowsingEnable: mocks.safebrowsingEnable,
-    safebrowsingDisable: mocks.safebrowsingDisable,
+    safebrowsingSettings: mocks.safebrowsingSettings,
     parentalStatus: mocks.parentalStatus,
-    parentalEnable: mocks.parentalEnable,
-    parentalDisable: mocks.parentalDisable,
+    parentalSettings: mocks.parentalSettings,
     safesearchStatus: mocks.safesearchStatus,
     safesearchSettings: mocks.safesearchSettings,
     testUpstreamDNS: mocks.testUpstreamDNS,
@@ -80,10 +76,6 @@ beforeEach(async () => {
     mocks.safebrowsingStatus.mockResolvedValue({ enabled: true });
     mocks.parentalStatus.mockResolvedValue({ enabled: true });
     mocks.safesearchStatus.mockResolvedValue(seedSafeSearchConfig);
-    mocks.safebrowsingDisable.mockResolvedValue(undefined);
-    mocks.safebrowsingEnable.mockResolvedValue(undefined);
-    mocks.parentalDisable.mockResolvedValue(undefined);
-    mocks.parentalEnable.mockResolvedValue(undefined);
     mocks.safesearchSettings.mockResolvedValue(undefined);
 
     await initSettings();
@@ -93,7 +85,7 @@ describe('disableSafeBrowsing', () => {
     it('disables safebrowsing, updates state, and offers undo', async () => {
         const result = await disableSafeBrowsing();
 
-        expect(mocks.safebrowsingDisable).toHaveBeenCalledTimes(1);
+        expect(mocks.safebrowsingSettings).toHaveBeenCalledWith({ enabled: false });
         expect(settingsState.settingsList.safebrowsing.enabled).toBe(false);
         expect(mocks.createUndoToast).toHaveBeenCalledWith(
             'user_rules_browsing_security_disabled',
@@ -109,12 +101,12 @@ describe('disableSafeBrowsing', () => {
 
         await triggerUndo();
 
-        expect(mocks.safebrowsingEnable).toHaveBeenCalledTimes(1);
+        expect(mocks.safebrowsingSettings).toHaveBeenLastCalledWith({ enabled: true });
         expect(settingsState.settingsList.safebrowsing.enabled).toBe(true);
     });
 
     it('returns false and shows an error toast on failure', async () => {
-        mocks.safebrowsingDisable.mockRejectedValueOnce(new Error('Network error'));
+        mocks.safebrowsingSettings.mockRejectedValueOnce(new Error('Network error'));
 
         const result = await disableSafeBrowsing();
 
@@ -128,7 +120,7 @@ describe('disableParental', () => {
     it('disables parental control, updates state, and offers undo', async () => {
         const result = await disableParental();
 
-        expect(mocks.parentalDisable).toHaveBeenCalledTimes(1);
+        expect(mocks.parentalSettings).toHaveBeenCalledWith({ enabled: false });
         expect(settingsState.settingsList.parental.enabled).toBe(false);
         expect(mocks.createUndoToast).toHaveBeenCalledWith(
             'user_rules_parental_control_disabled',
@@ -144,12 +136,12 @@ describe('disableParental', () => {
 
         await triggerUndo();
 
-        expect(mocks.parentalEnable).toHaveBeenCalledTimes(1);
+        expect(mocks.parentalSettings).toHaveBeenLastCalledWith({ enabled: true });
         expect(settingsState.settingsList.parental.enabled).toBe(true);
     });
 
     it('returns false and shows an error toast on failure', async () => {
-        mocks.parentalDisable.mockRejectedValueOnce(new Error('Network error'));
+        mocks.parentalSettings.mockRejectedValueOnce(new Error('Network error'));
 
         const result = await disableParental();
 

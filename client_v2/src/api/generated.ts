@@ -34,6 +34,7 @@ import type {
     Login,
     MobileConfigDoHParams,
     MobileConfigDoTParams,
+    ParentalConfig,
     ParentalStatus200,
     ProfileInfo,
     QueryLog,
@@ -44,6 +45,7 @@ import type {
     RewriteSettings,
     RewriteSettingsBody,
     RewriteUpdateBody,
+    SafeBrowsingConfig,
     SafeSearchConfig,
     SafebrowsingStatus200,
     ServerStatus,
@@ -709,11 +711,31 @@ export const filteringCheckHost = async (
     });
 };
 
+export const getSafebrowsingSettingsUrl = () => {
+    return `control/safebrowsing`;
+};
+
+/**
+ * @summary Replace safebrowsing settings
+ */
+export const safebrowsingSettings = async (
+    safeBrowsingConfig: SafeBrowsingConfig,
+    options?: RequestInit,
+): Promise<SafeBrowsingConfig> => {
+    return customFetch<SafeBrowsingConfig>(getSafebrowsingSettingsUrl(), {
+        ...options,
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...options?.headers },
+        body: JSON.stringify(safeBrowsingConfig),
+    });
+};
+
 export const getSafebrowsingEnableUrl = () => {
     return `control/safebrowsing/enable`;
 };
 
 /**
+ * @deprecated
  * @summary Enable safebrowsing
  */
 export const safebrowsingEnable = async (options?: RequestInit): Promise<void> => {
@@ -728,6 +750,7 @@ export const getSafebrowsingDisableUrl = () => {
 };
 
 /**
+ * @deprecated
  * @summary Disable safebrowsing
  */
 export const safebrowsingDisable = async (options?: RequestInit): Promise<void> => {
@@ -751,11 +774,31 @@ export const safebrowsingStatus = async (options?: RequestInit): Promise<Safebro
     });
 };
 
+export const getParentalSettingsUrl = () => {
+    return `control/parental`;
+};
+
+/**
+ * @summary Replace parental filtering settings
+ */
+export const parentalSettings = async (
+    parentalConfig: ParentalConfig,
+    options?: RequestInit,
+): Promise<ParentalConfig> => {
+    return customFetch<ParentalConfig>(getParentalSettingsUrl(), {
+        ...options,
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...options?.headers },
+        body: JSON.stringify(parentalConfig),
+    });
+};
+
 export const getParentalEnableUrl = () => {
     return `control/parental/enable`;
 };
 
 /**
+ * @deprecated
  * @summary Enable parental filtering
  */
 export const parentalEnable = async (options?: RequestInit): Promise<void> => {
@@ -770,6 +813,7 @@ export const getParentalDisableUrl = () => {
 };
 
 /**
+ * @deprecated
  * @summary Disable parental filtering
  */
 export const parentalDisable = async (options?: RequestInit): Promise<void> => {

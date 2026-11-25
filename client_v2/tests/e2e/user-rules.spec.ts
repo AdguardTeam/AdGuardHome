@@ -313,29 +313,29 @@ async function setupUserRulesMocks(
         });
     });
 
-    await page.route('**/control/safebrowsing/disable', (route) => {
+    await page.route('**/control/safebrowsing', (route) => {
         settingsState = {
             ...settingsState,
-            safebrowsing: { enabled: false },
+            safebrowsing: route.request().postDataJSON() as SettingsStatuses['safebrowsing'],
         };
 
         route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify({}),
+            body: JSON.stringify(settingsState.safebrowsing),
         });
     });
 
-    await page.route('**/control/parental/disable', (route) => {
+    await page.route('**/control/parental', (route) => {
         settingsState = {
             ...settingsState,
-            parental: { enabled: false },
+            parental: route.request().postDataJSON() as SettingsStatuses['parental'],
         };
 
         route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify({}),
+            body: JSON.stringify(settingsState.parental),
         });
     });
 
