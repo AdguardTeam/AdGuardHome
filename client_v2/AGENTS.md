@@ -670,14 +670,15 @@ friendly:
 
 - All user-facing strings must be localized. Add new keys to the base locale
   `src/__locales/en.json`; other locales are managed externally via Twosky.
-- Locale imports are **generated** — do not hand-edit.
-  `npm run locales:generate` regenerates
-  `src/common/intl/locales.generated.ts` from the language list in
-  `.twosky.json`; it does not read translation string content. Do NOT run it
-  after editing translation strings (e.g. adding a key to `en.json`) — it is
-  only needed when `.twosky.json` changes or a locale JSON file is added or
-  removed. Use the side-effect-free `npm run locales:check` to verify
-  freshness instead.
+- Locale imports and the blocked-service group map are **generated** — do not
+  hand-edit `src/common/intl/locales.generated.ts` or
+  `src/common/intl/services.groups.generated.ts`. `npm run locales:generate`
+  reads the language lists in `.twosky.json` and the
+  `servicesgroup.<id>.name` keys in `src/__locales-services/en.json`, and
+  writes both files. Run it when a language or locale JSON file is added or
+  removed, or when a `servicesgroup.<id>.name` key is added or removed;
+  editing their values alone does not need it. Use the side-effect-free
+  `npm run locales:check` to verify freshness of both files instead.
 - Access translations via the `intl` object from `panel/common/intl`:
     - `intl.getMessage('key', values?)` — returns a plain localized string.
       Pass interpolation values as the second argument, referenced inside the
