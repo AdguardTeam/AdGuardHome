@@ -2,11 +2,9 @@ import { createStore } from 'solid-js/store';
 import { untrack } from 'solid-js';
 import {
     safebrowsingStatus,
-    safebrowsingEnable,
-    safebrowsingDisable,
+    safebrowsingSettings,
     parentalStatus,
-    parentalEnable,
-    parentalDisable,
+    parentalSettings,
     safesearchStatus,
     safesearchSettings,
     testUpstreamDNS,
@@ -78,19 +76,11 @@ export async function toggleSetting(
     try {
         switch (settingKey) {
             case 'safebrowsing':
-                if (status) {
-                    await safebrowsingDisable();
-                } else {
-                    await safebrowsingEnable();
-                }
+                await safebrowsingSettings({ enabled: !status });
                 setState('settingsList', 'safebrowsing', 'enabled', !status);
                 return true;
             case 'parental':
-                if (status) {
-                    await parentalDisable();
-                } else {
-                    await parentalEnable();
-                }
+                await parentalSettings({ enabled: !status });
                 setState('settingsList', 'parental', 'enabled', !status);
                 return true;
             case 'safesearch':
@@ -109,17 +99,16 @@ export async function toggleSetting(
 export const settingsState = untrack(() => state);
 
 const disableWithUndo = async (
-    disable: () => Promise<void>,
-    enable: () => Promise<void>,
+    update: (settings: { enabled: boolean }) => Promise<{ enabled: boolean }>,
     setEnabled: (enabled: boolean) => void,
     message: string,
 ): Promise<boolean> => {
     try {
-        await disable();
+        await update({ enabled: false });
         setEnabled(false);
         addSuccessToast(
             createUndoToast(message, intl.getMessage('notify_undo'), async () => {
-                await enable();
+                await update({ enabled: true });
                 setEnabled(true);
             }),
         );
@@ -132,16 +121,14 @@ const disableWithUndo = async (
 
 export const disableSafeBrowsing = () =>
     disableWithUndo(
-        safebrowsingDisable,
-        safebrowsingEnable,
+        safebrowsingSettings,
         (enabled) => setState('settingsList', 'safebrowsing', 'enabled', enabled),
         intl.getMessage('user_rules_browsing_security_disabled'),
     );
 
 export const disableParental = () =>
     disableWithUndo(
-        parentalDisable,
-        parentalEnable,
+        parentalSettings,
         (enabled) => setState('settingsList', 'parental', 'enabled', enabled),
         intl.getMessage('user_rules_parental_control_disabled'),
     );

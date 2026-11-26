@@ -113,6 +113,7 @@ func (n interfaceName) ifacesStaticConfig(r io.Reader) (sub []string, cont bool,
 
 func ifaceHasStaticIP(
 	_ context.Context,
+	_ *slog.Logger,
 	_ executil.CommandConstructor,
 	ifaceName string,
 ) (has bool, err error) {

@@ -124,7 +124,7 @@ func TestHasStaticIP(t *testing.T) {
 			substRootDirFS(t, tc.rootFsys)
 
 			ctx := testutil.ContextWithTimeout(t, testTimeout)
-			has, err := IfaceHasStaticIP(ctx, testCmdCons, ifaceName)
+			has, err := IfaceHasStaticIP(ctx, testLogger, testCmdCons, ifaceName)
 			testutil.AssertErrorMsg(t, tc.wantErrMsg, err)
 
 			tc.wantHas(t, has)

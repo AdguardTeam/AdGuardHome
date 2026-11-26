@@ -706,21 +706,44 @@
             'application/json':
               'schema':
                 '$ref': '#/components/schemas/FilterCheckHostResponse'
+  '/safebrowsing':
+    'put':
+      'tags':
+      - 'safebrowsing'
+      'operationId': 'safebrowsingSettings'
+      'summary': 'Replace safebrowsing settings'
+      'requestBody':
+        'required': true
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/SafeBrowsingConfig'
+      'responses':
+        '200':
+          'description': 'Updated settings.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/SafeBrowsingConfig'
   '/safebrowsing/enable':
     'post':
+      'deprecated': true
       'tags':
       - 'safebrowsing'
       'operationId': 'safebrowsingEnable'
       'summary': 'Enable safebrowsing'
+      'description': 'Deprecated: Use `PUT /control/safebrowsing` instead.'
       'responses':
         '200':
           'description': 'OK.'
   '/safebrowsing/disable':
     'post':
+      'deprecated': true
       'tags':
       - 'safebrowsing'
       'operationId': 'safebrowsingDisable'
       'summary': 'Disable safebrowsing'
+      'description': 'Deprecated: Use `PUT /control/safebrowsing` instead.'
       'responses':
         '200':
           'description': 'OK.'
@@ -744,21 +767,44 @@
                 'response':
                   'value':
                     'enabled': false
+  '/parental':
+    'put':
+      'tags':
+      - 'parental'
+      'operationId': 'parentalSettings'
+      'summary': 'Replace parental filtering settings'
+      'requestBody':
+        'required': true
+        'content':
+          'application/json':
+            'schema':
+              '$ref': '#/components/schemas/ParentalConfig'
+      'responses':
+        '200':
+          'description': 'Updated settings.'
+          'content':
+            'application/json':
+              'schema':
+                '$ref': '#/components/schemas/ParentalConfig'
   '/parental/enable':
     'post':
+      'deprecated': true
       'tags':
       - 'parental'
       'operationId': 'parentalEnable'
       'summary': 'Enable parental filtering'
+      'description': 'Deprecated: Use `PUT /control/parental` instead.'
       'responses':
         '200':
           'description': 'OK.'
   '/parental/disable':
     'post':
+      'deprecated': true
       'tags':
       - 'parental'
       'operationId': 'parentalDisable'
       'summary': 'Disable parental filtering'
+      'description': 'Deprecated: Use `PUT /control/parental` instead.'
       'responses':
         '200':
           'description': 'OK.'
@@ -1259,6 +1305,22 @@
             '$ref': '#/components/schemas/RewriteUpdate'
       'required': true
   'schemas':
+    'SafeBrowsingConfig':
+      'type': 'object'
+      'required':
+      - 'enabled'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+          'description': 'Enables or disables safe browsing.'
+    'ParentalConfig':
+      'type': 'object'
+      'required':
+      - 'enabled'
+      'properties':
+        'enabled':
+          'type': 'boolean'
+          'description': 'Enables or disables parental control.'
     'FilteringReason':
       'type': 'string'
       'description': 'Request filtering status.'

@@ -2,9 +2,19 @@
 
 <!-- TODO(a.garipov): Reformat in accordance with the KeepAChangelog spec. -->
 
-## v1.0.0: API changes (NOTE: Not released yet)
+## v1.0.1: API changes
+
+- The new HTTP APIs `PUT /control/safebrowsing` and `PUT /control/parental`.
+
+- The following HTTP APIs are deprecated and will be removed in a future version:
+    - `POST /control/safebrowsing/enable`
+    - `POST /control/safebrowsing/disable`
+    - `POST /control/parental/enable`
+    - `POST /control/parental/disable`
 
 - Requirements are clarified for `GET /control/querylog`. Minimum, maximum, and default values for `offset` and `limit` query parameters were added.
+
+## v1.0.0: API changes
 
 - The following deprecated HTTP APIs:
 
