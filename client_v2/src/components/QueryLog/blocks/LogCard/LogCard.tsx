@@ -146,6 +146,10 @@ export const LogCard = (props: Props) => {
                         )}
                     >
                         {statusLabel()}
+                        <Show when={props.entry.cached}>
+                            {' / '}
+                            <span>{intl.getMessage('query_log_cached')}</span>
+                        </Show>
                     </span>
 
                     <Show when={reasonKey() !== 'none'}>
