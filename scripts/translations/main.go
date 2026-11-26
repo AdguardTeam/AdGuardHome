@@ -11,7 +11,6 @@ import (
 	"log/slog"
 	"maps"
 	"os"
-	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -232,6 +231,8 @@ func (c *twoskyClient) unused(ctx context.Context, l *slog.Logger) (err error) {
 
 // findSourceFiles returns list of source files.  l must not be nil.
 func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fileNames []string, err error) {
+	locDir := filepath.Clean(c.localesDir)
+
 	walkFn := func(name string, _ os.FileInfo, pErr error) (err error) {
 		if pErr != nil {
 			l.WarnContext(ctx, "accessing a path", slogutil.KeyError, pErr)
@@ -239,7 +240,7 @@ func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fil
 			return nil
 		}
 
-		if c.inLocalesDir(name) {
+		if strings.HasPrefix(name, locDir) {
 			return nil
 		}
 
@@ -257,15 +258,6 @@ func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fil
 	}
 
 	return fileNames, nil
-}
-
-// inLocalesDir returns true if name is the locales directory or inside it.
-// Those files hold the translations themselves and contain no text labels to
-// find, so the sources walk skips them.
-func (c *twoskyClient) inLocalesDir(name string) (ok bool) {
-	dir := filepath.Clean(c.localesDir)
-
-	return name == dir || strings.HasPrefix(name, dir+string(os.PathSeparator))
 }
 
 // findUnused prints unused text labels from fileNames.
@@ -308,22 +300,15 @@ func (c *twoskyClient) autoAdd(ctx context.Context, l *slog.Logger) (err error) 
 
 	cmdCons := executil.SystemCommandConstructor{}
 
-	adds, dels, mixed, err := c.changedLocales(ctx, l, cmdCons)
+	adds, dels, err := c.changedLocales(ctx, l, cmdCons)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
 
-	// The base locale holds every label, so a lost label means Twosky dropped a
-	// translation and must not be replaced silently.  A wording edit changes
-	// lines but keeps every label, so the changed file is compared by labels.
-	basePath := path.Join(c.localesDir, defaultBaseFile)
-	if baseChanged(basePath, adds, dels, mixed) {
-		err = c.checkBaseLabels(ctx, cmdCons, basePath)
-		if err != nil {
-			// Don't wrap the error since it's informative enough as is.
-			return err
-		}
+	basePath := filepath.Join(c.localesDir, defaultBaseFile)
+	if slices.Contains(dels, basePath) {
+		return errors.Error("base locale contains deletions")
 	}
 
 	err = handleAdds(ctx, l, cmdCons, adds)
@@ -360,62 +345,6 @@ func handleAdds(
 	return nil
 }
 
-// baseChanged returns true if base is among the changed files.
-func baseChanged(base string, adds, dels, mixed []string) (ok bool) {
-	return slices.Contains(adds, base) ||
-		slices.Contains(dels, base) ||
-		slices.Contains(mixed, base)
-}
-
-// checkBaseLabels returns an error if basePath lost labels compared to the
-// version in git's HEAD.  cmdCons must not be nil.
-func (c *twoskyClient) checkBaseLabels(
-	ctx context.Context,
-	cmdCons executil.CommandConstructor,
-	basePath string,
-) (err error) {
-	defer func() { err = errors.Annotate(err, "checking base locale: %w") }()
-
-	current, err := readLocales(basePath)
-	if err != nil {
-		return fmt.Errorf("reading current version: %w", err)
-	}
-
-	gitArgs := []string{"show", "HEAD:" + filepath.ToSlash(basePath)}
-
-	var out bytes.Buffer
-	err = executil.Run(ctx, cmdCons, &executil.CommandConfig{
-		Path:   gitCmd,
-		Args:   gitArgs,
-		Stdout: &out,
-	})
-	if err != nil {
-		return fmt.Errorf("executing cmd: %w", err)
-	}
-
-	committed := make(locales)
-	err = json.Unmarshal(out.Bytes(), &committed)
-	if err != nil {
-		return fmt.Errorf("unmarshalling committed version: %w", err)
-	}
-
-	var lost []textLabel
-	for label := range committed {
-		_, ok := current[label]
-		if !ok {
-			lost = append(lost, label)
-		}
-	}
-
-	if len(lost) > 0 {
-		slices.Sort(lost)
-
-		return fmt.Errorf("lost labels: %q", lost)
-	}
-
-	return nil
-}
-
 // handleDels restores locales with deletions.
 func handleDels(
 	ctx context.Context,
@@ -439,17 +368,16 @@ func handleDels(
 }
 
 // changedLocales returns cleaned paths of locales with changes or error.  adds
-// is the list of locales with only additions, dels is the list of locales with
-// only deletions, and mixed is the list of locales with both.  l and cmdCons
-// must not be nil.
+// is the list of locales with only additions.  dels is the list of locales
+// with only deletions.  l and cmdCons must not be nil.
 func (c *twoskyClient) changedLocales(
 	ctx context.Context,
 	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
-) (adds, dels, mixed []string, err error) {
+) (adds, dels []string, err error) {
 	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
 
-	gitArgs := []string{"diff", "--numstat", "--", c.localesDir}
+	gitArgs := []string{"diff", "--numstat", c.localesDir}
 	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
 	// TODO(s.chzhen):  Consider streaming the output if needed.  Using
@@ -464,7 +392,7 @@ func (c *twoskyClient) changedLocales(
 		Stdout: &out,
 	})
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("executing cmd: %w", err)
+		return nil, nil, fmt.Errorf("executing cmd: %w", err)
 	}
 
 	scanner := bufio.NewScanner(&out)
@@ -474,25 +402,22 @@ func (c *twoskyClient) changedLocales(
 
 		fields := strings.Fields(line)
 		if len(fields) < 3 {
-			return nil, nil, nil, fmt.Errorf("invalid input: %q", line)
+			return nil, nil, fmt.Errorf("invalid input: %q", line)
 		}
 
-		name := fields[2]
+		path := fields[2]
 
-		switch {
-		case fields[0] != "0" && fields[1] != "0":
-			mixed = append(mixed, name)
-		case fields[0] == "0":
-			dels = append(dels, name)
-		default:
-			adds = append(adds, name)
+		if fields[0] == "0" {
+			dels = append(dels, path)
+		} else if fields[1] == "0" {
+			adds = append(adds, path)
 		}
 	}
 
 	err = scanner.Err()
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("scanning: %w", err)
+		return nil, nil, fmt.Errorf("scanning: %w", err)
 	}
 
-	return adds, dels, mixed, nil
+	return adds, dels, nil
 }

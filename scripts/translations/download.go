@@ -164,7 +164,7 @@ func saveToFile(
 	name := filepath.Join(localesDir, code+".json")
 	err = os.WriteFile(name, buf.Bytes(), 0o664)
 	if err != nil {
-		return fmt.Errorf("writing %q: %w", name, err)
+		return fmt.Errorf("writing file: %w", err)
 	}
 
 	fmt.Println(name)
