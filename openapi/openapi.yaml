@@ -2318,10 +2318,16 @@
           'type': 'integer'
           'format': 'uint16'
           'example': 5443
-          'description': 'DNS-over-HTTPS port. If 0, DNSCrypt will be disabled.'
+          'readOnly': true
+          'description': >
+            The DNSCrypt port.  If 0, DNSCrypt is disabled.  This property is
+            only used in responses and is ignored in requests.
         'dnscrypt_config_file':
           'type': 'string'
-          'description': 'Path to the DNSCrypt configuration file.'
+          'readOnly': true
+          'description': >
+            Path to the DNSCrypt configuration file.  This property is only
+            used in responses and is ignored in requests.
     'NetInterface':
       'type': 'object'
       'description': 'Network interface info'

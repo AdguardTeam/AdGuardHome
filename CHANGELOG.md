@@ -31,6 +31,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
+- The `port_dnscrypt` and `dnscrypt_config_file` properties of the TLS configuration HTTP API are now documented as read-only, as they can only be set through the configuration file.
+
 - Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
 
 ### Fixed

@@ -33,6 +33,8 @@
 
 - The deprecated usage of an empty value for the `"upstream_mode"` property in the `GET /control/dns_info` and `POST /control/dns_config` HTTP APIs has been removed.  Use `"load_balance"` instead.
 
+- Properties `"port_dnscrypt"` and `"dnscrypt_config_file"` in `TlsConfig` are now marked as read-only.  They can only be set through the configuration file and are ignored in `POST /control/tls/configure` and `POST /control/tls/validate`.
+
 ## v0.107.79: API changes
 
 - Field `bootstrap_dns` in `POST /control/dns_config` now accepts comments.  A comment must start with the `#` symbol.
