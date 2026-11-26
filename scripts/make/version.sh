@@ -19,14 +19,18 @@
 # release tags if they are on the same commit, so the beta tag **must** be
 # pushed and built **before** the release tag is pushed.
 
+set -e -f -u
+
+if (set -o 'pipefail'); then
+	set -o 'pipefail'
+fi
+
 verbose="${VERBOSE:-0}"
 readonly verbose
 
 if [ "$verbose" -gt '0' ]; then
 	set -x
 fi
-
-set -e -f -u
 
 # bump_minor is an awk program that reads a minor release version, increments
 # the minor part of it, and prints the next version.
@@ -82,22 +86,19 @@ case "$channel" in
 	version="v0.0.0-dev.${commit_number}+$(git rev-parse --short HEAD)"
 	;;
 'edge')
-	# TODO(a.garipov):  Remove this and use edge_todo below instead once v1.0.0
-	# is out.
-
-	# Temporarily, use the last v0.108.0 beta as the starting point for the
-	# v1.0.0 alpha (edge, nightly) releases.
-	num_commits="$(git rev-list --count "v0.108.0-b.89..HEAD")"
-	readonly num_commits
-
-	version="v1.0.0-a.${num_commits}+$(git rev-parse --short HEAD)"
-	;;
-'edge_todo')
-	# TODO(a.garipov):  Use this again once v1.0.0 is out.
+	# TODO(a.garipov):  Think of a better solution considering that a vX.Y.0
+	# version is often on a release-vX.Y branch, so the git rev-list command
+	# below might not actually count what it needs to count.
 
 	# last_minor_zero is the last new minor release.
 	last_minor_zero="$(get_last_minor_zero)"
 	readonly last_minor_zero
+
+	if [ "$last_minor_zero" = '' ]; then
+		printf 'last release with minor version set to zero not found\n' 1>&2
+
+		exit 1
+	fi
 
 	# num_commits_since_minor is the number of commits since the last new
 	# minor release.  If the current commit is the new minor release,
@@ -106,7 +107,7 @@ case "$channel" in
 	readonly num_commits_since_minor
 
 	# next_minor is the next minor release version.
-	next_minor="$(echo "$last_minor_zero" | awk -F '.' "$bump_minor")"
+	next_minor="$(printf '%s\n' "$last_minor_zero" | awk -F '.' "$bump_minor")"
 	readonly next_minor
 
 	# Make this commit a prerelease version for the next minor release.  For
@@ -129,7 +130,7 @@ case "$channel" in
 
 	# Require an actual tag for the beta and final releases.
 	if [ "$current_desc" != "$last_tag" ]; then
-		echo 'need a tag' 1>&2
+		printf 'need a tag\n' 1>&2
 
 		exit 1
 	fi
@@ -150,8 +151,8 @@ case "$channel" in
 	#
 	#   rc-v12.34.56
 	#
-	if ! echo "$current_branch" | grep -E -e '^rc-v[0-9]+\.[0-9]+\.[0-9]+$' -q; then
-		echo "invalid release candidate branch name '$current_branch'" 1>&2
+	if ! printf '%s\n' "$current_branch" | grep -E -e '^rc-v[0-9]+\.[0-9]+\.[0-9]+$' -q; then
+		printf 'invalid release candidate branch name "%s"\n' "$current_branch" 1>&2
 
 		exit 1
 	fi
@@ -174,7 +175,7 @@ case "$channel" in
 	elif git rev-parse --verify -q "refs/heads/${release_branch}" >/dev/null; then
 		release_ref="refs/heads/${release_branch}"
 	else
-		echo "cannot find base branch '$release_branch' for '$current_branch'" 1>&2
+		printf 'cannot find base branch "%s" for "%s"\n' "$release_branch" "$current_branch" 1>&2
 
 		exit 1
 	fi
@@ -188,17 +189,24 @@ case "$channel" in
 	version="${rc_version}-rc.${num_commits}"
 	;;
 *)
-	echo "invalid channel '$channel', supported values are \
-		'development', 'edge', 'beta', 'release' and 'candidate'" 1>&2
+	printf \
+		'invalid channel "%s", supported values are %s\n' \
+		"$channel" \
+		'"beta", "candidate", "development", "edge", and "release"' \
+		1>&2 \
+		;
 	exit 1
 	;;
 esac
 
+version_regexp='^v[0-9]+\.[0-9]+\.[0-9]+(-(a|b|dev|rc)\.[0-9]+)?(\+[[:xdigit:]]+)?$'
+readonly version_regexp
+
 # Finally, make sure that we don't output invalid versions.
-if ! echo "$version" | grep -E -e '^v[0-9]+\.[0-9]+\.[0-9]+(-(a|b|dev|rc)\.[0-9]+)?(\+[[:xdigit:]]+)?$' -q; then
-	echo "generated an invalid version '$version'" 1>&2
+if ! printf '%s\n' "$version" | grep -E -e "$version_regexp" -q; then
+	printf 'generated an invalid version "%s"\n' "$version" 1>&2
 
 	exit 1
 fi
 
-echo "$version"
+printf '%s\n' "$version"
