@@ -223,9 +223,7 @@ Optional environment:
 - `go run ./scripts/translations download [-n <count>]`: download and save
   all translations. `n` is an optional flag; count is a number of concurrent
   downloads. It downloads locales for the project selected by
-  `TWOSKY_PROJECT_ID` and writes them to every directory listed in that
-  project's `metadata.locales_dirs`. If `locales_dirs` is omitted, files are
-  written to `metadata.locales_dir`.
+  `TWOSKY_PROJECT_ID` and writes them to that project's `metadata.locales_dir`.
 
 - `go run ./scripts/translations upload`: upload the base `en` locale.
 
@@ -238,13 +236,9 @@ Optional environment:
 
 - `go run ./scripts/translations auto-add`: add locales with additions to the git and restore locales with deletions.
 
-After the download you’ll find the output locales in the configured directories.
-A project with several consumers, such as `hostlists-registry`, lists all of
-them in `metadata.locales_dirs` so that the same translations are downloaded
-into both `client/` and `client_v2/`.  `metadata.locales_dir` must be one of
-the listed directories: the other commands read that copy.  Every directory
-receives every language of the project, which a consumer may not use:
-`hostlists-registry` has 36 languages, while `client_v2` bundles 35, so
+After the download you’ll find the output locales in the configured directory.
+A project may have more languages than its consumer uses: `hostlists-registry`
+has 36, while `client_v2` bundles 35, so
 `client_v2/src/__locales-services/zh-hk.json` is downloaded and unused.
 
 Optional environment:

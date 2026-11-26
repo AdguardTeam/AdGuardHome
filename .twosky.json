@@ -141,12 +141,8 @@
       "zh-tw": "正體中文（台灣）"
     },
     "metadata": {
-      "locales_dir": "./client/src/__locales-services",
-      "locales_dirs": [
-        "./client/src/__locales-services",
-        "./client_v2/src/__locales-services"
-      ],
-      "sources_dir": "./client/src"
+      "locales_dir": "./client_v2/src/__locales-services",
+      "sources_dir": "./client_v2/src"
     }
   }
 ]

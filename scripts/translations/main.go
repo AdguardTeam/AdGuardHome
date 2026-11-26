@@ -259,18 +259,13 @@ func (c *twoskyClient) findSourceFiles(ctx context.Context, l *slog.Logger) (fil
 	return fileNames, nil
 }
 
-// inLocalesDir returns true if name is inside one of the locales directories.
+// inLocalesDir returns true if name is the locales directory or inside it.
 // Those files hold the translations themselves and contain no text labels to
 // find, so the sources walk skips them.
 func (c *twoskyClient) inLocalesDir(name string) (ok bool) {
-	for _, dir := range c.localesDirs {
-		dir = filepath.Clean(dir)
-		if name == dir || strings.HasPrefix(name, dir+string(os.PathSeparator)) {
-			return true
-		}
-	}
+	dir := filepath.Clean(c.localesDir)
 
-	return false
+	return name == dir || strings.HasPrefix(name, dir+string(os.PathSeparator))
 }
 
 // findUnused prints unused text labels from fileNames.
@@ -319,15 +314,13 @@ func (c *twoskyClient) autoAdd(ctx context.Context, l *slog.Logger) (err error) 
 		return err
 	}
 
-	// Every locales dir holds a copy of the base file, and any lost key in it
-	// means Twosky dropped base translations, so it must not be replaced
-	// silently.  mixed holds the files that lost keys and gained others, which
-	// the numstat parser puts in neither list.
-	for _, dir := range c.localesDirs {
-		basePath := path.Join(dir, defaultBaseFile)
-		if slices.Contains(dels, basePath) || slices.Contains(mixed, basePath) {
-			return errors.Error("base locale contains deletions")
-		}
+	// The base locale holds every label, so any lost key means Twosky dropped
+	// translations and the file must not be replaced silently.  mixed holds the
+	// base locales that lost keys and gained others, which the numstat parser
+	// puts in neither list.
+	basePath := path.Join(c.localesDir, defaultBaseFile)
+	if slices.Contains(dels, basePath) || slices.Contains(mixed, basePath) {
+		return errors.Error("base locale contains deletions")
 	}
 
 	err = handleAdds(ctx, l, cmdCons, adds)
@@ -397,7 +390,7 @@ func (c *twoskyClient) changedLocales(
 ) (adds, dels, mixed []string, err error) {
 	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
 
-	gitArgs := append([]string{"diff", "--numstat", "--"}, c.localesDirs...)
+	gitArgs := []string{"diff", "--numstat", "--", c.localesDir}
 	l.DebugContext(ctx, "executing", "cmd", gitCmd, "args", gitArgs)
 
 	// TODO(s.chzhen):  Consider streaming the output if needed.  Using

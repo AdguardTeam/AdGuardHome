@@ -15,9 +15,8 @@ import (
 
 // metadata represents additional information for a single project.
 type metadata struct {
-	LocalesDir  string   `json:"locales_dir"`
-	LocalesDirs []string `json:"locales_dirs,omitempty"`
-	SourcesDir  string   `json:"sources_dir"`
+	LocalesDir string `json:"locales_dir"`
+	SourcesDir string `json:"sources_dir"`
 }
 
 // twoskyConfig is the configuration structure for localization of a single
@@ -45,24 +44,6 @@ func (t *twoskyConfig) Validate() (err error) {
 		validate.NotEmptySlice("localizable_files", t.LocalizableFiles),
 		validate.NotEmpty("metadata.locales_dir", t.Metadata.LocalesDir),
 		validate.NotEmpty("metadata.sources_dir", t.Metadata.SourcesDir),
-	}
-
-	for i, dir := range t.Metadata.LocalesDirs {
-		err = validate.NotEmpty(fmt.Sprintf("metadata.locales_dirs[%d]", i), dir)
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}
-
-	// The other commands read the single locales_dir, while download writes to
-	// every locales_dirs entry, so a locales_dir outside the list would make
-	// download and the rest disagree about which copy is canonical.
-	if len(t.Metadata.LocalesDirs) > 0 &&
-		!slices.Contains(t.Metadata.LocalesDirs, t.Metadata.LocalesDir) {
-		errs = append(errs, fmt.Errorf(
-			"metadata.locales_dir: %q is not present in metadata.locales_dirs",
-			t.Metadata.LocalesDir,
-		))
 	}
 
 	if len(t.Languages) == 0 {
@@ -128,10 +109,6 @@ type twoskyClient struct {
 	// localesDir is the path to the directory with locale files.
 	localesDir string
 
-	// localesDirs is the list of directories to save downloaded locale files
-	// to.  If empty, localesDir is used.
-	localesDirs []string
-
 	// projectID is the name of the project.
 	projectID string
 
@@ -185,16 +162,10 @@ func newTwoskyClient(conf *twoskyConfig) (cli *twoskyClient, err error) {
 		langs = dlLangs
 	}
 
-	localesDirs := conf.Metadata.LocalesDirs
-	if len(localesDirs) == 0 {
-		localesDirs = []string{conf.Metadata.LocalesDir}
-	}
-
 	return &twoskyClient{
 		uri:              uri,
 		baseLang:         baseLang,
 		localesDir:       conf.Metadata.LocalesDir,
-		localesDirs:      localesDirs,
 		projectID:        projectID,
 		sourcesDir:       conf.Metadata.SourcesDir,
 		langs:            langs,
