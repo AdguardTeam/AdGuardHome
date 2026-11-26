@@ -42,6 +42,7 @@ func (t *twoskyConfig) Validate() (err error) {
 		validate.NotEmpty("project_id", t.ProjectID),
 		validate.NotEmpty("base_locale", t.BaseLangCode),
 		validate.NotEmptySlice("localizable_files", t.LocalizableFiles),
+		validate.NotEmpty("metadata", t.Metadata),
 		validate.NotEmpty("metadata.locales_dir", t.Metadata.LocalesDir),
 		validate.NotEmpty("metadata.sources_dir", t.Metadata.SourcesDir),
 	}

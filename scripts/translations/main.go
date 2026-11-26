@@ -314,13 +314,16 @@ func (c *twoskyClient) autoAdd(ctx context.Context, l *slog.Logger) (err error) 
 		return err
 	}
 
-	// The base locale holds every label, so any lost key means Twosky dropped
-	// translations and the file must not be replaced silently.  mixed holds the
-	// base locales that lost keys and gained others, which the numstat parser
-	// puts in neither list.
+	// The base locale holds every label, so a lost label means Twosky dropped a
+	// translation and must not be replaced silently.  A wording edit changes
+	// lines but keeps every label, so the changed file is compared by labels.
 	basePath := path.Join(c.localesDir, defaultBaseFile)
-	if slices.Contains(dels, basePath) || slices.Contains(mixed, basePath) {
-		return errors.Error("base locale contains deletions")
+	if baseChanged(basePath, adds, dels, mixed) {
+		err = c.checkBaseLabels(ctx, cmdCons, basePath)
+		if err != nil {
+			// Don't wrap the error since it's informative enough as is.
+			return err
+		}
 	}
 
 	err = handleAdds(ctx, l, cmdCons, adds)
@@ -352,6 +355,62 @@ func handleAdds(
 	err = executil.RunWithPeek(ctx, cmdCons, aghos.MaxCmdOutputSize, gitCmd, gitArgs...)
 	if err != nil {
 		return fmt.Errorf("git add failed: %w", err)
+	}
+
+	return nil
+}
+
+// baseChanged returns true if base is among the changed files.
+func baseChanged(base string, adds, dels, mixed []string) (ok bool) {
+	return slices.Contains(adds, base) ||
+		slices.Contains(dels, base) ||
+		slices.Contains(mixed, base)
+}
+
+// checkBaseLabels returns an error if basePath lost labels compared to the
+// version in git's HEAD.  cmdCons must not be nil.
+func (c *twoskyClient) checkBaseLabels(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	basePath string,
+) (err error) {
+	defer func() { err = errors.Annotate(err, "checking base locale: %w") }()
+
+	current, err := readLocales(basePath)
+	if err != nil {
+		return fmt.Errorf("reading current version: %w", err)
+	}
+
+	gitArgs := []string{"show", "HEAD:" + filepath.ToSlash(basePath)}
+
+	var out bytes.Buffer
+	err = executil.Run(ctx, cmdCons, &executil.CommandConfig{
+		Path:   gitCmd,
+		Args:   gitArgs,
+		Stdout: &out,
+	})
+	if err != nil {
+		return fmt.Errorf("executing cmd: %w", err)
+	}
+
+	committed := make(locales)
+	err = json.Unmarshal(out.Bytes(), &committed)
+	if err != nil {
+		return fmt.Errorf("unmarshalling committed version: %w", err)
+	}
+
+	var lost []textLabel
+	for label := range committed {
+		_, ok := current[label]
+		if !ok {
+			lost = append(lost, label)
+		}
+	}
+
+	if len(lost) > 0 {
+		slices.Sort(lost)
+
+		return fmt.Errorf("lost labels: %q", lost)
 	}
 
 	return nil

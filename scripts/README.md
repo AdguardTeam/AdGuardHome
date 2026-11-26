@@ -230,7 +230,10 @@ Optional environment:
 - `go run ./scripts/translations summary`: show the current locales summary.
 
     > [!NOTE]
-    > The following script may produce false positives because JavaScript uses template literals like `servicesgroup.${group.id}.name`, so the actual key won't be found by substring search.
+    > The following script searches for labels as substrings.  A project whose
+    > keys are generated from the base locale, such as `hostlists-registry`
+    > whose group map holds every key, always looks complete, so it cannot
+    > report orphaned labels.
 
 - `go run ./scripts/translations unused`: show the list of unused strings.
 
