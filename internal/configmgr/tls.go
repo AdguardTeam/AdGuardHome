@@ -80,6 +80,8 @@ func (c *TLSConfig) Validate() (err error) {
 		return fmt.Errorf("override_tls_ciphers: %w", err)
 	}
 
+	// TODO(d.kolyshev):  Add more validations.
+
 	return nil
 }
 

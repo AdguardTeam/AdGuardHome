@@ -494,9 +494,9 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	errs = validate.Append(errs, "dhcp", config.DHCP)
 	errs = validate.Append(errs, "http", &config.HTTPConfig)
 	errs = validate.Append(errs, "os", config.OSConfig)
+	errs = validate.Append(errs, "theme", configmgr.Theme(config.Theme))
 	errs = validate.Append(errs, "tls", &config.TLS)
 	errs = validate.Append(errs, "users", config.Users)
-	errs = validateTheme(errs, config.Theme)
 
 	if len(errs) > 0 {
 		return errors.Join(errs...)
@@ -513,22 +513,6 @@ func validateConfig(ctx context.Context, l *slog.Logger, fileData []byte) (err e
 	validateLanguage(ctx, l)
 
 	return nil
-}
-
-// validateTheme appends theme validation errors to orig.
-func validateTheme(orig []error, theme string) (errs []error) {
-	errs = orig
-
-	if theme == "" {
-		return errs
-	}
-
-	_, err := configmgr.NewTheme(theme)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("theme: %w", err))
-	}
-
-	return errs
 }
 
 // validateLanguage validates the specified language and clears it with a

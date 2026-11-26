@@ -133,6 +133,8 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 		}))
 
 		dataNullTheme = []byte(`{"language":"en","theme":null}`)
+
+		dataEmptyTheme = []byte(`{"language":"en","theme":""}`)
 	)
 
 	testCases := []struct {
@@ -172,9 +174,14 @@ func TestWeb_HandlePutProfile(t *testing.T) {
 			`supported: ["auto" "light" "dark"]` + "\n",
 		wantCode: http.StatusBadRequest,
 	}, {
+		req:      newProfileUpdateRequest(http.MethodPut, dataEmptyTheme, true),
+		name:     "empty_theme",
+		wantBody: `reading req: bad enum value: "", supported: ["auto" "light" "dark"]` + "\n",
+		wantCode: http.StatusBadRequest,
+	}, {
 		req:      newProfileUpdateRequest(http.MethodPut, dataNullTheme, true),
 		name:     "null_theme",
-		wantBody: "theme: empty value\n",
+		wantBody: `bad enum value: "", supported: ["auto" "light" "dark"]` + "\n",
 		wantCode: http.StatusBadRequest,
 	}}
 

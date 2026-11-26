@@ -108,3 +108,13 @@ func (t *Theme) UnmarshalText(b []byte) (err error) {
 
 	return err
 }
+
+// type check
+var _ validate.Interface = Theme("")
+
+// Validate implements the [validate.Interface] interface for Theme.
+func (t Theme) Validate() (err error) {
+	_, err = NewTheme(string(t))
+
+	return err
+}

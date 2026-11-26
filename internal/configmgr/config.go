@@ -1,8 +1,6 @@
 package configmgr
 
 import (
-	"fmt"
-
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/validate"
@@ -138,12 +136,7 @@ func (c *Config) Validate() (err error) {
 		errs = validate.Append(errs, kv.Key, kv.Value)
 	}
 
-	if c.Theme != "" {
-		_, err = NewTheme(c.Theme)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("theme: %w", err))
-		}
-	}
+	errs = validate.Append(errs, "theme", Theme(c.Theme))
 
 	errs = validate.AppendSlice(errs, "filters", c.Filters)
 	errs = validate.AppendSlice(errs, "users", c.Users)

@@ -6,7 +6,6 @@ import (
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
-	"github.com/AdguardTeam/golibs/validate"
 )
 
 // profileJSON is an object for /control/profile and /control/profile/update
@@ -77,7 +76,7 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	theme := profileReq.Theme
-	err = validate.NotEmpty("theme", theme)
+	err = theme.Validate()
 	if err != nil {
 		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
 
