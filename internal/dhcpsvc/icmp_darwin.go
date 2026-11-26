@@ -15,7 +15,8 @@ import (
 
 // dialICMP4 establishes an IPv4 connection to ip.  It prefers the unprivileged
 // datagram socket and falls back to the raw one.  The raw socket requires root
-// privileges, which is the same expectation the DHCP server itself has.
+// privileges, which is the same requirement the DHCP server itself has.  l must
+// not be nil, ip must be a valid IPv4 address.
 //
 // It's a darwin-specific version of the function since [icmp] enables the
 // IP_STRIPHDR socket option there, so packets read from a raw IPv4 socket don't

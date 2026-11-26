@@ -78,29 +78,30 @@ func (d *DefaultICMPDialer) Dial(
 
 // dialICMP6 establishes an IPv6 connection to ip.  It prefers the unprivileged
 // datagram socket and falls back to the raw one.  The raw socket requires root
-// privileges, which is the same expectation the DHCP server itself has.
+// privileges, which is the same requirement the DHCP server itself has.  l must
+// not be nil, ip must be a valid IPv6 address.
 func dialICMP6(
 	ctx context.Context,
-	logger *slog.Logger,
-	raddr netip.Addr,
+	l *slog.Logger,
+	ip netip.Addr,
 ) (conn net.PacketConn, addr net.Addr, err error) {
 	pc, udpErr := icmp.ListenPacket("udp6", "::")
 	if udpErr == nil {
-		logger.DebugContext(ctx, "listening udp6")
+		l.DebugContext(ctx, "listening udp6")
 
-		return pc, net.UDPAddrFromAddrPort(netip.AddrPortFrom(raddr, 0)), nil
+		return pc, net.UDPAddrFromAddrPort(netip.AddrPortFrom(ip, 0)), nil
 	}
 
-	logger.DebugContext(ctx, "failed to listen udp6", slogutil.KeyError, udpErr)
+	l.DebugContext(ctx, "failed to listen udp6", slogutil.KeyError, udpErr)
 
 	pc, rawErr := icmp.ListenPacket("ip6:ipv6-icmp", "::")
 	if rawErr != nil {
 		return nil, nil, errors.Join(udpErr, rawErr)
 	}
 
-	logger.DebugContext(ctx, "listening raw ip6:ipv6-icmp")
+	l.DebugContext(ctx, "listening raw ip6:ipv6-icmp")
 
-	return pc, &net.IPAddr{IP: net.IP(raddr.AsSlice()), Zone: raddr.Zone()}, nil
+	return pc, &net.IPAddr{IP: ip.AsSlice(), Zone: ip.Zone()}, nil
 }
 
 // ICMPAddressCheckerConfig is the configuration for [ICMPAddressChecker].
@@ -221,7 +222,8 @@ func (c *ICMPAddressChecker) IsAvailable(ctx context.Context, ip netip.Addr) (ok
 }
 
 // sendEchoRequest marshals an ICMP echo request for raddr and writes it to the
-// destination address of conn.
+// destination address of conn.  l, conn, and raddr must not be nil, raddr msut
+// be a valid IP address.
 func sendEchoRequest(
 	ctx context.Context,
 	l *slog.Logger,
@@ -260,7 +262,7 @@ func sendEchoRequest(
 // waitEchoResponse reads conn until either an echo reply from ip matching the
 // request with the [echoSequenceNumber] sequence number is received or the
 // deadline of conn is exceeded.  It reports whether such a reply has been
-// received.
+// received.  l and respType must not be nil, ip must be a valid IP address.
 func waitEchoResponse(
 	ctx context.Context,
 	l *slog.Logger,
@@ -293,7 +295,8 @@ func waitEchoResponse(
 
 // echoReplyFrom parses the ICMP message in data, received from peer, and
 // reports whether it is an echo reply of type respType sent by ip, where proto
-// is the ICMP protocol number.  It logs and ignores malformed messages.
+// is the ICMP protocol number.  It logs and ignores malformed messages.  l and
+// respType must not be nil, peer and ip must be valid IP addresses.
 func echoReplyFrom(
 	ctx context.Context,
 	l *slog.Logger,
@@ -327,8 +330,8 @@ func icmpTypes(ip netip.Addr) (reqType, replyType icmp.Type) {
 // the request with the [echoSequenceNumber] received from ip.  It doesn't check
 // for a matching ID, since the kernel rewrites it to the local port on the
 // unprivileged datagram path, so it cannot be relied upon there, while on the
-// raw path any reply sourced from ip means that the address is in use, no matter
-// whose request it answers.  ip must have no zone.
+// raw path any reply sourced from ip means that the address is in use, no
+// matter whose request it answers.  ip must have no zone, msg must not be nil.
 func isMatchingEchoReply(
 	msg *icmp.Message,
 	replyType icmp.Type,

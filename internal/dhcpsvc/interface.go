@@ -17,10 +17,12 @@ import (
 
 // macKey contains hardware address as byte array of 6, 8, or 20 bytes.
 //
-// TODO(e.burkov):  Move to aghnet or even to netutil.
+// TODO(e.burkov):  Move to aghnet or even to netutil.  See AGDNS-4777.
 //
 // TODO(e.burkov):  Identify IPv4 clients by the hardware address and the client
 // identifier option.  Identify IPv6 clients with DUID.
+//
+// TODO(e.burkov):  Consider naming variables of this type mk.
 type macKey any
 
 // macToKey converts mac into macKey, which is used as the key for the lease
@@ -255,7 +257,8 @@ func (iface *netInterface) allocateLease(
 }
 
 // addAndSetLease adds the lease to the interface's lease map and marks its
-// offset as occupied if it falls within the address range.
+// offset as occupied if it falls within the address range.  lease must not be
+// nil.
 func (iface *netInterface) addAndSetLease(macKey macKey, lease *Lease) {
 	iface.leases[macKey] = lease
 

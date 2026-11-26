@@ -18,7 +18,8 @@ import (
 
 // dialICMP4 establishes an IPv4 connection to ip.  It prefers the unprivileged
 // datagram socket and falls back to the raw one.  The raw socket requires root
-// privileges, which is the same expectation the DHCP server itself has.
+// privileges, which is the same requirement the DHCP server itself has.  l must
+// not be nil, ip must be a valid IPv4 address.
 func dialICMP4(
 	ctx context.Context,
 	l *slog.Logger,
