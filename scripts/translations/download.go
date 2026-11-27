@@ -162,7 +162,8 @@ func saveToFile(
 	}
 
 	name := filepath.Join(localesDir, code+".json")
-	err = os.WriteFile(name, buf.Bytes(), 0o664)
+	// #nosec G306 -- Use the default source file permissions.
+	err = os.WriteFile(name, buf.Bytes(), 0o644)
 	if err != nil {
 		return fmt.Errorf("writing file: %w", err)
 	}

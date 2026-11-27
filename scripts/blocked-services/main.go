@@ -65,9 +65,12 @@ func main() {
 	}).Parse(tmplStr)
 	errors.Check(err)
 
+	// #nosec G304 -- Trust the default path or the path explicitly given by the
+	// user.
 	f := errors.Must(os.OpenFile(
 		"./internal/filtering/servicelist.go",
 		os.O_CREATE|os.O_TRUNC|os.O_WRONLY,
+		// #nosec G302 -- Use the default source file permissions.
 		0o644,
 	))
 	defer slogutil.CloseAndLog(ctx, l, f, slog.LevelError)
@@ -123,11 +126,11 @@ type hlServices struct {
 // hlServicesService is the JSON structure for a service in the Hostlists
 // Registry.
 type hlServicesService struct {
-	ID      string   `json:"id"`
-	Name    string   `json:"name"`
-	IconSVG string   `json:"icon_svg"`
-	Rules   []string `json:"rules"`
 	Group   string   `json:"group"`
+	ID      string   `json:"id"`
+	IconSVG string   `json:"icon_svg"`
+	Name    string   `json:"name"`
+	Rules   []string `json:"rules"`
 }
 
 // hlServicesGroup is the JSON structure for a service group in the Hostlists

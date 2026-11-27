@@ -11,21 +11,21 @@ import (
 func TestGenerateHostName(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		testCases := []struct {
+			ip   netip.Addr
 			name string
 			want string
-			ip   netip.Addr
 		}{{
+			ip:   netip.MustParseAddr("127.0.0.1"),
 			name: "good_ipv4",
 			want: "127-0-0-1",
-			ip:   netip.MustParseAddr("127.0.0.1"),
 		}, {
+			ip:   netip.MustParseAddr("fe00::1"),
 			name: "good_ipv6",
 			want: "fe00-0000-0000-0000-0000-0000-0000-0001",
-			ip:   netip.MustParseAddr("fe00::1"),
 		}, {
+			ip:   netip.MustParseAddr("::ffff:1.2.3.4"),
 			name: "4to6",
 			want: "1-2-3-4",
-			ip:   netip.MustParseAddr("::ffff:1.2.3.4"),
 		}}
 
 		for _, tc := range testCases {

@@ -3,7 +3,13 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 19
+# AdGuard-Project-Version: 20
+
+set -e -f -u
+
+if (set -o 'pipefail'); then
+	set -o 'pipefail'
+fi
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -11,15 +17,6 @@ readonly verbose
 if [ "$verbose" -gt '0' ]; then
 	set -x
 fi
-
-# Set $EXIT_ON_ERROR to zero to see all errors.
-if [ "${EXIT_ON_ERROR:-1}" -eq '0' ]; then
-	set +e
-else
-	set -e
-fi
-
-set -f -u
 
 # Source the common helpers, including not_found and run_linter.
 . ./scripts/make/helper.sh
@@ -58,9 +55,8 @@ set -f -u
 #   *  Package unsafe is… unsafe.
 #
 # Currently, the only standard exception are files generated from protobuf
-# schemas, which use package reflect.  Additionally, some packages are allowed
-# to use package log, see above.  If your project needs more exceptions, add and
-# document them.
+# schemas, which use package reflect.  If your project needs more exceptions,
+# add and document them.
 #
 # NOTE:  Flag -H for grep is non-POSIX but all of Busybox, GNU, macOS, and
 # OpenBSD support it.
@@ -181,17 +177,14 @@ run_linter -e underscores
 
 run_linter -e "$go" tool gofumpt --extra -e -l .
 
-run_linter "${GO:-go}" vet work
+run_linter "$go" vet work
 
-# govulncheck is not stricly reproducible, because it queries the VulnDB, which
-# is updated constantly.  If a stricly reproducible lint is desired, for example
-# for Docker lint stages, set IGNORE_NON_REPRODUCIBLE to 1 to ignore the exit
-# code from govulncheck.
-#
-# TODO(a.garipov):  Return the default to 0 and update the Go version once
-# https://github.com/quic-go/quic-go/issues/5543 is fixed.
-if [ "${IGNORE_NON_REPRODUCIBLE:-1}" -gt '0' ]; then
-	# run_linter calls set +e, so don't mind the cancelling effect of ||.
+# govulncheck is not strictly reproducible, because it queries the VulnDB, which
+# is updated constantly.  If a strictly reproducible lint is desired, for
+# example for Docker lint stages, set IGNORE_NON_REPRODUCIBLE to 1 to ignore the
+# exit code from govulncheck.
+if [ "${IGNORE_NON_REPRODUCIBLE:-0}" -gt '0' ]; then
+	# run_linter calls set +e, so don't mind the canceling effect of ||.
 	# shellcheck disable=SC2310
 	run_linter "$go" tool govulncheck work || :
 else
@@ -207,24 +200,26 @@ run_linter "$go" tool gocognit --exact-recursion --over 14 \
 	./internal/dhcpd \
 	;
 
-run_linter "$go" tool gocognit --over='10' \
-	./internal/aghalg/ \
+run_linter "$go" tool gocognit --exact-recursion --over='10' \
 	./internal/agh/ \
+	./internal/aghalg/ \
 	./internal/aghhttp/ \
 	./internal/aghnet/ \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
+	./internal/aghslog/ \
 	./internal/aghtest/ \
 	./internal/aghtls/ \
 	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
+	./internal/configmgr/ \
 	./internal/configmigrate/ \
-	./internal/dhcpsvc \
+	./internal/dhcpsvc/ \
 	./internal/dnsforward/ \
 	./internal/filtering/ \
 	./internal/home/ \
-	./internal/ipset \
+	./internal/ipset/ \
 	./internal/next/ \
 	./internal/ossvc/ \
 	./internal/permcheck/ \
@@ -259,10 +254,13 @@ run_linter "$go" tool nilness work
 
 # TODO(a.garipov): Enable for all.
 run_linter "$go" tool fieldalignment \
+	./internal/agh/ \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
+	./internal/aghnet/ \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
+	./internal/aghslog/ \
 	./internal/aghtest/ \
 	./internal/aghtls/ \
 	./internal/aghuser/ \
@@ -278,6 +276,7 @@ run_linter "$go" tool fieldalignment \
 	./internal/ipset/ \
 	./internal/next/... \
 	./internal/ossvc/ \
+	./internal/permcheck/ \
 	./internal/querylog/ \
 	./internal/rdns/ \
 	./internal/schedule/ \
@@ -285,22 +284,28 @@ run_linter "$go" tool fieldalignment \
 	./internal/updater/ \
 	./internal/version/ \
 	./internal/whois/ \
+	./scripts/... \
 	;
 
 run_linter -e "$go" tool shadow --strict work
 
 # TODO(a.garipov): Enable for all.
+#
 # TODO(e.burkov):  Re-enable G115.
 run_linter "$go" tool gosec --exclude=G115 --fmt=golint --quiet \
+	./internal/agh/ \
 	./internal/aghalg/ \
 	./internal/aghhttp/ \
 	./internal/aghnet/ \
 	./internal/aghos/ \
 	./internal/aghrenameio/ \
+	./internal/aghslog/ \
 	./internal/aghtest/ \
+	./internal/aghtls/ \
 	./internal/aghuser/ \
 	./internal/arpdb/ \
 	./internal/client/ \
+	./internal/configmgr/ \
 	./internal/configmigrate/ \
 	./internal/dhcpd/ \
 	./internal/dhcpsvc/ \
@@ -310,13 +315,15 @@ run_linter "$go" tool gosec --exclude=G115 --fmt=golint --quiet \
 	./internal/filtering/rulelist/ \
 	./internal/filtering/safesearch/ \
 	./internal/ipset/ \
-	./internal/next/ \
+	./internal/next/... \
 	./internal/ossvc/ \
+	./internal/permcheck/ \
 	./internal/rdns/ \
 	./internal/schedule/ \
 	./internal/stats/ \
 	./internal/version/ \
 	./internal/whois/ \
+	./scripts/... \
 	;
 
 run_linter "$go" tool errcheck work

@@ -35,6 +35,8 @@ func main() {
 		Timeout: 10 * time.Second,
 	}
 
+	// #nosec G704 -- Trust the default URL or the URL explicitly given by the
+	// user.
 	resp := errors.Must(c.Get(urlStr))
 	defer slogutil.CloseAndLog(ctx, l, resp.Body, slog.LevelError)
 

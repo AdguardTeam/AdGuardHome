@@ -53,6 +53,8 @@ func addCertsFromDir(
 	for _, de := range dirEnts {
 		var certData []byte
 		rootFile := filepath.Join(dir, de.Name())
+
+		// #nosec G304 -- The directories are a constant slice.
 		certData, err = os.ReadFile(rootFile)
 		if err != nil {
 			l.ErrorContext(ctx, "reading root cert", slogutil.KeyError, err)

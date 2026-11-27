@@ -134,8 +134,6 @@ Optional environment:
 
 Optional environment:
 
-- `EXIT_ON_ERROR`: if set to `0`, don’t exit the script after the first encountered error. The default value is `1`.
-
 - `GO`: set an alternative name for the Go compiler.
 
 - `VERBOSE`: verbosity level. `1` shows every command that is run. `2` also shows subcommands. The default value is `0`, don’t be verbose.

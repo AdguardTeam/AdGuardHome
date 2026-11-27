@@ -58,6 +58,8 @@ func rangeACEs(dacl *windows.ACL, f aceFunc) (err error) {
 			continue
 		}
 
+		// #nosec G103 -- A necessary use of package unsafe for pointer
+		// conversions.
 		sid := (*windows.SID)(unsafe.Pointer(&ace.SidStart))
 		if !f(ace.Header, ace.Mask, sid) {
 			break
