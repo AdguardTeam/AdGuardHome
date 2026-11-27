@@ -368,6 +368,8 @@ func TestQueryLogShouldLog(t *testing.T) {
 }
 
 func TestQueryLog_Shutdown_emptyBuffer(t *testing.T) {
+	t.Parallel()
+
 	l, err := newQueryLog(Config{
 		Logger:      testLogger,
 		Enabled:     true,
