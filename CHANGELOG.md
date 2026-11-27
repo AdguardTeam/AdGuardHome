@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- The query log search in the new web interface being reset to a lone quote by a stale response ([#8776]).
+
 - Interactive cards in the new web interface becoming unreachable when the pointer crossed the gap between a row and its card ([#8779]).
 
 - Rapid changes to global blocked services in the new web interface silently overwriting each other ([#8769]).
@@ -81,6 +83,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8763]:       https://github.com/AdguardTeam/AdGuardHome/issues/8763
 [#8769]:       https://github.com/AdguardTeam/AdGuardHome/issues/8769
 [#8775]:       https://github.com/AdguardTeam/AdGuardHome/issues/8775
+[#8776]:       https://github.com/AdguardTeam/AdGuardHome/issues/8776
 [#8779]:       https://github.com/AdguardTeam/AdGuardHome/issues/8779
 
 <!--

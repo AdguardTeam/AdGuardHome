@@ -106,16 +106,31 @@ const REASON_OPTIONS = [
 
 export const Header = (props: Props) => {
     const [searchValue, setSearchValue] = createSignal(untrack(() => props.currentSearch));
+    // The store echo of a submitted search must not overwrite text the user
+    // has typed since. The parent trims the value, so compare the same form.
+    const [lastSubmitted, setLastSubmitted] = createSignal<string | null>(null);
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     const isMobile = useIsMobile();
 
     createEffect(
         on(
             () => props.currentSearch,
-            (value) => setSearchValue(value),
+            (value) => {
+                if (value === lastSubmitted()) {
+                    return;
+                }
+                setLastSubmitted(value);
+                setSearchValue(value);
+            },
             { defer: true },
         ),
     );
+
+    const submitSearch = (value: string) => {
+        const trimmed = value.trim();
+        setLastSubmitted(trimmed);
+        props.onSearch(trimmed);
+    };
 
     const handleSearchChange = (e: Event) => {
         const value = (e.target as HTMLInputElement).value;
@@ -126,7 +141,7 @@ export const Header = (props: Props) => {
         }
 
         debounceTimer = setTimeout(() => {
-            props.onSearch(value);
+            submitSearch(value);
         }, DEBOUNCE_FILTER_TIMEOUT);
     };
 
@@ -135,7 +150,7 @@ export const Header = (props: Props) => {
             clearTimeout(debounceTimer);
         }
         setSearchValue('');
-        props.onSearch('');
+        submitSearch('');
     };
 
     onCleanup(() => {

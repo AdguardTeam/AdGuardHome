@@ -581,6 +581,40 @@ test.describe('Query log desktop', () => {
     // TODO(ik): fragile tests, need to rewrite later
     test.skip(() => !!process.env.CI, 'Skipped on CI: fragile tests');
 
+    test('keeps a quoted search when an older response lands last', async ({ page }) => {
+        await openQueryLog(page);
+
+        const searchInput = page.getByTestId('query-log-search-input');
+
+        // Hold the response for the lone opening quote: it matches nothing and
+        // is the stale answer that used to reset the input.
+        await page.route('**/control/querylog*', async (route) => {
+            const requestUrl = new URL(route.request().url());
+
+            if (requestUrl.searchParams.get('search') === '"') {
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
+
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify(buildDefaultQueryLogResponse(requestUrl)),
+            });
+        });
+
+        await searchInput.fill('"');
+        await page.waitForTimeout(700);
+
+        await searchInput.fill('"google.com"');
+        await page.waitForTimeout(700);
+        await expect(searchInput).toHaveValue('"google.com"');
+
+        // The delayed response for the lone quote must not touch the input.
+        await page.waitForTimeout(1500);
+        await expect(searchInput).toHaveValue('"google.com"');
+        expectPageFilters(page, { search: '"google.com"', status: 'all', reason: 'all' });
+    });
+
     test('supports semantic row assertions, quick filters, search, refresh, and URL sync', async ({
         page,
     }) => {

@@ -59,6 +59,20 @@ const initialState: QueryLogsState = {
 
 const [state, setState] = createStore<QueryLogsState>(initialState);
 
+// A response may land after the search it belongs to was replaced. Each log
+// request takes a token and only the latest token may write state or continue
+// paging; discarding is enough because `customFetch` turns AbortError into a
+// generic error and would surface a false toast.
+let latestLogsRequest = 0;
+let latestAdditionalRequest = 0;
+
+const beginLogsRequest = () => {
+    latestLogsRequest += 1;
+    return latestLogsRequest;
+};
+
+const isLatestLogsRequest = (id: number) => id === latestLogsRequest;
+
 // ---------- Short-poll helpers (v2 parity) ----------
 
 /** Maps frontend status filter → exact backend reason strings */
@@ -123,29 +137,38 @@ const filterLogsByStatus = (
 const shortPollQueryLogs = async (
     data: { logs: NormalizedQueryLogItem[]; oldest: string },
     filter: QueryLogFilter,
+    requestId: number,
     total?: { logs: NormalizedQueryLogItem[]; oldest: string },
 ): Promise<{ logs: NormalizedQueryLogItem[]; oldest: string }> => {
     const totalData = total
         ? { logs: [...total.logs, ...data.logs], oldest: data.oldest }
         : { logs: data.logs, oldest: data.oldest };
+    if (!isLatestLogsRequest(requestId)) return totalData;
     const visible = filterLogsByStatus(
         totalData.logs,
         filter?.status || DEFAULT_LOGS_FILTER.status,
     ).length;
     if (visible >= QUERY_LOGS_PAGE_LIMIT || totalData.oldest === '') return totalData;
     const more = await fetchLogsWithParams(totalData.oldest, filter);
-    return shortPollQueryLogs(more, filter, totalData);
+    return shortPollQueryLogs(more, filter, requestId, totalData);
 };
 
 // ---------- Public actions ----------
 
 export const getLogs = async (currentQuery?: string) => {
+    const requestId = beginLogsRequest();
     setState('processingGetLogs', true);
     try {
         const { isFiltered, filter, oldest } = untrack(() => state);
         const data = await fetchLogsWithParams(oldest, filter);
+        if (!isLatestLogsRequest(requestId)) {
+            return;
+        }
         if (isFiltered) {
-            const accumulated = await shortPollQueryLogs(data, filter);
+            const accumulated = await shortPollQueryLogs(data, filter, requestId);
+            if (!isLatestLogsRequest(requestId)) {
+                return;
+            }
             setState({
                 logs: accumulated.logs,
                 oldest: accumulated.oldest,
@@ -162,25 +185,43 @@ export const getLogs = async (currentQuery?: string) => {
         }
         void currentQuery; // retained for v2 compatibility
     } catch (error) {
+        if (!isLatestLogsRequest(requestId)) {
+            return;
+        }
         addErrorToast({ error });
         setState('processingGetLogs', false);
     }
 };
 
 export const getAdditionalLogs = async () => {
+    if (untrack(() => state.processingAdditionalLogs || state.processingGetLogs)) {
+        return;
+    }
+
+    latestAdditionalRequest += 1;
+    const token = latestAdditionalRequest;
     setState('processingAdditionalLogs', true);
     try {
-        const { filter, oldest } = untrack(() => state);
+        const { filter, oldest, logs } = untrack(() => state);
+        const logsRequestId = latestLogsRequest;
         const data = await fetchLogsWithParams(oldest, filter);
+        if (token !== latestAdditionalRequest || logsRequestId !== latestLogsRequest) {
+            return;
+        }
         setState({
-            logs: [...state.logs, ...data.logs],
+            logs: [...logs, ...data.logs],
             oldest: data.oldest,
             isEntireLog: data.oldest === '',
-            processingAdditionalLogs: false,
         });
     } catch (error) {
+        if (token !== latestAdditionalRequest) {
+            return;
+        }
         addErrorToast({ error });
-        setState('processingAdditionalLogs', false);
+    } finally {
+        if (token === latestAdditionalRequest) {
+            setState('processingAdditionalLogs', false);
+        }
     }
 };
 
@@ -188,11 +229,17 @@ export const clearLogs = async () => {
     setState('processingClear', true);
     try {
         await querylogClear();
+        // The log is empty now: a search or a page that is still in flight
+        // must neither repopulate it nor leave its loading flag stuck.
+        latestLogsRequest += 1;
+        latestAdditionalRequest += 1;
         setState({
             logs: [],
             oldest: '',
             isEntireLog: false,
             processingClear: false,
+            processingGetLogs: false,
+            processingAdditionalLogs: false,
         });
         addSuccessToast(intl.getMessage('settings_notify_query_log_cleared'));
     } catch (error) {
@@ -237,23 +284,34 @@ export const setLogsConfig = async (values: GetQueryLogConfigResponse): Promise<
 };
 
 export const setFilteredLogs = async (filter?: QueryLogFilter): Promise<boolean> => {
+    const requestId = beginLogsRequest();
+    const nextFilter = filter ?? DEFAULT_LOGS_FILTER;
     setState({
-        filter: filter ?? DEFAULT_LOGS_FILTER,
+        filter: nextFilter,
         isFiltered: true,
         processingGetLogs: true,
     });
     try {
         const data = await fetchLogsWithParams('', filter);
-        const accumulated = await shortPollQueryLogs(data, filter);
+        if (!isLatestLogsRequest(requestId)) {
+            return false;
+        }
+        const accumulated = await shortPollQueryLogs(data, filter, requestId);
+        if (!isLatestLogsRequest(requestId)) {
+            return false;
+        }
         setState({
             logs: accumulated.logs,
             oldest: accumulated.oldest,
             isEntireLog: accumulated.oldest === '',
-            filter: filter ?? DEFAULT_LOGS_FILTER,
+            filter: nextFilter,
             processingGetLogs: false,
         });
         return true;
     } catch (error) {
+        if (!isLatestLogsRequest(requestId)) {
+            return false;
+        }
         addErrorToast({ error });
         setState('processingGetLogs', false);
         return false;
