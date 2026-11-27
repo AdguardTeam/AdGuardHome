@@ -103,3 +103,24 @@
         color: var(--fills-switch-knob-disabled);
     }
 }
+
+/* A busy control stays disabled but must not repaint the whole page grey. */
+.busy .input:disabled + .handler {
+    background-color: var(--fills-switch-off-default);
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-switch-off-default);
+        }
+    }
+}
+
+.busy .input:checked:disabled + .handler {
+    background-color: var(--fills-switch-on-default);
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-switch-on-default);
+        }
+    }
+}

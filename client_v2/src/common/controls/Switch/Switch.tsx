@@ -7,6 +7,8 @@ type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'type'
     id: string;
     checked: boolean;
     disabled?: boolean;
+    /** Keeps the normal palette while the control is temporarily unavailable. */
+    busy?: boolean;
     labelClass?: string;
     class?: string;
     wrapperClass?: string;
@@ -41,7 +43,13 @@ export const Switch = (props: Props) => {
     );
 
     return (
-        <label for={props.id} class={cn(s.switch, props.class, { [s.disabled]: props.disabled })}>
+        <label
+            for={props.id}
+            class={cn(s.switch, props.class, {
+                [s.disabled]: props.disabled,
+                [s.busy]: props.busy,
+            })}
+        >
             <Show when={props.wrapperClass} fallback={switchControls}>
                 <div class={props.wrapperClass}>{switchControls}</div>
             </Show>

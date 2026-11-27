@@ -366,28 +366,58 @@ test.describe('Blocked Services Page', () => {
         await expect(page).toHaveURL(/#\/?blocked_services\/schedule/);
     });
 
-    // TODO: Check if the component actually disables switches during API calls.
-    // If not, this test should use test.fixme instead.
-    test('should disable switches during API processing', async ({ page }) => {
-        // Make update slow
-        await page.route('**/control/blocked_services/update', (route) => {
-            setTimeout(() => {
-                route.fulfill({
-                    status: 200,
-                    contentType: 'application/json',
-                    body: JSON.stringify({}),
-                });
-            }, 2000);
+    test('should serialize switches during API processing without repainting them', async ({
+        page,
+    }) => {
+        let listIds = [...MOCK_BLOCKED_SERVICES.ids];
+        const updates: { ids: string[] }[] = [];
+
+        await page.route('**/control/blocked_services/update', async (route) => {
+            const body = route.request().postDataJSON() as { ids: string[] };
+            updates.push(body);
+            listIds = body.ids;
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({}),
+            });
         });
 
-        // Toggle a service
-        const whatsappLabel = page.locator('label[for="service_whatsapp"]');
+        await page.route('**/control/blocked_services/get', async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 600));
+            await route.fulfill({
+                status: 200,
+                contentType: 'application/json',
+                body: JSON.stringify({ ...MOCK_BLOCKED_SERVICES, ids: listIds }),
+            });
+        });
+
+        const list = page.getByTestId('blocked-services-list');
         const telegramInput = page.locator('input#service_telegram');
+        const telegramTrack = page.locator('label[for="service_telegram"] > div');
+        const beforePalette = await telegramTrack.evaluate(
+            (el) => getComputedStyle(el).backgroundColor,
+        );
 
-        await whatsappLabel.click();
+        await page.locator('label[for="service_whatsapp"]').click();
 
-        // During the ongoing 2-second API call, other switches should be disabled
+        await expect(list).toHaveAttribute('aria-busy', 'true');
         await expect(telegramInput).toBeDisabled();
+        await expect(telegramTrack).toHaveCSS('background-color', beforePalette);
+
+        // The PUT and the follow-up read are both slow, so the pending window
+        // must survive the PUT and end only when the list is refreshed.
+        await expect(list).toHaveAttribute('aria-busy', 'false', { timeout: 10000 });
+        await expect(telegramInput).toBeEnabled();
+
+        await page.locator('label[for="service_epic_games"]').click();
+        await expect(list).toHaveAttribute('aria-busy', 'false', { timeout: 10000 });
+
+        expect(updates).toHaveLength(2);
+        expect(updates[1]?.ids.sort()).toEqual(
+            ['telegram', 'steam', 'whatsapp', 'epic_games'].sort(),
+        );
     });
 });
 

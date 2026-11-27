@@ -10,6 +10,7 @@ type Props = {
     iconSvg: string;
     checked: boolean;
     disabled: boolean;
+    busy?: boolean;
     onChange: (id: string, checked: boolean) => void;
 };
 
@@ -34,6 +35,7 @@ export const ServiceRow = (props: Props) => {
             onClick={handleRowClick}
             role="button"
             tabIndex={0}
+            aria-disabled={props.disabled}
             data-testid={`blocked-service-row-${props.id}`}
             onKeyDown={(e: KeyboardEvent) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -53,6 +55,7 @@ export const ServiceRow = (props: Props) => {
                     id={`service_${props.id}`}
                     checked={props.checked}
                     disabled={props.disabled}
+                    busy={props.busy}
                     onChange={handleChange}
                 />
             </div>

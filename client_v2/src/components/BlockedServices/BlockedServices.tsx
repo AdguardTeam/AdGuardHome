@@ -1,8 +1,17 @@
-import { createSignal, createEffect, createMemo, onMount, Show, For } from 'solid-js';
+import {
+    createSignal,
+    createEffect,
+    createMemo,
+    onMount,
+    onCleanup,
+    Show,
+    For,
+} from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { Icon } from 'panel/common/ui/Icon';
+import { InlineLoader } from 'panel/common/ui/Loader';
 import { SettingLink } from 'panel/common/ui/SettingLink';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
@@ -43,12 +52,14 @@ type Props = {
     };
 };
 
+const BUSY_LOADER_DELAY = 150;
+
 export const BlockedServices = (props: Props) => {
     const [search, setSearch] = createSignal('');
     const [groupFilter, setGroupFilter] = createSignal<string[]>([]);
-    const [togglingId, setTogglingId] = createSignal<string | null>(null);
     const [showBlockedOnly, setShowBlockedOnly] = createSignal(false);
     const [showUnblockedOnly, setShowUnblockedOnly] = createSignal(false);
+    const [showBusyLoader, setShowBusyLoader] = createSignal(false);
 
     onMount(() => {
         if (!props.clientScope) {
@@ -59,10 +70,18 @@ export const BlockedServices = (props: Props) => {
         }
     });
 
+    // One pending window covers the whole-list PUT and the follow-up GET, so
+    // switches stay locked until the shown list is the saved one.
+    const isGlobalUpdatePending = () =>
+        !props.clientScope && (servicesState.processingSet || servicesState.processing);
+
     createEffect(() => {
-        if (!servicesState.processingSet) {
-            setTogglingId(null);
+        if (!isGlobalUpdatePending()) {
+            setShowBusyLoader(false);
+            return;
         }
+        const timer = setTimeout(() => setShowBusyLoader(true), BUSY_LOADER_DELAY);
+        onCleanup(() => clearTimeout(timer));
     });
 
     const blockedSet = createMemo(() => {
@@ -147,7 +166,9 @@ export const BlockedServices = (props: Props) => {
             updateClientFormField('blocked_services', newIds);
             return;
         }
-        setTogglingId(serviceId);
+        if (isGlobalUpdatePending()) {
+            return;
+        }
         const currentIds = servicesState.list?.ids || [];
         const newIds = checked
             ? [...currentIds, serviceId]
@@ -216,16 +237,21 @@ export const BlockedServices = (props: Props) => {
                 <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                     <Show when={!props.clientScope && !props.breadcrumbs}>
                         <div class={s.header}>
-                            <h1
-                                class={cn(
-                                    theme.layout.title,
-                                    theme.title.h4,
-                                    theme.title.h3_tablet,
-                                )}
-                                data-testid="blocked-services-title"
-                            >
-                                {intl.getMessage('blocked_services')}
-                            </h1>
+                            <div class={s.titleRow}>
+                                <h1
+                                    class={cn(
+                                        theme.layout.title,
+                                        theme.title.h4,
+                                        theme.title.h3_tablet,
+                                    )}
+                                    data-testid="blocked-services-title"
+                                >
+                                    {intl.getMessage('blocked_services')}
+                                </h1>
+                                <Show when={showBusyLoader()}>
+                                    <InlineLoader class={s.busyLoader} />
+                                </Show>
+                            </div>
                             <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
                         </div>
                     </Show>
@@ -332,7 +358,11 @@ export const BlockedServices = (props: Props) => {
                             />
                         </GroupFilter>
 
-                        <div class={s.servicesList} data-testid="blocked-services-list">
+                        <div
+                            class={s.servicesList}
+                            data-testid="blocked-services-list"
+                            aria-busy={isGlobalUpdatePending()}
+                        >
                             <Show
                                 when={filteredServices().length === 0}
                                 fallback={
@@ -345,8 +375,9 @@ export const BlockedServices = (props: Props) => {
                                                 checked={blockedSet().has(service.id)}
                                                 disabled={
                                                     isGloballyDisabled() ||
-                                                    togglingId() === service.id
+                                                    isGlobalUpdatePending()
                                                 }
+                                                busy={isGlobalUpdatePending()}
                                                 onChange={handleToggleService}
                                             />
                                         )}

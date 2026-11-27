@@ -5,7 +5,7 @@ import {
     blockedServicesAll,
     blockedServicesScheduleUpdate,
 } from 'panel/api/generated';
-import { addErrorToast, addSuccessToast, createUndoToast } from './toasts';
+import { addErrorToast, addSuccessToast, addWarningToast, createUndoToast } from './toasts';
 import intl from 'panel/common/intl';
 import type { BlockedServicesSchedule } from 'panel/api/model/blockedServicesSchedule';
 import type { BlockedService } from 'panel/api/model/blockedService';
@@ -37,12 +37,30 @@ const initialState: ServicesState = {
 
 const [state, setState] = createStore<ServicesState>(initialState);
 
+// Whole-list updates and reads race each other: a read that started before a
+// PUT must not restore the pre-update ids over the accepted payload.
+let latestServicesGet = 0;
+
+const beginServicesGet = () => {
+    latestServicesGet += 1;
+    return latestServicesGet;
+};
+
+const isLatestServicesGet = (id: number) => id === latestServicesGet;
+
 export const getBlockedServices = async () => {
+    const requestId = beginServicesGet();
     setState('processing', true);
     try {
         const data = await blockedServicesSchedule();
+        if (!isLatestServicesGet(requestId)) {
+            return;
+        }
         setState({ list: data, processing: false, initialized: true });
     } catch (error) {
+        if (!isLatestServicesGet(requestId)) {
+            return;
+        }
         addErrorToast({ error });
         setState({ processing: false, initialized: true });
     }
@@ -67,16 +85,28 @@ export const getAllBlockedServices = async () => {
 export const updateBlockedServices = async (
     values: BlockedServicesSchedule,
 ): Promise<boolean> => {
+    if (untrack(() => state.processingSet)) {
+        addWarningToast({ error: intl.getMessage('blocked_services_update_in_progress') });
+        return false;
+    }
+
     setState('processingSet', true);
+    const updateId = beginServicesGet();
     try {
         await blockedServicesScheduleUpdate(values);
-        setState('processingSet', false);
+        // The accepted payload is authoritative until the follow-up read lands;
+        // a failed read must not re-enable editing against a stale list.
+        setState('list', values);
         await getBlockedServices();
         return true;
     } catch (error) {
         addErrorToast({ error });
-        setState('processingSet', false);
+        if (isLatestServicesGet(updateId)) {
+            setState('processing', false);
+        }
         return false;
+    } finally {
+        setState('processingSet', false);
     }
 };
 

@@ -1,10 +1,28 @@
-import { render, screen } from '@solidjs/testing-library';
+import { render, screen, fireEvent } from '@solidjs/testing-library';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, createMemoryHistory } from '@solidjs/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BlockedServices } from 'panel/components/BlockedServices/BlockedServices';
-import { clearClientForm, initClientForm } from 'panel/stores/clientForm';
+import { clearClientForm, clientFormState, initClientForm } from 'panel/stores/clientForm';
 import { copyInDom } from 'panel/__tests__/helpers/copy';
+
+const ALL_SERVICES = [
+    {
+        id: 'telegram',
+        name: 'Telegram',
+        icon_svg: '<svg><circle cx="12" cy="12" r="10"/></svg>',
+        group_id: 'messaging',
+        rules: ['||telegram.org^'],
+    },
+    {
+        id: 'whatsapp',
+        name: 'WhatsApp',
+        icon_svg: '<svg><circle cx="12" cy="12" r="10"/></svg>',
+        group_id: 'messaging',
+        rules: ['||whatsapp.com^'],
+    },
+];
 
 const servicesMocks = vi.hoisted(() => ({
     getBlockedServices: vi.fn(),
@@ -13,9 +31,12 @@ const servicesMocks = vi.hoisted(() => ({
     servicesState: {
         allServices: [] as unknown[],
         allGroups: [] as unknown[],
+        list: { ids: [] as string[] } as { ids: string[]; schedule?: unknown },
         processingAll: false,
         processing: false,
         processingSet: false,
+        initialized: false,
+        allInitialized: false,
     },
 }));
 
@@ -79,5 +100,76 @@ describe('BlockedServices client scope', () => {
         expect(document.getElementById('use-global-blocked-services')).toBeNull();
         expect(screen.queryByTestId('blocked-services-global-note')).toBeNull();
         expect(screen.getByTestId('blocked-services-list')).toBeInTheDocument();
+    });
+});
+
+describe('BlockedServices global update pending state', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        clearClientForm();
+        servicesMocks.servicesState.allServices = ALL_SERVICES;
+        servicesMocks.servicesState.list = { ids: [] };
+        servicesMocks.servicesState.processing = false;
+        servicesMocks.servicesState.processingSet = false;
+    });
+
+    it('disables every global switch and marks the list busy during the PUT', () => {
+        servicesMocks.servicesState.processingSet = true;
+        renderBlockedServices(false);
+
+        expect(document.getElementById('service_telegram')).toBeDisabled();
+        expect(document.getElementById('service_whatsapp')).toBeDisabled();
+        expect(screen.getByTestId('blocked-services-list')).toHaveAttribute(
+            'aria-busy',
+            'true',
+        );
+        expect(screen.getByTestId('blocked-service-row-telegram')).toHaveAttribute(
+            'aria-disabled',
+            'true',
+        );
+        expect(document.querySelector('label[for="service_telegram"]')?.className).toMatch(
+            /_busy_/,
+        );
+    });
+
+    it('keeps the switches disabled while the follow-up read is in flight', () => {
+        servicesMocks.servicesState.processing = true;
+        renderBlockedServices(false);
+
+        expect(document.getElementById('service_telegram')).toBeDisabled();
+        expect(screen.getByTestId('blocked-services-list')).toHaveAttribute(
+            'aria-busy',
+            'true',
+        );
+    });
+
+    it('rejects a toggle that arrives after an update has started', async () => {
+        renderBlockedServices(false);
+
+        await fireEvent.click(screen.getByTestId('blocked-service-row-telegram'));
+        expect(servicesMocks.updateBlockedServices).toHaveBeenCalledTimes(1);
+
+        servicesMocks.servicesState.processingSet = true;
+        await fireEvent.click(screen.getByTestId('blocked-service-row-whatsapp'));
+
+        expect(servicesMocks.updateBlockedServices).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps per-client switches editable while a global update is pending', async () => {
+        initClientForm({
+            name: 'Laptop',
+            use_global_blocked_services: false,
+            blocked_services: [],
+        });
+        servicesMocks.servicesState.processingSet = true;
+        renderBlockedServices(true);
+
+        const telegram = document.getElementById('service_telegram') as HTMLInputElement;
+        expect(telegram).not.toBeDisabled();
+
+        await userEvent.click(telegram);
+
+        expect(clientFormState.blocked_services).toContain('telegram');
+        expect(servicesMocks.updateBlockedServices).not.toHaveBeenCalled();
     });
 });
