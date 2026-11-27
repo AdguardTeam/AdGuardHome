@@ -18,6 +18,7 @@ type UpstreamInfo = {
 
 type Props = {
     topUpstreamsAvgTime: UpstreamInfo[];
+    avgUpstreamResponseTime: number;
     avgProcessingTime: number;
     period?: number;
 };
@@ -38,7 +39,7 @@ export const UpstreamAvgTime = (props: Props) => {
 
                 <Show when={hasStats()}>
                     <div class={cn(theme.text.t3, s.cardSubtitle)}>
-                        {(props.avgProcessingTime ?? 0).toFixed(0)}{' '}
+                        {(props.avgUpstreamResponseTime ?? 0).toFixed(0)}{' '}
                         {intl.getMessage('milliseconds_abbreviation')}
                     </div>
                 </Show>
