@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 
-import { LOCALES, LOCALE_LOADERS, LOCALE_CODES } from 'panel/common/intl/locales.generated';
+import {
+    LOCALES,
+    LOCALE_LOADERS,
+    LOCALE_CODES,
+    SERVICES_BASE_LOCALE,
+    SERVICES_LOCALE_LOADERS,
+} from 'panel/common/intl/locales.generated';
 import twosky from 'Twosky';
 
 const homeV2 = twosky.find((p) => p.project_id === 'home_v2')!;
@@ -16,6 +22,15 @@ describe('locales.generated.ts', () => {
     it('LOCALE_LOADERS has a loader for every non-en locale', () => {
         const loaderCodes = Object.keys(LOCALE_LOADERS).sort();
         expect(loaderCodes).toEqual(expectedCodes.filter((c) => c !== 'en'));
+    });
+
+    it('SERVICES_LOCALE_LOADERS has a loader for every non-en locale', () => {
+        const loaderCodes = Object.keys(SERVICES_LOCALE_LOADERS).sort();
+        expect(loaderCodes).toEqual(expectedCodes.filter((c) => c !== 'en'));
+    });
+
+    it('blocked-services base locale is present and non-empty', () => {
+        expect(Object.keys(SERVICES_BASE_LOCALE).length).toBeGreaterThan(0);
     });
 
     it('LOCALES only contains the base locale (en) initially', () => {

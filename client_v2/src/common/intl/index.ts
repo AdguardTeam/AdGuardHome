@@ -10,15 +10,45 @@ import {
     LOCALE_LOADERS,
     LOCALE_CODES,
     LocaleMessage,
+    SERVICES_BASE_LOCALE,
+    SERVICES_LOCALE_LOADERS,
+    ServicesMessage,
 } from 'panel/common/intl/locales.generated';
 
 export type LocalesType = ReturnType<I18nInterface['getUILanguage']>;
 
 /**
+ * Converts the blocked-services locale format (`{ key: { message } }`) to the
+ * flat format used by `@adguard/translate`.
+ */
+const flattenServices = (services: ServicesMessage): LocaleMessage =>
+    Object.fromEntries(
+        Object.entries(services).map(([key, value]) => [
+            key,
+            typeof value === 'string' ? value : value.message,
+        ]),
+    );
+
+/**
  * The live message map — starts with only the base locale (`en`),
  * populated with additional locales at runtime via {@link preloadLocale}.
+ *
+ * The base locale also includes the blocked-services group names, which live
+ * in a separate Hostlists Registry translation project.
  */
-const messages: Record<string, LocaleMessage> = { ...LOCALES };
+const messages: Record<string, LocaleMessage> = {
+    ...LOCALES,
+    [BASE_LOCALE]: {
+        ...(LOCALES[BASE_LOCALE] ?? {}),
+        ...flattenServices(SERVICES_BASE_LOCALE),
+    },
+};
+
+/** Locales whose main UI strings have been loaded. */
+const loadedLocales = new Set<string>([BASE_LOCALE]);
+
+/** Locales whose blocked-services strings have been loaded. */
+const loadedServices = new Set<string>([BASE_LOCALE]);
 
 /**
  * Converts a hyphenated twosky locale code to the underscore format that
@@ -266,15 +296,52 @@ const intl = {
 
 /**
  * Loads a non-base locale into the `messages` map so that subsequent
- * `getMessage`/`getPlural` calls can serve it.  If the locale is already
- * loaded or is the base locale (`en`), this is a no-op.
+ * `getMessage`/`getPlural` calls can serve it.  The main UI strings and the
+ * blocked-services group names are loaded independently, since they come from
+ * different Twosky projects and may already be loaded separately.
  */
 export const preloadLocale = async (code: string) => {
-    if (messages[code]) return;
-    const loader = LOCALE_LOADERS[code];
-    if (!loader) return;
-    const mod = await loader();
-    messages[code] = (mod as { default?: LocaleMessage }).default ?? (mod as LocaleMessage);
+    const loadMain = loadedLocales.has(code) ? undefined : LOCALE_LOADERS[code];
+    const loadServices = loadedServices.has(code) ? undefined : SERVICES_LOCALE_LOADERS[code];
+
+    if (!loadMain && !loadServices) {
+        return;
+    }
+
+    const [mainResult, servicesResult] = await Promise.allSettled([
+        loadMain?.(),
+        loadServices?.(),
+    ]);
+
+    if (mainResult.status === 'rejected') {
+        throw mainResult.reason;
+    }
+
+    let merged: LocaleMessage = { ...(messages[code] ?? {}) };
+
+    if (mainResult.value) {
+        merged = {
+            ...merged,
+            ...((mainResult.value as { default?: LocaleMessage }).default ??
+                (mainResult.value as LocaleMessage)),
+        };
+        loadedLocales.add(code);
+    }
+
+    if (servicesResult.status === 'rejected') {
+        // The main locale still loads; service group names fall back to English.
+        // eslint-disable-next-line no-console
+        console.warn('[i18n] Failed to load blocked-services locale:', code, servicesResult.reason);
+    } else if (servicesResult.value) {
+        const services =
+            (servicesResult.value as { default?: ServicesMessage }).default ??
+            (servicesResult.value as ServicesMessage);
+
+        merged = { ...merged, ...flattenServices(services) };
+        loadedServices.add(code);
+    }
+
+    messages[code] = merged;
 };
 
 // Fire-and-forget: preload the browser-detected locale as soon as the module

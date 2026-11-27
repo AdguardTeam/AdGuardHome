@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "AI"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Zoznamovanie"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Hazardné hry, stávkovanie"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Hranie hier"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Webhosting"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Správy"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Nástroje na ochranu súkromia"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Nakupovanie"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Sociálne siete"
+  },
+  "servicesgroup.software.name": {
+    "message": "Vývoj softvéru"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Streamovanie"
+  }
+}

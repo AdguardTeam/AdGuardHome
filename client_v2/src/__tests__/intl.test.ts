@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { translate } from '@adguard/translate';
+import servicesDe from 'panel/__locales-services/de.json';
+import servicesEn from 'panel/__locales-services/en.json';
 import { LocalStorageHelper } from '../helpers/localStorageHelper';
 
 // Ensure the real constants module is available even when other test files
@@ -233,6 +235,30 @@ describe('shipped locale plural values', () => {
         // wrong reason.
         expect(intl.getUILanguage()).toBe(locale);
         expect(intl.getPlural('last_days', 7)).not.toBe('last_days');
+    });
+});
+
+describe('blocked-services locale', () => {
+    afterEach(async () => {
+        await intl.changeLanguage('en');
+    });
+
+    // The group names come from a second Twosky project and are merged into the
+    // same message map by preloadLocale; a broken loader or merge order leaves
+    // the chips showing the raw group ID.
+    it('serves the group names after changeLanguage', async () => {
+        await intl.changeLanguage('de');
+
+        expect(intl.getUILanguage()).toBe('de');
+        expect(intl.getMessage('servicesgroup.gaming.name')).toBe(
+            servicesDe['servicesgroup.gaming.name'].message,
+        );
+    });
+
+    it('keeps the English group names as the base fallback', () => {
+        expect(intl.getBaseMessage('servicesgroup.gaming.name')).toBe(
+            servicesEn['servicesgroup.gaming.name'].message,
+        );
     });
 });
 

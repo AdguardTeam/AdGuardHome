@@ -1,6 +1,6 @@
 import { Show, For, type JSX } from 'solid-js';
 import cn from 'clsx';
-import intl from 'panel/common/intl';
+import { SERVICE_GROUP_MESSAGES } from 'panel/common/intl/services.groups.generated';
 import theme from 'panel/lib/theme';
 
 import s from './BlockedServices.module.pcss';
@@ -16,42 +16,11 @@ type Props = {
     children?: JSX.Element;
 };
 
-const getGroupName = (id: string): string => {
-    switch (id) {
-        case 'ai':
-            return intl.getMessage('parental_group_ai');
-        case 'cdn':
-            return intl.getMessage('parental_group_cdn');
-        case 'dating':
-            return intl.getMessage('parental_group_dating');
-        case 'gambling':
-            return intl.getMessage('parental_group_gambling');
-        case 'gaming':
-            return intl.getMessage('parental_group_gaming');
-        case 'messaging':
-            return intl.getMessage('parental_group_messaging');
-        case 'privacy':
-            return intl.getMessage('parental_group_privacy');
-        case 'shopping':
-            return intl.getMessage('parental_group_shopping');
-        case 'social':
-            return intl.getMessage('parental_group_social');
-        case 'development':
-            return intl.getMessage('parental_group_development');
-        case 'streaming':
-            return intl.getMessage('parental_group_streaming');
-        case 'hosting':
-            return intl.getMessage('parental_group_hosting');
-        case 'messenger':
-            return intl.getMessage('parental_group_messenger');
-        case 'social_network':
-            return intl.getMessage('parental_group_social_network');
-        case 'software':
-            return intl.getMessage('parental_group_software');
-        default:
-            return id;
-    }
-};
+/**
+ * Returns the localized name of a blocked-service group, falling back to the
+ * raw ID for a group this build has no name for.
+ */
+const getGroupName = (id: string): string => SERVICE_GROUP_MESSAGES[id]?.() ?? id;
 
 export const GroupFilter = (props: Props) => {
     return (

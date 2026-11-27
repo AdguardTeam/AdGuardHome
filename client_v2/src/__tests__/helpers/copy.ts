@@ -1,12 +1,33 @@
 import { vi } from 'vitest';
 
 import enJson from 'panel/__locales/en.json';
+import servicesEnJson from 'panel/__locales-services/en.json';
+
+/**
+ * Flattens the blocked-services locale format (`{ key: { message } }`) to the
+ * strings the app exposes through `intl`, keeping the keys so `CopyKey` covers
+ * them.  Mirrors `flattenServices` in `panel/common/intl`, which this helper
+ * must not import because component tests mock that module.
+ */
+const flattenServices = <T extends Record<string, string | { message: string }>>(
+    services: T,
+): { [K in keyof T]: string } =>
+    Object.fromEntries(
+        Object.entries(services).map(([key, value]) => [
+            key,
+            typeof value === 'string' ? value : value.message,
+        ]),
+    ) as { [K in keyof T]: string };
 
 /**
  * The base locale, re-exported so tests can assert a key's copy without a
- * second import path.
+ * second import path.  Includes the Hostlists Registry blocked-services group
+ * names, which live in a separate locale source.
  */
-export const en = enJson;
+export const en = {
+    ...enJson,
+    ...flattenServices(servicesEnJson),
+};
 
 export type CopyKey = keyof typeof en;
 

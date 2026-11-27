@@ -100,7 +100,7 @@
     "project_id": "hostlists-registry",
     "base_locale": "en",
     "localizable_files": [
-      "client/src/__locales-services/services.json"
+      "client_v2/src/__locales-services/services.json"
     ],
     "languages": {
       "ar": "العربية",
@@ -141,8 +141,8 @@
       "zh-tw": "正體中文（台灣）"
     },
     "metadata": {
-      "locales_dir": "./client/src/__locales-services",
-      "sources_dir": "./client/src"
+      "locales_dir": "./client_v2/src/__locales-services",
+      "sources_dir": "./client_v2/src"
     }
   }
 ]

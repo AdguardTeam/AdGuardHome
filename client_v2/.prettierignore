@@ -1,2 +1,3 @@
 ../.twosky.json
 src/common/intl/locales.generated.ts
+src/common/intl/services.groups.generated.ts

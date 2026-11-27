@@ -51,8 +51,8 @@ describe('filterServices', () => {
     ];
 
     const serviceGroupMap = new Map([
-        ['telegram', 'messaging'],
-        ['whatsapp', 'messaging'],
+        ['telegram', 'messenger'],
+        ['whatsapp', 'messenger'],
         ['steam', 'gaming'],
         ['epic_games', 'gaming'],
     ]);

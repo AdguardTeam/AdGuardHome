@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "MI"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Társkeresés"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Szerencsejáték, fogadás"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Játék"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Webtárhely"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Üzenetküldés"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Adatvédelmi eszközök"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Vásárlás"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Közösségi háló"
+  },
+  "servicesgroup.software.name": {
+    "message": "Szoftverfejlesztés"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Streaming"
+  }
+}

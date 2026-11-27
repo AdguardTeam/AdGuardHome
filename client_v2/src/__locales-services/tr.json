@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "Yapay zekâ"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Tanışma"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Kumar, bahis"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Oyun"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Web barındırma"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Mesajlaşma"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Gizlilik araçları"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Alışveriş"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Sosyal ağlar"
+  },
+  "servicesgroup.software.name": {
+    "message": "Yazılım geliştirme"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Canlı yayın akışı"
+  }
+}

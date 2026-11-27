@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "الذكاء الاصطناعي"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "المواعدة"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "المقامرة، المراهنات"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "الألعاب الرقمية"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "استضافة الويب"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "المراسلة"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "أدوات الخصوصية"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "التسوق"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "شبكات التواصل الإجتماعية"
+  },
+  "servicesgroup.software.name": {
+    "message": "تطوير البرمجيات"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "البث"
+  }
+}

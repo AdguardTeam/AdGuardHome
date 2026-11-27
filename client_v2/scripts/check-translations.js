@@ -1,4 +1,6 @@
-// CLI entry point for auditing client_v2 translation usage against src/__locales/en.json.
+// CLI entry point for auditing client_v2 translation usage against the base
+// locales: src/__locales/en.json (UI strings) and
+// src/__locales-services/en.json (Hostlists Registry blocked-service groups).
 // It reports missing locale keys, unused locale keys, and dynamic intl usages that make the audit best-effort.
 import path from 'node:path';
 import process from 'node:process';
@@ -15,6 +17,16 @@ import {
     validatePlurals,
 } from './translation-audit.js';
 
+// Mirrors flattenServices in src/common/intl/index.ts.  This script runs on
+// plain Node and cannot import the TypeScript module.
+const flattenServices = (services) =>
+    Object.fromEntries(
+        Object.entries(services).map(([key, value]) => [
+            key,
+            typeof value === 'string' ? value : value.message,
+        ]),
+    );
+
 export const runTranslationAudit = async ({
     rootDir = process.cwd(),
     write = (chunk) => {
@@ -27,9 +39,15 @@ export const runTranslationAudit = async ({
     try {
         const srcDir = path.join(rootDir, 'src');
         const localePath = path.join(srcDir, '__locales', 'en.json');
+        const servicesLocalePath = path.join(srcDir, '__locales-services', 'en.json');
         const filePaths = await listSourceFiles(srcDir);
-        const localeMessages = await loadLocaleMessages(localePath);
+        const servicesMessages = flattenServices(await loadLocaleMessages(servicesLocalePath));
+        const localeMessages = {
+            ...(await loadLocaleMessages(localePath)),
+            ...servicesMessages,
+        };
         const usage = await collectTranslationUsageFromFiles(filePaths);
+
         const report = auditTranslations({ localeMessages, usage });
 
         write(`${formatAuditReport(report, { rootDir })}\n\n`);

@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "ШІ"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Знайомства"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Азартні ігри, ставки"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Геймінг"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Вебхостинг"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Обмін повідомленнями"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Інструменти конфіденційності"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Магазини"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Соціальні мережі"
+  },
+  "servicesgroup.software.name": {
+    "message": "Розробка програмного забезпечення"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Стрімінг"
+  }
+}

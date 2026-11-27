@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "AI"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Întâlniri"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Jocuri de noroc, pariuri"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Jocuri"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Găzduire web"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Mesagerie"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Instrumente de confidențialitate"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Cumpărături"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Rețele sociale"
+  },
+  "servicesgroup.software.name": {
+    "message": "Dezvoltare de program"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Streaming"
+  }
+}

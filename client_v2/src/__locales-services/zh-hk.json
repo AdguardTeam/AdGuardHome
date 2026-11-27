@@ -1,0 +1,23 @@
+{
+  "servicesgroup.gaming.name": {
+    "message": "遊戲"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "網頁寄存"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "隱私權工具"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "購物"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "社交媒體"
+  },
+  "servicesgroup.software.name": {
+    "message": "軟體開發"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "線上串流"
+  }
+}

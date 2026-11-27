@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "AI"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "交友"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "賭博、投注"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "遊戲"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Web 主機服務"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "即時通訊"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "隱私工具"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "購物"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "社群網路"
+  },
+  "servicesgroup.software.name": {
+    "message": "軟體開發"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "串流"
+  }
+}

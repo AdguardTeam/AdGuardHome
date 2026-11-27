@@ -167,7 +167,7 @@ export const formatAuditReport = (report, { rootDir } = {}) => {
     const lines = [
         'client_v2 translation audit',
         `Static translation calls: ${report.staticKeyCount}`,
-        `Locale keys in en.json: ${report.localeKeyCount}`,
+        `Locale keys in base locales: ${report.localeKeyCount}`,
         `Dynamic translation calls: ${report.dynamicUsages.length}`,
         '',
     ];

@@ -59,7 +59,9 @@ Playwright (e2e).
   providers)
 - **HTTP**: Native `fetch` wrapped in a single `Api` class
 - **i18n**: `@adguard/translate` with 35 bundled locales from `src/__locales/`
-  (generated from `.twosky.json` via `npm run locales:generate`)
+  (generated from `.twosky.json` via `npm run locales:generate`) and
+  blocked-service group names from `src/__locales-services/` (the
+  Hostlists Registry `hostlists-registry` Twosky project)
 - **Testing**: Vitest 4 + `@solidjs/testing-library` (unit);
   Playwright 1.56 (e2e against a real backend)
 - **Component catalog**: Storybook 10 with `storybook-solidjs-vite` on a Vite
@@ -108,6 +110,7 @@ client_v2/
 │   ├── install/                   # Standalone install-wizard entry
 │   ├── forgot_password/           # Standalone password-reset entry
 │   ├── __locales/                 # Translation JSON (en, ru, de, …)
+│   ├── __locales-services/        # Hostlists Registry blocked-service names
 │   ├── stories/                   # Storybook docs pages (theme tokens, icon gallery)
 │   └── __tests__/                 # Vitest unit/integration tests
 ├── tests/e2e/                     # Playwright e2e specs
@@ -576,7 +579,10 @@ vulnerabilities, supply-chain risk, and long-term maintenance cost.
 
 ## Markdown Formatting
 
-All Markdown files MUST follow these formatting rules:
+The repository-wide rules live in `.markdownlint.json`, which `make md-lint`
+enforces for the root documents and `scripts/*.md`. That configuration sets
+`line-length` to `false`, so those files do not hard-wrap paragraphs: keep each
+paragraph on one line. The rules below apply to the `client_v2` documents:
 
 - **Line length**: Keep lines at most 80 characters, but don't overwrap the
   lines artificially short just to hit the limit, keep them close to 80
@@ -667,14 +673,15 @@ friendly:
 
 - All user-facing strings must be localized. Add new keys to the base locale
   `src/__locales/en.json`; other locales are managed externally via Twosky.
-- Locale imports are **generated** — do not hand-edit.
-  `npm run locales:generate` regenerates
-  `src/common/intl/locales.generated.ts` from the language list in
-  `.twosky.json`; it does not read translation string content. Do NOT run it
-  after editing translation strings (e.g. adding a key to `en.json`) — it is
-  only needed when `.twosky.json` changes or a locale JSON file is added or
-  removed. Use the side-effect-free `npm run locales:check` to verify
-  freshness instead.
+- Locale imports and the blocked-service group map are **generated** — do not
+  hand-edit `src/common/intl/locales.generated.ts` or
+  `src/common/intl/services.groups.generated.ts`. `npm run locales:generate`
+  reads the language lists in `.twosky.json` and the
+  `servicesgroup.<id>.name` keys in `src/__locales-services/en.json`, and
+  writes both files. Run it when a language or locale JSON file is added or
+  removed, or when a `servicesgroup.<id>.name` key is added or removed;
+  editing their values alone does not need it. Use the side-effect-free
+  `npm run locales:check` to verify freshness of both files instead.
 - Access translations via the `intl` object from `panel/common/intl`:
     - `intl.getMessage('key', values?)` — returns a plain localized string.
       Pass interpolation values as the second argument, referenced inside the

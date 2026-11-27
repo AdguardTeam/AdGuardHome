@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "AI"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "Upoznavanje"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "Kockanje, klađenje"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "Igre"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "Veb hosting"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "Razmena poruka"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "Alati za privatnost"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "Kupovina"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "Društvene mreže"
+  },
+  "servicesgroup.software.name": {
+    "message": "Razvoj softvera"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "Striming"
+  }
+}

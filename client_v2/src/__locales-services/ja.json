@@ -1,0 +1,38 @@
+{
+  "servicesgroup.ai.name": {
+    "message": "AI（人工知能）"
+  },
+  "servicesgroup.cdn.name": {
+    "message": "CDN"
+  },
+  "servicesgroup.dating.name": {
+    "message": "出会い系・マッチング"
+  },
+  "servicesgroup.gambling.name": {
+    "message": "ギャンブル・賭博"
+  },
+  "servicesgroup.gaming.name": {
+    "message": "ゲーム"
+  },
+  "servicesgroup.hosting.name": {
+    "message": "ウェブホスティング"
+  },
+  "servicesgroup.messenger.name": {
+    "message": "メッセージ"
+  },
+  "servicesgroup.privacy.name": {
+    "message": "プライバシーツール"
+  },
+  "servicesgroup.shopping.name": {
+    "message": "ショッピング"
+  },
+  "servicesgroup.social_network.name": {
+    "message": "SNS"
+  },
+  "servicesgroup.software.name": {
+    "message": "ソフトウェア開発"
+  },
+  "servicesgroup.streaming.name": {
+    "message": "ストリーミング（動画配信サービス等）"
+  }
+}
