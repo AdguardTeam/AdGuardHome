@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
 	"github.com/AdguardTeam/AdGuardHome/internal/schedule"
@@ -150,6 +151,162 @@ func TestDNSFilter_handleFilteringSetURL(t *testing.T) {
 			assert.Equal(t, tc.wantBody == "", confModifiedCalled)
 		})
 	}
+}
+
+func TestDNSFilter_handleSettings(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		wantEnabled  assert.BoolAssertionFunc
+		name         string
+		wantStatus   int
+		enabled      aghalg.NullBool
+		isParental   bool
+		startEnabled bool
+	}{{
+		wantEnabled:  assert.False,
+		name:         "safebrowsing_empty_request",
+		wantStatus:   http.StatusBadRequest,
+		enabled:      aghalg.NBNull,
+		isParental:   false,
+		startEnabled: false,
+	}, {
+		wantEnabled:  assert.True,
+		name:         "safebrowsing_enable",
+		wantStatus:   http.StatusOK,
+		enabled:      aghalg.NBTrue,
+		isParental:   false,
+		startEnabled: false,
+	}, {
+		wantEnabled:  assert.False,
+		name:         "safebrowsing_disable",
+		wantStatus:   http.StatusOK,
+		enabled:      aghalg.NBFalse,
+		isParental:   false,
+		startEnabled: true,
+	}, {
+		wantEnabled:  assert.False,
+		name:         "parental_empty_request",
+		wantStatus:   http.StatusBadRequest,
+		enabled:      aghalg.NBNull,
+		isParental:   true,
+		startEnabled: false,
+	}, {
+		wantEnabled:  assert.True,
+		name:         "parental_enable",
+		wantStatus:   http.StatusOK,
+		enabled:      aghalg.NBTrue,
+		isParental:   true,
+		startEnabled: false,
+	}, {
+		wantEnabled:  assert.False,
+		name:         "parental_disable",
+		wantStatus:   http.StatusOK,
+		enabled:      aghalg.NBFalse,
+		isParental:   true,
+		startEnabled: true,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			d, applyChan := setupHandleSettings(t)
+
+			var (
+				handler     http.HandlerFunc
+				confEnabled *bool
+			)
+			if tc.isParental {
+				handler = d.handleParentalSettings
+				confEnabled = &d.conf.ParentalEnabled
+			} else {
+				handler = d.handleSafeBrowsingSettings
+				confEnabled = &d.conf.SafeBrowsingEnabled
+			}
+
+			*confEnabled = tc.startEnabled
+
+			subtestHandleSettings(
+				t,
+				tc.enabled,
+				tc.wantEnabled,
+				tc.wantStatus,
+				confEnabled,
+				handler,
+				applyChan,
+			)
+
+			tc.wantEnabled(t, *confEnabled)
+		})
+	}
+}
+
+// setupHandleSettings is a helper that returns new DNSFilter properly
+// initialized for settings handle tests.  This filter sends to an applyChan on
+// config modification.
+func setupHandleSettings(tb testing.TB) (d *DNSFilter, applyChan chan struct{}) {
+	tb.Helper()
+
+	applyChan = make(chan struct{}, 1)
+
+	confModifier := &aghtest.ConfigModifier{}
+	confModifier.OnApply = func(_ context.Context) {
+		testutil.RequireSend(tb, applyChan, struct{}{}, testTimeout)
+	}
+
+	d, err := New(&Config{
+		Logger:       testLogger,
+		ConfModifier: confModifier,
+		HTTPReg:      aghhttp.EmptyRegistrar{},
+	}, nil)
+	require.NoError(tb, err)
+
+	tb.Cleanup(d.Close)
+
+	return d, applyChan
+}
+
+// subtestHandleSettings makes sure that DNSFilter handles settings requests
+// correctly.  It creates a test request using enabled as a corresponding field
+// value, serves it with handler and makes sure that confEnabled has changed to
+// the intended value.
+func subtestHandleSettings(
+	tb testing.TB,
+	enabled aghalg.NullBool,
+	wantEnabled assert.BoolAssertionFunc,
+	wantStatus int,
+	confEnabled *bool,
+	handler http.HandlerFunc,
+	applyChan <-chan struct{},
+) {
+	req := struct {
+		Enabled aghalg.NullBool `json:"enabled"`
+	}{
+		Enabled: enabled,
+	}
+
+	reqBody, err := json.Marshal(req)
+	require.NoError(tb, err)
+
+	ctx := testutil.ContextWithTimeout(tb, testTimeout)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequestWithContext(
+		ctx,
+		http.MethodPut,
+		"/",
+		bytes.NewReader(reqBody),
+	)
+
+	handler.ServeHTTP(w, r)
+
+	require.Equal(tb, wantStatus, w.Code)
+	if wantStatus == http.StatusOK {
+		testutil.RequireReceive(tb, applyChan, testTimeout)
+	}
+
+	wantEnabled(tb, *confEnabled)
 }
 
 func TestDNSFilter_handleSafeBrowsingStatus(t *testing.T) {
