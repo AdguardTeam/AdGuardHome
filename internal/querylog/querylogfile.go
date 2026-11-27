@@ -14,6 +14,9 @@ import (
 	"github.com/c2h5oh/datasize"
 )
 
+// errNothingToWrite is returned when there is nothing to write to the file.
+const errNothingToWrite = errors.Error("nothing to write to file")
+
 // flushLogBuffer flushes the current buffer to file and resets the current
 // buffer.
 func (l *queryLog) flushLogBuffer(ctx context.Context) (err error) {
@@ -24,6 +27,12 @@ func (l *queryLog) flushLogBuffer(ctx context.Context) (err error) {
 
 	b, err := l.encodeEntries(ctx)
 	if err != nil {
+		if errors.Is(err, errNothingToWrite) {
+			l.logger.DebugContext(ctx, "nothing to flush")
+
+			return nil
+		}
+
 		// Don't wrap the error since it's informative enough as is.
 		return err
 	}
@@ -39,7 +48,7 @@ func (l *queryLog) encodeEntries(ctx context.Context) (b *bytes.Buffer, err erro
 
 	bufLen := l.buffer.Len()
 	if bufLen == 0 {
-		return nil, errors.Error("nothing to write to a file")
+		return nil, errNothingToWrite
 	}
 
 	start := time.Now()

@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Query log error on shutdown ([#8770]).
+
 - The selected filter chips in the new web interface being hard to tell apart from the unselected ones ([#8745]).
 
 - The custom filtering rules editor in the new web interface no longer being resizable ([#8730]).
@@ -73,6 +75,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8748]:       https://github.com/AdguardTeam/AdGuardHome/issues/8748
 [#8754]:       https://github.com/AdguardTeam/AdGuardHome/issues/8754
 [#8763]:       https://github.com/AdguardTeam/AdGuardHome/issues/8763
+[#8770]:       https://github.com/AdguardTeam/AdGuardHome/issues/8770
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

@@ -367,6 +367,21 @@ func TestQueryLogShouldLog(t *testing.T) {
 	}
 }
 
+func TestQueryLog_Shutdown_emptyBuffer(t *testing.T) {
+	l, err := newQueryLog(Config{
+		Logger:      testLogger,
+		Enabled:     true,
+		FileEnabled: true,
+		RotationIvl: timeutil.Day,
+		MemSize:     100,
+		BaseDir:     t.TempDir(),
+	})
+	require.NoError(t, err)
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	assert.NoError(t, l.Shutdown(ctx))
+}
+
 func assertLogEntry(tb testing.TB, entry *logEntry, host string, answer, client net.IP) {
 	tb.Helper()
 
