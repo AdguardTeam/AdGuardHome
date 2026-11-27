@@ -5,7 +5,7 @@ import {
     blockedServicesAll,
     blockedServicesScheduleUpdate,
 } from 'panel/api/generated';
-import { addErrorToast, addSuccessToast, addWarningToast, createUndoToast } from './toasts';
+import { addErrorToast, addSuccessToast, createUndoToast } from './toasts';
 import intl from 'panel/common/intl';
 import type { BlockedServicesSchedule } from 'panel/api/model/blockedServicesSchedule';
 import type { BlockedService } from 'panel/api/model/blockedService';
@@ -19,6 +19,8 @@ type ServicesState = {
     /** Whether the all-blocked-services request has settled at least once. */
     allInitialized: boolean;
     processingSet: boolean;
+    /** The service whose switch triggered the pending whole-list update. */
+    processingServiceId: string | null;
     list: BlockedServicesSchedule;
     allServices: BlockedService[];
     allGroups: ServiceGroup[];
@@ -30,6 +32,7 @@ const initialState: ServicesState = {
     processingAll: true,
     allInitialized: false,
     processingSet: false,
+    processingServiceId: null,
     list: {},
     allServices: [],
     allGroups: [],
@@ -84,13 +87,9 @@ export const getAllBlockedServices = async () => {
 
 export const updateBlockedServices = async (
     values: BlockedServicesSchedule,
+    serviceId?: string,
 ): Promise<boolean> => {
-    if (untrack(() => state.processingSet)) {
-        addWarningToast({ error: intl.getMessage('blocked_services_update_in_progress') });
-        return false;
-    }
-
-    setState('processingSet', true);
+    setState({ processingSet: true, processingServiceId: serviceId ?? null });
     const updateId = beginServicesGet();
     try {
         await blockedServicesScheduleUpdate(values);
@@ -106,7 +105,7 @@ export const updateBlockedServices = async (
         }
         return false;
     } finally {
-        setState('processingSet', false);
+        setState({ processingSet: false, processingServiceId: null });
     }
 };
 
@@ -120,20 +119,26 @@ export const allowBlockedService = async (serviceId: string): Promise<boolean> =
     if (!currentIds.includes(serviceId)) return true;
     const serviceName =
         state.allServices.find((s) => s.id === serviceId)?.name || serviceId;
-    const didUpdate = await updateBlockedServices({
-        ids: currentIds.filter((id: string) => id !== serviceId),
-        schedule: list?.schedule,
-    });
+    const didUpdate = await updateBlockedServices(
+        {
+            ids: currentIds.filter((id: string) => id !== serviceId),
+            schedule: list?.schedule,
+        },
+        serviceId,
+    );
     if (!didUpdate) return false;
     addSuccessToast(
         createUndoToast(
             intl.getMessage('user_rules_service_allowed', { value: serviceName }),
             intl.getMessage('notify_undo'),
             async () => {
-                await updateBlockedServices({
-                    ids: [...currentIds, serviceId],
-                    schedule: list?.schedule,
-                });
+                await updateBlockedServices(
+                    {
+                        ids: [...currentIds, serviceId],
+                        schedule: list?.schedule,
+                    },
+                    serviceId,
+                );
             },
         ),
     );

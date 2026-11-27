@@ -366,9 +366,7 @@ test.describe('Blocked Services Page', () => {
         await expect(page).toHaveURL(/#\/?blocked_services\/schedule/);
     });
 
-    test('should serialize switches during API processing without repainting them', async ({
-        page,
-    }) => {
+    test('should serialize switches and grey only the one being saved', async ({ page }) => {
         let listIds = [...MOCK_BLOCKED_SERVICES.ids];
         const updates: { ids: string[] }[] = [];
 
@@ -396,14 +394,26 @@ test.describe('Blocked Services Page', () => {
         const list = page.getByTestId('blocked-services-list');
         const telegramInput = page.locator('input#service_telegram');
         const telegramTrack = page.locator('label[for="service_telegram"] > div');
+        const whatsappTrack = page.locator('label[for="service_whatsapp"] > div');
         const beforePalette = await telegramTrack.evaluate(
             (el) => getComputedStyle(el).backgroundColor,
         );
+
+        const disabledOnPalette = await page.evaluate(() => {
+            const probe = document.createElement('div');
+            probe.style.backgroundColor = 'var(--fills-switch-on-disabled)';
+            document.body.appendChild(probe);
+            const color = getComputedStyle(probe).backgroundColor;
+            probe.remove();
+            return color;
+        });
 
         await page.locator('label[for="service_whatsapp"]').click();
 
         await expect(list).toHaveAttribute('aria-busy', 'true');
         await expect(telegramInput).toBeDisabled();
+        // Only the saved switch uses the disabled palette.
+        await expect(whatsappTrack).toHaveCSS('background-color', disabledOnPalette);
         await expect(telegramTrack).toHaveCSS('background-color', beforePalette);
 
         // The PUT and the follow-up read are both slow, so the pending window

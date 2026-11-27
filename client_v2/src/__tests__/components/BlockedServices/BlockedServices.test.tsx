@@ -35,6 +35,7 @@ const servicesMocks = vi.hoisted(() => ({
         processingAll: false,
         processing: false,
         processingSet: false,
+        processingServiceId: null as string | null,
         initialized: false,
         allInitialized: false,
     },
@@ -111,6 +112,7 @@ describe('BlockedServices global update pending state', () => {
         servicesMocks.servicesState.list = { ids: [] };
         servicesMocks.servicesState.processing = false;
         servicesMocks.servicesState.processingSet = false;
+        servicesMocks.servicesState.processingServiceId = null;
     });
 
     it('disables every global switch and marks the list busy during the PUT', () => {
@@ -128,6 +130,19 @@ describe('BlockedServices global update pending state', () => {
             'true',
         );
         expect(document.querySelector('label[for="service_telegram"]')?.className).toMatch(
+            /_busy_/,
+        );
+    });
+
+    it('shows the disabled palette only on the switch being saved', () => {
+        servicesMocks.servicesState.processingSet = true;
+        servicesMocks.servicesState.processingServiceId = 'telegram';
+        renderBlockedServices(false);
+
+        expect(document.querySelector('label[for="service_telegram"]')?.className).not.toMatch(
+            /_busy_/,
+        );
+        expect(document.querySelector('label[for="service_whatsapp"]')?.className).toMatch(
             /_busy_/,
         );
     });

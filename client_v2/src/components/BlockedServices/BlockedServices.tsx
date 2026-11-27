@@ -173,7 +173,7 @@ export const BlockedServices = (props: Props) => {
         const newIds = checked
             ? [...currentIds, serviceId]
             : currentIds.filter((id: string) => id !== serviceId);
-        updateBlockedServices({ ids: newIds, schedule: servicesState.list?.schedule });
+        updateBlockedServices({ ids: newIds, schedule: servicesState.list?.schedule }, serviceId);
     };
 
     const handleUseGlobalBlockedServices = (e: Event) => {
@@ -377,7 +377,13 @@ export const BlockedServices = (props: Props) => {
                                                     isGloballyDisabled() ||
                                                     isGlobalUpdatePending()
                                                 }
-                                                busy={isGlobalUpdatePending()}
+                                                // The saved switch greys out; the rest keep
+                                                // the normal palette.
+                                                busy={
+                                                    isGlobalUpdatePending() &&
+                                                    servicesState.processingServiceId !==
+                                                        service.id
+                                                }
                                                 onChange={handleToggleService}
                                             />
                                         )}

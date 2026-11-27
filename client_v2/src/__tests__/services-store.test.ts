@@ -6,7 +6,6 @@ const mocks = vi.hoisted(() => ({
     blockedServicesScheduleUpdate: vi.fn(),
     addErrorToast: vi.fn(),
     addSuccessToast: vi.fn(),
-    addWarningToast: vi.fn(),
     createUndoToast: vi.fn(),
 }));
 
@@ -18,7 +17,6 @@ vi.mock('panel/api/generated', () => ({
 vi.mock('panel/stores/toasts', () => ({
     addErrorToast: mocks.addErrorToast,
     addSuccessToast: mocks.addSuccessToast,
-    addWarningToast: mocks.addWarningToast,
     createUndoToast: mocks.createUndoToast,
 }));
 vi.mock('panel/common/intl', async () =>
@@ -26,7 +24,6 @@ vi.mock('panel/common/intl', async () =>
 );
 
 import {
-    allowBlockedService,
     getBlockedServices,
     getAllBlockedServices,
     servicesState,
@@ -127,9 +124,10 @@ describe('updateBlockedServices — whole-list serialization', () => {
         mocks.blockedServicesScheduleUpdate.mockReturnValueOnce(put.promise);
         mocks.blockedServicesSchedule.mockReturnValueOnce(followUp.promise);
 
-        const update = updateBlockedServices({ ids: ['telegram'] });
+        const update = updateBlockedServices({ ids: ['telegram'] }, 'telegram');
 
         expect(servicesState.processingSet).toBe(true);
+        expect(servicesState.processingServiceId).toBe('telegram');
         put.resolve();
         await vi.waitFor(() => expect(mocks.blockedServicesSchedule).toHaveBeenCalledTimes(1));
         expect(servicesState.processingSet).toBe(true);
@@ -139,6 +137,7 @@ describe('updateBlockedServices — whole-list serialization', () => {
         await update;
 
         expect(servicesState.processingSet).toBe(false);
+        expect(servicesState.processingServiceId).toBeNull();
         expect(servicesState.processing).toBe(false);
         expect(servicesState.list.ids).toEqual(['telegram']);
         expect(mocks.blockedServicesScheduleUpdate).toHaveBeenCalledTimes(1);
@@ -169,27 +168,6 @@ describe('updateBlockedServices — whole-list serialization', () => {
         expect(mocks.blockedServicesSchedule).not.toHaveBeenCalled();
     });
 
-    it('refuses a concurrent update, warns, and sends one request', async () => {
-        const put = deferred<void>();
-        const followUp = deferred<{ ids: string[] }>();
-        mocks.blockedServicesScheduleUpdate.mockReturnValueOnce(put.promise);
-        mocks.blockedServicesSchedule.mockReturnValueOnce(followUp.promise);
-
-        const first = updateBlockedServices({ ids: ['telegram'] });
-        const second = await updateBlockedServices({ ids: ['whatsapp'] });
-
-        expect(second).toBe(false);
-        expect(mocks.addWarningToast).toHaveBeenCalledWith({
-            error: expect.any(String),
-        });
-        expect(mocks.blockedServicesScheduleUpdate).toHaveBeenCalledTimes(1);
-
-        put.resolve();
-        await vi.waitFor(() => expect(mocks.blockedServicesSchedule).toHaveBeenCalledTimes(1));
-        followUp.resolve({ ids: ['telegram'] });
-        await first;
-    });
-
     it('discards a read that started before the update', async () => {
         const staleRead = deferred<{ ids: string[] }>();
         mocks.blockedServicesSchedule.mockReturnValueOnce(staleRead.promise);
@@ -214,30 +192,3 @@ describe('updateBlockedServices — whole-list serialization', () => {
     });
 });
 
-describe('allowBlockedService — shared whole-list update', () => {
-    beforeEach(async () => {
-        resetApiMocks();
-        await seedList(['telegram']);
-    });
-
-    it('refuses to update while another whole-list update is pending', async () => {
-        const put = deferred<void>();
-        const followUp = deferred<{ ids: string[] }>();
-        mocks.blockedServicesScheduleUpdate.mockReturnValueOnce(put.promise);
-        mocks.blockedServicesSchedule.mockReturnValueOnce(followUp.promise);
-
-        const first = updateBlockedServices({ ids: ['telegram'] });
-        const ok = await allowBlockedService('telegram');
-
-        expect(ok).toBe(false);
-        expect(mocks.addWarningToast).toHaveBeenCalledWith({
-            error: expect.any(String),
-        });
-        expect(mocks.blockedServicesScheduleUpdate).toHaveBeenCalledTimes(1);
-
-        put.resolve();
-        await vi.waitFor(() => expect(mocks.blockedServicesSchedule).toHaveBeenCalledTimes(1));
-        followUp.resolve({ ids: ['telegram'] });
-        await first;
-    });
-});

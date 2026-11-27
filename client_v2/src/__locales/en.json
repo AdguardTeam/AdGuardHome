@@ -47,7 +47,6 @@
   "blocked_service": "Blocked service",
   "blocked_services": "Blocked services",
   "blocked_services_desc": "Select popular websites and services that should be blocked",
-  "blocked_services_update_in_progress": "Blocked services are already being updated. Please try again in a moment",
   "blocked_threats": "Blocked threats",
   "blocked_threats_chart": "Blocked threats",
   "blocked_total": "%value% blocked total",
