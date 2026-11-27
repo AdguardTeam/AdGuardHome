@@ -29,6 +29,10 @@ See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Added
+
+- Docker image tags that follow the latest release of each major and minor version, for example `v1` and `v1.0` ([#7226]).
+
 ### Changed
 
 - Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
@@ -61,6 +65,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
 
+[#7226]:       https://github.com/AdguardTeam/AdGuardHome/issues/7226
 [#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
 [#8726]:       https://github.com/AdguardTeam/AdGuardHome/issues/8726
 [#8727]:       https://github.com/AdguardTeam/AdGuardHome/issues/8727

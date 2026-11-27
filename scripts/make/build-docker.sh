@@ -50,23 +50,81 @@ readonly docker_image_name
 docker_push="${DOCKER_PUSH:-0}"
 readonly docker_push
 
+# newest_release prints the newest release version that matches the extended
+# regular expression in the first argument, considering both the git tags in
+# git_tags and the version being built.  Sort the versions numerically and in
+# reverse by the major part, skipping the "v" prefix, then by the minor and
+# patch parts.
+newest_release() {
+	printf '%s\n' "$git_tags" "$version" \
+		| grep -E -x -e "$1" \
+		| sort -k 1.2,1nr -k 2,2nr -k 3,3nr -t '.' \
+		| head -n 1 \
+		;
+}
+
 case "$channel" in
 'release')
+	# The minor and major tags, for example v1.2 and v1 for v1.2.3, point to
+	# the newest release of their line.  They require a version of the form
+	# vMAJOR.MINOR.PATCH.
+	if ! printf '%s\n' "$version" | grep -E -q -x 'v[0-9]+\.[0-9]+\.[0-9]+'; then
+		echo "invalid release version '$version', expected vMAJOR.MINOR.PATCH" 1>&2
+		exit 1
+	fi
+
+	version_minor="${version%.*}"
+	version_major="${version_minor%.*}"
+	readonly version_minor version_major
+
 	docker_version_tag="--tag=${docker_image_name}:${version}"
+
+	# Don't move a line's tag back when an older release of that line, for
+	# example a patch for an older minor line, is built after a newer one.
+	#
+	# List the tags in an assignment, so that the build fails if they can't be
+	# listed.
+	git_tags="$(git tag)"
+	major_num="${version_major#v}"
+	minor_num="${version_minor##*.}"
+	newest_in_major="$(newest_release "v${major_num}\\.[0-9]+\\.[0-9]+")"
+	newest_in_minor="$(newest_release "v${major_num}\\.${minor_num}\\.[0-9]+")"
+	readonly git_tags major_num minor_num newest_in_major newest_in_minor
+
+	docker_minor_tag=''
+	if [ "$newest_in_minor" = "$version" ]; then
+		docker_minor_tag="--tag=${docker_image_name}:${version_minor}"
+	else
+		echo "not moving tag ${version_minor}: ${newest_in_minor} is newer" 1>&2
+	fi
+
+	docker_major_tag=''
+	if [ "$newest_in_major" = "$version" ]; then
+		docker_major_tag="--tag=${docker_image_name}:${version_major}"
+	else
+		echo "not moving tag ${version_major}: ${newest_in_major} is newer" 1>&2
+	fi
+
 	docker_channel_tag="--tag=${docker_image_name}:latest"
 	;;
 'beta')
 	docker_version_tag="--tag=${docker_image_name}:${version}"
+	docker_minor_tag=''
+	docker_major_tag=''
 	docker_channel_tag="--tag=${docker_image_name}:beta"
 	;;
 'edge')
-	# Set the version tag to an empty string when pushing to the edge channel.
+	# Set the version tags to empty strings when pushing to the edge channel.
 	docker_version_tag=''
+	docker_minor_tag=''
+	docker_major_tag=''
 	docker_channel_tag="--tag=${docker_image_name}:edge"
 	;;
 'development')
-	# Set both tags to an empty string for development builds.
+	# Set all tags to empty strings for development builds.
 	docker_version_tag=''
+	docker_minor_tag=''
+	docker_major_tag=''
 	docker_channel_tag=''
 	;;
 *)
@@ -75,7 +133,7 @@ case "$channel" in
 	exit 1
 	;;
 esac
-readonly docker_version_tag docker_channel_tag
+readonly docker_version_tag docker_minor_tag docker_major_tag docker_channel_tag
 
 # Copy the binaries into a new directory under new names, so that it's easier to
 # COPY them later.  DO NOT remove the trailing underscores.  See file
@@ -118,15 +176,16 @@ docker_build_opt_tag() {
 		--progress 'plain' \
 		;
 
-	# Append the channel tag, if any.
-	if [ "$docker_channel_tag" != '' ]; then
-		set -- "$@" "$docker_channel_tag"
-	fi
-
-	# Append the version tag, if any.
-	if [ "$docker_version_tag" != '' ]; then
-		set -- "$@" "$docker_version_tag"
-	fi
+	# Append the tags, if any, each as a separate argument.
+	for tag in \
+		"$docker_channel_tag" \
+		"$docker_version_tag" \
+		"$docker_minor_tag" \
+		"$docker_major_tag"; do
+		if [ "$tag" != '' ]; then
+			set -- "$@" "$tag"
+		fi
+	done
 
 	# Push to DockerHub, if requested.
 	if [ "$docker_push" -eq 1 ]; then
