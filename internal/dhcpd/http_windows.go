@@ -39,6 +39,10 @@ func (s *server) notImplemented(w http.ResponseWriter, r *http.Request) {
 // interconnected parts--such as HTTP handlers and frontend--to make that work
 // properly.
 func (s *server) registerHandlers() {
+	if s.conf.HTTPReg == nil {
+		return
+	}
+
 	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/status", s.notImplemented)
 	s.conf.HTTPReg.Register(http.MethodGet, "/control/dhcp/interfaces", s.notImplemented)
 	s.conf.HTTPReg.Register(http.MethodPost, "/control/dhcp/set_config", s.notImplemented)

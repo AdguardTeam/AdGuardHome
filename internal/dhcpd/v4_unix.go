@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/log"
@@ -63,15 +64,25 @@ func (s *v4Server) enabled() (ok bool) {
 	return s.conf != nil && s.conf.Enabled
 }
 
-// WriteDiskConfig4 - write configuration
-func (s *v4Server) WriteDiskConfig4(c *V4ServerConf) {
-	if s.conf != nil {
-		*c = *s.conf
+// WriteDiskConfig4 implements the [DHCPServer] interface for *v4Server.
+func (s *v4Server) WriteDiskConfig4(dc *configmgr.DHCPv4Config) {
+	if s.conf == nil {
+		return
 	}
+
+	dc.GatewayIP = s.conf.GatewayIP
+	dc.RangeStart = s.conf.RangeStart
+	dc.RangeEnd = s.conf.RangeEnd
+	dc.SubnetMask = s.conf.SubnetMask
+
+	dc.Options = s.conf.Options
+	dc.ICMPTimeout = s.conf.ICMPTimeout
+	dc.LeaseDuration = s.conf.LeaseDuration
 }
 
-// WriteDiskConfig6 - write configuration
-func (s *v4Server) WriteDiskConfig6(c *V6ServerConf) {
+// WriteDiskConfig6 implements the [DHCPServer] interface for *v4Server.
+func (s *v4Server) WriteDiskConfig6(_ *configmgr.DHCPv6Config) {
+	// Do nothing.
 }
 
 // normalizeHostname normalizes a hostname sent by the client.  If err is not
@@ -122,10 +133,13 @@ func (s *v4Server) validHostnameForClient(cliHostname string, ip netip.Addr) (ho
 
 // HostByIP implements the [Interface] interface for *v4Server.
 func (s *v4Server) HostByIP(ip netip.Addr) (host string) {
+	now := time.Now()
+
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	if l, ok := s.ipIndex[ip]; ok {
+	l, ok := s.ipIndex[ip]
+	if ok && (l.IsStatic || l.Expiry.After(now)) {
 		return l.Hostname
 	}
 
@@ -134,10 +148,13 @@ func (s *v4Server) HostByIP(ip netip.Addr) (host string) {
 
 // IPByHost implements the [Interface] interface for *v4Server.
 func (s *v4Server) IPByHost(host string) (ip netip.Addr) {
+	now := time.Now()
+
 	s.leasesLock.Lock()
 	defer s.leasesLock.Unlock()
 
-	if l, ok := s.hostsIndex[host]; ok {
+	l, ok := s.hostsIndex[host]
+	if ok && (l.IsStatic || l.Expiry.After(now)) {
 		return l.IP
 	}
 
@@ -1409,8 +1426,8 @@ func (s *v4Server) Stop() (err error) {
 	return nil
 }
 
-// Create DHCPv4 server
-func v4Create(conf *V4ServerConf) (srv *v4Server, err error) {
+// newV4Server creates a new IPv4 DHCP server.  conf must not be nil.
+func newV4Server(conf *V4ServerConf) (srv *v4Server, err error) {
 	s := &v4Server{
 		hostsIndex: map[string]*dhcpsvc.Lease{},
 		ipIndex:    map[netip.Addr]*dhcpsvc.Lease{},

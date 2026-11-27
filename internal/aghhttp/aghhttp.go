@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
-	"github.com/AdguardTeam/golibs/httphdr"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 )
 
@@ -56,27 +55,4 @@ func ErrorAndLog(
 // be used as the value of the Server HTTP header.
 func UserAgent() (ua string) {
 	return fmt.Sprintf("AdGuardHome/%s", version.Version())
-}
-
-// textPlainDeprMsg is the message returned to API users when they try to use
-// an API that used to accept "text/plain" but doesn't anymore.
-const textPlainDeprMsg = `using this api with the text/plain content-type is deprecated; ` +
-	`use application/json`
-
-// WriteTextPlainDeprecated responds to the request with a message about
-// deprecation and removal of a plain-text API if the request is made with the
-// "text/plain" Content-Type.  All arguments must not be nil.
-func WriteTextPlainDeprecated(
-	ctx context.Context,
-	l *slog.Logger,
-	w http.ResponseWriter,
-	r *http.Request,
-) (isPlainText bool) {
-	if r.Header.Get(httphdr.ContentType) != HdrValTextPlain {
-		return false
-	}
-
-	ErrorAndLog(ctx, l, r, w, http.StatusUnsupportedMediaType, textPlainDeprMsg)
-
-	return true
 }

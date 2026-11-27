@@ -131,12 +131,6 @@ type jsonDNSConfig struct {
 type jsonUpstreamMode string
 
 const (
-	// jsonUpstreamModeEmpty is the default value on frontend, it is used as
-	// jsonUpstreamModeLoadBalance mode.
-	//
-	// Deprecated: Use jsonUpstreamModeLoadBalance instead.
-	jsonUpstreamModeEmpty jsonUpstreamMode = ""
-
 	jsonUpstreamModeLoadBalance jsonUpstreamMode = "load_balance"
 	jsonUpstreamModeParallel    jsonUpstreamMode = "parallel"
 	jsonUpstreamModeFastestAddr jsonUpstreamMode = "fastest_addr"
@@ -176,15 +170,18 @@ func (s *Server) getDNSConfig(ctx context.Context) (c *jsonDNSConfig) {
 	localPTRUpstreams := stringutil.CloneSliceOrEmpty(s.conf.LocalPTRResolvers)
 
 	var upstreamMode jsonUpstreamMode
-	switch s.conf.UpstreamMode {
+	switch m := s.conf.UpstreamMode; m {
 	case proxy.UpstreamModeLoadBalance:
-		// TODO(d.kolyshev): Support jsonUpstreamModeLoadBalance on frontend
-		// instead of jsonUpstreamModeEmpty.
-		upstreamMode = jsonUpstreamModeEmpty
+		upstreamMode = jsonUpstreamModeLoadBalance
 	case proxy.UpstreamModeParallel:
 		upstreamMode = jsonUpstreamModeParallel
 	case proxy.UpstreamModeFastestAddr:
 		upstreamMode = jsonUpstreamModeFastestAddr
+	default:
+		// TODO(a.garipov):  Remove or replace with a panic once the
+		// configuration file is properly validated.
+		s.logger.WarnContext(ctx, "bad upstream mode; using load balance", "mode", m)
+		upstreamMode = jsonUpstreamModeLoadBalance
 	}
 
 	defPTRUps, err := s.defaultLocalPTRUpstreams(ctx)
@@ -269,7 +266,6 @@ func (req *jsonDNSConfig) checkUpstreamMode() (err error) {
 
 	switch um := *req.UpstreamMode; um {
 	case
-		jsonUpstreamModeEmpty,
 		jsonUpstreamModeLoadBalance,
 		jsonUpstreamModeParallel,
 		jsonUpstreamModeFastestAddr:
@@ -620,7 +616,7 @@ func (s *Server) setConfig(dc *jsonDNSConfig) (shouldRestart bool) {
 // Panics in case of invalid value.
 func mustParseUpstreamMode(mode jsonUpstreamMode) (um proxy.UpstreamMode) {
 	switch mode {
-	case jsonUpstreamModeEmpty, jsonUpstreamModeLoadBalance:
+	case jsonUpstreamModeLoadBalance:
 		return proxy.UpstreamModeLoadBalance
 	case jsonUpstreamModeParallel:
 		return proxy.UpstreamModeParallel

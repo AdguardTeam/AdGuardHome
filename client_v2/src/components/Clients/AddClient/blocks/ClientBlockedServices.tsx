@@ -1,6 +1,7 @@
 import { createMemo } from 'solid-js';
 import intl from 'panel/common/intl';
 import { clientFormState } from 'panel/stores/clientForm';
+import { useInitClientFormFromRoute } from 'panel/hooks/useInitClientFormFromRoute';
 import { RoutePath } from 'panel/components/Routes/Paths';
 
 import { BlockedServices } from 'panel/components/BlockedServices/BlockedServices';
@@ -8,6 +9,8 @@ import { BlockedServices } from 'panel/components/BlockedServices/BlockedService
 import s from './ClientBlockedServices.module.pcss';
 
 export const ClientBlockedServices = () => {
+    useInitClientFormFromRoute();
+
     const isEdit = createMemo(() => clientFormState.mode === 'edit');
 
     const clientPageLink = createMemo(() =>

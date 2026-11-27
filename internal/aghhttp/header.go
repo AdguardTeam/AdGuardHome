@@ -6,5 +6,4 @@ package aghhttp
 const (
 	HdrValApplicationJSON         = "application/json"
 	HdrValStrictTransportSecurity = "max-age=31536000; includeSubDomains"
-	HdrValTextPlain               = "text/plain"
 )

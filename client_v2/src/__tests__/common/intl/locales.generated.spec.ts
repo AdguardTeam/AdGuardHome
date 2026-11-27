@@ -26,16 +26,4 @@ describe('locales.generated.ts', () => {
         expect(LOCALES.en).toBeDefined();
         expect(Object.keys(LOCALES.en).length).toBeGreaterThan(0);
     });
-
-    it('every lazy loader resolves to a non-empty message map', async () => {
-        for (const [code, loader] of Object.entries(LOCALE_LOADERS)) {
-            const mod = await loader();
-            const messages = (mod as { default?: Record<string, string> }).default ?? mod;
-            expect(messages, `locale ${code}`).toBeDefined();
-            expect(
-                Object.keys(messages as Record<string, string>).length,
-                `locale ${code}`,
-            ).toBeGreaterThan(0);
-        }
-    });
 });

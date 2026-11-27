@@ -36,6 +36,12 @@
     margin-bottom: 8px;
 }
 
+.readOnlyNote {
+    margin: 0;
+    padding: 16px;
+    color: var(--default-description-text);
+}
+
 .scheduleList {
     display: flex;
     flex-direction: column;
@@ -116,7 +122,7 @@
     transition: background-color 0.2s;
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         background-color: var(--hovered-page-background);
     }
 }

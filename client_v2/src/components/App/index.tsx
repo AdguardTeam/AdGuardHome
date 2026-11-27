@@ -21,8 +21,15 @@ import { LeasesPage } from 'panel/components/Dhcp/LeasesPage';
 import { QueryLog } from 'panel/components/QueryLog';
 import { Toasts } from 'panel/components/Toasts';
 import { THEMES } from '../../helpers/constants';
-import { setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
-import { getDnsStatus, getTimerStatus, dashboardState } from '../../stores/dashboard';
+import { getTheme, setHtmlLangAttr, setUITheme } from '../../helpers/helpers';
+import {
+    getDnsStatus,
+    getProfileData,
+    getTimerStatus,
+    dashboardState,
+    stopStatusChecks,
+} from '../../stores/dashboard';
+import { StatusError } from './blocks/StatusError/StatusError';
 
 import s from './styles.module.pcss';
 import { DnsSettings } from '../DnsSettings';
@@ -53,11 +60,36 @@ const ProtectionRoute = () => <Protection />;
 const AddClientRoute = () => <AddClient />;
 
 const App = () => {
+    // A failed profile request has no other retry path, and the operator's
+    // theme and profile edits depend on it.
+    const retryFailedProfile = () => {
+        if (dashboardState.profileFailed) {
+            getProfileData();
+        }
+    };
+
+    const handleStatusRetry = () => {
+        retryFailedProfile();
+        getDnsStatus();
+    };
+
     onMount(() => {
         getDnsStatus();
+        // The profile is an HTTP endpoint that works while the core is stopped,
+        // so load it here; `retryFailedProfile` refetches it after a failure.
+        // The menu reads it to hide the logout link on a userless install.
+        getProfileData();
 
         const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+            retryFailedProfile();
+            // A failed bootstrap or a stopped core left the store without a
+            // usable status, so only the full check can restore the page.
+            if (dashboardState.statusFailed || !dashboardState.isCoreRunning) {
+                getDnsStatus();
+            } else {
                 getTimerStatus();
             }
         };
@@ -66,6 +98,7 @@ const App = () => {
 
         onCleanup(() => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
+            stopStatusChecks();
         });
     });
 
@@ -81,26 +114,27 @@ const App = () => {
         }
     });
 
-    // React to theme changes
+    // React to theme changes.  The profile theme is authoritative for the
+    // signed-in operator; a userless install (auth disabled or GL-iNet) has no
+    // operator theme in the profile and keeps it in `localStorage` only.
     createEffect(() => {
-        const theme = dashboardState.theme;
+        const theme = dashboardState.name ? dashboardState.theme : getTheme();
 
-        if (!theme) return;
+        if (theme) setUITheme(theme);
 
-        if (theme !== THEMES.auto) {
-            setUITheme(theme);
-            return;
-        }
-
+        // The OS-scheme listener is registered for every preference: a guest's
+        // choice lives in `localStorage` (written by `Footer`) rather than in
+        // `dashboardState`, so it does not re-run this effect.  Re-checking the
+        // preference here keeps an explicit choice intact while still applying
+        // OS changes as soon as "auto" is selected.
         const colorSchemeMedia = window.matchMedia('(prefers-color-scheme: dark)');
-        setUITheme(theme);
 
-        const handleChange = (e: MediaQueryListEvent) => {
-            if (e.matches) {
-                setUITheme(THEMES.dark);
-            } else {
-                setUITheme(THEMES.light);
-            }
+        const handleChange = () => {
+            const current = dashboardState.name ? dashboardState.theme : getTheme();
+
+            // Re-resolve through `setUITheme` so the stored preference stays
+            // "auto" instead of being overwritten with the resolved theme.
+            if (current === THEMES.auto) setUITheme(THEMES.auto);
         };
 
         colorSchemeMedia.addEventListener('change', handleChange);
@@ -120,7 +154,39 @@ const App = () => {
                     <div class={s.wrapper}>
                         <Sidebar />
 
-                        <Show when={!dashboardState.processing && dashboardState.isCoreRunning}>
+                        <Show when={dashboardState.statusFailed || !dashboardState.isCoreRunning}>
+                            <Show
+                                when={dashboardState.statusFailed}
+                                fallback={
+                                    <StatusError
+                                        message={intl.getMessage('dns_start_error_title')}
+                                        processing={dashboardState.processing}
+                                        reasons={[
+                                            intl.getMessage('dns_start_error_port', {
+                                                port: dashboardState.dnsPort,
+                                            }),
+                                            intl.getMessage('dns_start_error_permission'),
+                                            intl.getMessage('dns_start_error_address'),
+                                        ]}
+                                        action={intl.getMessage('dns_start_error_action')}
+                                    />
+                                }
+                            >
+                                <StatusError
+                                    message={intl.getMessage('dns_status_error_short')}
+                                    processing={dashboardState.processing}
+                                    onRetry={handleStatusRetry}
+                                />
+                            </Show>
+                        </Show>
+
+                        <Show
+                            when={
+                                !dashboardState.processing &&
+                                !dashboardState.statusFailed &&
+                                dashboardState.isCoreRunning
+                            }
+                        >
                             <div class={s.bodyWrapper}>{props.children}</div>
                         </Show>
                     </div>

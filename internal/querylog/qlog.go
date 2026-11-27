@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
@@ -112,19 +113,6 @@ func (l *queryLog) Shutdown(ctx context.Context) (err error) {
 	return nil
 }
 
-func checkInterval(ivl time.Duration) (ok bool) {
-	// The constants for possible values of query log's rotation interval.
-	const (
-		quarterDay  = timeutil.Day / 4
-		day         = timeutil.Day
-		week        = timeutil.Day * 7
-		month       = timeutil.Day * 30
-		threeMonths = timeutil.Day * 90
-	)
-
-	return ivl == quarterDay || ivl == day || ivl == week || ivl == month || ivl == threeMonths
-}
-
 // validateIvl returns an error if ivl is less than an hour or more than a
 // year.
 func validateIvl(ivl time.Duration) (err error) {
@@ -140,11 +128,20 @@ func validateIvl(ivl time.Duration) (err error) {
 }
 
 // WriteDiskConfig implements the [QueryLog] interface for *queryLog.
-func (l *queryLog) WriteDiskConfig(c *Config) {
+func (l *queryLog) WriteDiskConfig(dc *configmgr.QueryLogConfig, dnsConf *configmgr.DNSConfig) {
 	l.confMu.RLock()
 	defer l.confMu.RUnlock()
 
-	*c = *l.conf
+	c := l.conf
+
+	dc.Ignored = c.Ignored.Values()
+	dc.Interval = timeutil.Duration(c.RotationIvl)
+	dc.MemSize = c.MemSize
+	dc.Enabled = c.Enabled
+	dc.FileEnabled = c.FileEnabled
+	dc.IgnoredEnabled = c.Ignored.IsEnabled()
+
+	dnsConf.AnonymizeClientIP = c.AnonymizeClientIP
 }
 
 // Clear memory buffer and remove log files

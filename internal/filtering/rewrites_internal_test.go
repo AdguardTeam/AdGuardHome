@@ -445,3 +445,51 @@ func TestRewritesExceptionIP(t *testing.T) {
 		})
 	}
 }
+
+func TestLegacyRewrite_trailingDot(t *testing.T) {
+	t.Parallel()
+
+	ip := "192.0.2.1"
+	wantAddr := netip.MustParseAddr(ip)
+
+	d, _ := newForTest(t, nil, nil)
+	t.Cleanup(d.Close)
+
+	d.conf.Rewrites = []*LegacyRewrite{{
+		Domain:  "example.test.",
+		Answer:  ip,
+		Enabled: true,
+	}, {
+		Domain:  "*.example.test.",
+		Answer:  ip,
+		Enabled: true,
+	}}
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+	require.NoError(t, d.prepareRewrites(ctx))
+
+	testCases := []struct {
+		name string
+		host string
+	}{{
+		name: "match_domain",
+		host: "example.test",
+	}, {
+		name: "match_subdomain",
+		host: "sub.example.test",
+	}}
+
+	wantRes := Result{
+		Reason: Rewritten,
+		IPList: []netip.Addr{wantAddr},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := d.processRewrites(tc.host, dns.TypeA)
+			assert.Equal(t, wantRes, r)
+		})
+	}
+}

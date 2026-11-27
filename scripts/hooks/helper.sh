@@ -8,7 +8,7 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 3
+# AdGuard-Project-Version: 5
 
 # Only show interactive prompts if there a terminal is attached to stdout.
 # While this technically doesn't guarantee that reading from /dev/tty works,
@@ -71,6 +71,10 @@ check_unstaged_changes() {
 lint_staged_changes() {
 	verbose="${VERBOSE:-0}"
 	readonly verbose
+
+	if [ "$(git diff --cached --name-only -- '*.ts' '*.tsx' || :)" != '' ]; then
+		make VERBOSE="$verbose" js-lint js-typecheck js-test
+	fi
 
 	if [ "$(git diff --cached --name-only -- '*.md' || :)" != '' ]; then
 		make VERBOSE="$verbose" md-lint

@@ -225,7 +225,7 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 }
 
 // handleStaticIP checks and optionally sets a static IP on the interface that
-// owns IP.  cmdCons must not be nil.
+// owns IP.  l and cmdCons must not be nil.
 func handleStaticIP(
 	ctx context.Context,
 	l *slog.Logger,
@@ -256,7 +256,7 @@ func handleStaticIP(
 
 	// Fall through even if we just set the static IP.  Check whether the
 	// interface has a static IP and return the details.
-	isStaticIP, err := aghnet.IfaceHasStaticIP(ctx, cmdCons, interfaceName)
+	isStaticIP, err := aghnet.IfaceHasStaticIP(ctx, l, cmdCons, interfaceName)
 	if err != nil {
 		ipResp.Static = "error"
 		ipResp.Error = err.Error()

@@ -8,7 +8,7 @@ vi.mock('panel/helpers/constants', async (importOriginal) =>
     importOriginal<typeof import('panel/helpers/constants')>(),
 );
 
-import {
+import intl, {
     createSolidDefaultValues,
     solidMessageConstructor,
     getInitialLanguage,
@@ -215,6 +215,24 @@ describe('intl.getMessage — missing placeholder fallback', () => {
         // 'query' is missing from values → should return the key
         const result = safeGetPlural('plural_with_value', 5);
         expect(result).toBe('plural_with_value');
+    });
+});
+
+describe('shipped locale plural values', () => {
+    afterEach(async () => {
+        await intl.changeLanguage('en');
+    });
+
+    // A value with the wrong number of pipe-separated forms makes the
+    // translator throw, and getPlural then renders the raw key in the UI.
+    it.each(['de', 'sk'] as const)('resolves last_days in %s instead of the key', async (locale) => {
+        await intl.changeLanguage(locale);
+
+        // changeLanguage swallows a load failure, leaving the English
+        // translator active; without this the assertion could pass for the
+        // wrong reason.
+        expect(intl.getUILanguage()).toBe(locale);
+        expect(intl.getPlural('last_days', 7)).not.toBe('last_days');
     });
 });
 

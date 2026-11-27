@@ -1,10 +1,11 @@
 import path from 'path';
-import fs from 'fs';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import CopyPlugin from 'copy-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import { BUILD_ENVS } from './constants.js';
+import { getAliasesFromTsconfig } from './scripts/tsconfig-aliases.js';
+import { THEME_BOOTSTRAP_TEMPLATE_PARAMETERS } from './scripts/theme-bootstrap-template.js';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
@@ -25,23 +26,6 @@ const PUBLIC_ASSETS_PATH = path.resolve(PUBLIC_PATH, 'assets');
 const BUILD_ENV = BUILD_ENVS[process.env.BUILD_ENV];
 
 const isDev = BUILD_ENV === BUILD_ENVS.dev;
-
-function getAliasesFromTsconfig(tsconfigPath, resourcesPath) {
-    const tsConfig = JSON.parse(fs.readFileSync(tsconfigPath, 'utf8'));
-    const aliases = {};
-    if (tsConfig.compilerOptions && tsConfig.compilerOptions.paths) {
-        Object.entries(tsConfig.compilerOptions.paths).forEach(([alias, targetArr]) => {
-            if (alias.endsWith('/*')) {
-                const aliasName = alias.replace('/*', '');
-                const target = targetArr[0].replace('/*', '');
-                aliases[aliasName] = path.resolve(resourcesPath, target);
-            } else {
-                aliases[alias] = path.resolve(resourcesPath, targetArr[0]);
-            }
-        });
-    }
-    return aliases;
-}
 
 const tsConfigPath = path.resolve(__dirname, './tsconfig.json');
 const aliasesFromTsconfig = getAliasesFromTsconfig(tsConfigPath, RESOURCES_PATH);
@@ -140,11 +124,13 @@ const config = {
             verbose: false,
             dry: false,
         }),
+        // Every entry point inlines the same pre-paint theme script.
         new HtmlWebpackPlugin({
             inject: true,
             cache: false,
             chunks: ['main'],
             template: HTML_PATH,
+            templateParameters: THEME_BOOTSTRAP_TEMPLATE_PARAMETERS,
         }),
         new HtmlWebpackPlugin({
             inject: true,
@@ -152,6 +138,7 @@ const config = {
             chunks: ['install'],
             filename: 'install.html',
             template: HTML_INSTALL_PATH,
+            templateParameters: THEME_BOOTSTRAP_TEMPLATE_PARAMETERS,
         }),
         new HtmlWebpackPlugin({
             inject: true,
@@ -159,6 +146,7 @@ const config = {
             chunks: ['login'],
             filename: 'login.html',
             template: HTML_LOGIN_PATH,
+            templateParameters: THEME_BOOTSTRAP_TEMPLATE_PARAMETERS,
         }),
         new HtmlWebpackPlugin({
             inject: true,
@@ -166,6 +154,7 @@ const config = {
             chunks: ['forgot_password'],
             filename: 'forgot_password.html',
             template: HTML_FORGOT_PASSWORD_PATH,
+            templateParameters: THEME_BOOTSTRAP_TEMPLATE_PARAMETERS,
         }),
         new MiniCssExtractPlugin({
             filename: isDev ? '[name].css' : '[name].[hash].css',

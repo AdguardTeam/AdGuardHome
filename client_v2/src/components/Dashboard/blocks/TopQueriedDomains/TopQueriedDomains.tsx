@@ -4,6 +4,7 @@ import { Icon } from 'panel/common/ui/Icon';
 import { Link } from 'panel/common/ui/Link';
 import { RoutePath } from 'panel/components/Routes/Paths';
 import { formatCompactNumber } from 'panel/helpers/helpers';
+import { computePercent, formatPercent } from 'panel/helpers/statistics';
 import { getTrackerData } from 'panel/helpers/trackers/trackers';
 import theme from 'panel/lib/theme';
 import cn from 'clsx';
@@ -52,9 +53,7 @@ export const TopQueriedDomains = (props: Props) => {
                     <For each={sortedDomains()}>
                         {(domain) => {
                             const percent = createMemo(() =>
-                                props.numDnsQueries > 0
-                                    ? (domain.count / props.numDnsQueries) * 100
-                                    : 0,
+                                computePercent(domain.count, props.numDnsQueries),
                             );
                             const trackerData = getTrackerData(domain.name);
 
@@ -123,7 +122,7 @@ export const TopQueriedDomains = (props: Props) => {
                                                             s.queryPercent,
                                                         )}
                                                     >
-                                                        ({percent().toFixed(1)}%)
+                                                        ({formatPercent(percent())}%)
                                                     </div>
                                                 </div>
                                             </div>

@@ -21,13 +21,13 @@ import (
 	"time"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/agh"
-	"github.com/AdguardTeam/AdGuardHome/internal/aghalg"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghos"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghslog"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtls"
 	"github.com/AdguardTeam/AdGuardHome/internal/arpdb"
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpd"
 	"github.com/AdguardTeam/AdGuardHome/internal/dnsforward"
 	"github.com/AdguardTeam/AdGuardHome/internal/filtering"
@@ -46,7 +46,6 @@ import (
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
-	"github.com/AdguardTeam/golibs/service"
 )
 
 // Global context
@@ -82,7 +81,11 @@ func Main(clientBuildFS fs.FS) {
 	//
 	// TODO(a.garipov): The comment above is most likely false.  Replace with
 	// package flag.
-	opts := loadCmdLineOpts()
+	//
+	// TODO(a.garipov):  Remove the legacy --no-etc-hosts flag migration and
+	// other legacy option handling in a future version.
+	args, legacyNoEtcHosts := filterNoOpOpts(os.Args, os.Stdout, os.Stderr)
+	opts := loadCmdLineOpts(args)
 
 	// TODO(s.chzhen):  Construct logger from command-line options.
 	l := slog.Default()
@@ -106,6 +109,7 @@ func Main(clientBuildFS fs.FS) {
 
 	// Print the first message after logger is configured.
 	baseLogger.InfoContext(ctx, "starting adguard home", "version", version.Full())
+	baseLogger.DebugContext(ctx, "filtered arguments", "before", os.Args, "after", args)
 	baseLogger.DebugContext(ctx, "current working directory", "path", workDir)
 	if opts.runningAsService {
 		baseLogger.InfoContext(ctx, "adguard home is running as a service")
@@ -122,22 +126,11 @@ func Main(clientBuildFS fs.FS) {
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP, syscall.SIGQUIT)
 
-	var (
-		hc        *aghnet.HostsContainer
-		hcWatcher service.Interface = service.Empty{}
-	)
-	if !opts.noEtcHosts {
-		hc, hcWatcher, err = newHostsContainer(ctx, baseLogger)
-		fatalOnError(ctx, baseLogger, err)
-	}
-
 	pidFilePath := setPIDFilePath(ctx, baseLogger, opts)
 	sigHdlrLogger := baseLogger.With(slogutil.KeyPrefix, "signalhdlr")
 	sigHdlrCleanup := &signalHandlerCleanup{
 		logger:          sigHdlrLogger,
-		hostsContainer:  hc,
 		glTokenFileRoot: glTokenFileRoot,
-		hcWatcher:       hcWatcher,
 		done:            done,
 		pidFilePath:     pidFilePath,
 		glinetMode:      opts.glinetMode,
@@ -162,7 +155,7 @@ func Main(clientBuildFS fs.FS) {
 			workDir,
 			confPath,
 			pidFilePath,
-			hc,
+			legacyNoEtcHosts,
 		)
 		if err != nil {
 			svcLogger.ErrorContext(ctx, "action failed", slogutil.KeyError, err)
@@ -172,7 +165,6 @@ func Main(clientBuildFS fs.FS) {
 		return
 	}
 
-	// run the protection
 	run(
 		ctx,
 		baseLogger,
@@ -184,7 +176,7 @@ func Main(clientBuildFS fs.FS) {
 		workDir,
 		confPath,
 		pidFilePath,
-		hc,
+		legacyNoEtcHosts,
 	)
 }
 
@@ -197,6 +189,7 @@ func setupContext(
 	workDir string,
 	confPath string,
 	isFirstRun bool,
+	legacyNoEtcHosts bool,
 ) {
 	if isFirstRun {
 		baseLogger.InfoContext(ctx, "this is the first time adguard home has been launched")
@@ -206,7 +199,7 @@ func setupContext(
 	confFileExists := false
 
 	// TODO(s.chzhen):  Consider adding a key prefix.
-	err := parseConfig(ctx, baseLogger, workDir, confPath)
+	err := parseConfig(ctx, baseLogger, workDir, confPath, legacyNoEtcHosts)
 	if err != nil {
 		if !errors.Is(err, fs.ErrNotExist) || !isFirstRun {
 			baseLogger.ErrorContext(
@@ -292,11 +285,18 @@ func configureOS(ctx context.Context, l *slog.Logger, conf *configuration) (err 
 }
 
 // newHostsContainer initializes the structures to keep up-to-date the hosts
-// provided by the OS.  baseLogger must not be nil.
+// provided by the OS.  watcher is never nil.  baseLogger must not be nil.
 func newHostsContainer(
 	ctx context.Context,
 	baseLogger *slog.Logger,
+	enabled bool,
 ) (etcHosts *aghnet.HostsContainer, watcher aghos.FSWatcher, err error) {
+	watcher = aghos.EmptyFSWatcher{}
+
+	if !enabled {
+		return nil, watcher, nil
+	}
+
 	l := baseLogger.With(slogutil.KeyPrefix, "hosts")
 
 	watcher, err = aghos.NewOSWatcher(&aghos.OSWatcherConfig{
@@ -315,7 +315,7 @@ func newHostsContainer(
 
 	paths, err := hostsfile.DefaultHostsPaths()
 	if err != nil {
-		return nil, nil, fmt.Errorf("getting default system hosts paths: %w", err)
+		return nil, watcher, fmt.Errorf("getting default system hosts paths: %w", err)
 	}
 
 	etcHosts, err = aghnet.NewHostsContainer(
@@ -330,15 +330,69 @@ func newHostsContainer(
 		if errors.Is(err, aghnet.ErrNoHostsPaths) {
 			l.WarnContext(ctx, "initializing hosts container", slogutil.KeyError, err)
 
-			return nil, nil, closeErr
+			return nil, watcher, closeErr
 		}
 
 		err = fmt.Errorf("initializing hosts container: %w", err)
 
-		return nil, nil, errors.WithDeferred(err, closeErr)
+		return nil, watcher, errors.WithDeferred(err, closeErr)
 	}
 
 	return etcHosts, watcher, watcher.Start(ctx)
+}
+
+// dhcpConfigToInternal converts c to the DHCP server settings.  All arguments
+// must not be nil, workDir must not be empty.
+func dhcpConfigToInternal(
+	c *configmgr.DHCPConfig,
+	baseLogger *slog.Logger,
+	confModifier agh.ConfigModifier,
+	httpReg aghhttp.Registrar,
+	workDir string,
+) (s *dhcpd.ServerConfig) {
+	return &dhcpd.ServerConfig{
+		Conf6:              dhcpV6ConfigToInternal(c.Conf6),
+		CommandConstructor: executil.SystemCommandConstructor{},
+		ConfModifier:       confModifier,
+		HTTPReg:            httpReg,
+		Logger:             baseLogger.With(slogutil.KeyPrefix, "dhcpd"),
+		InterfaceName:      c.InterfaceName,
+		LocalDomainName:    c.LocalDomainName,
+		DataDir:            filepath.Join(workDir, dataDir),
+		Conf4:              dhcpV4ConfigToInternal(c.Conf4),
+		Enabled:            c.Enabled,
+	}
+}
+
+// dhcpV4ConfigToInternal converts c to the DHCPv4 server settings.
+func dhcpV4ConfigToInternal(c *configmgr.DHCPv4Config) (s dhcpd.V4ServerConf) {
+	if c == nil {
+		return dhcpd.V4ServerConf{}
+	}
+
+	return dhcpd.V4ServerConf{
+		GatewayIP:     c.GatewayIP,
+		RangeStart:    c.RangeStart,
+		RangeEnd:      c.RangeEnd,
+		SubnetMask:    c.SubnetMask,
+		Options:       c.Options,
+		LeaseDuration: c.LeaseDuration,
+		ICMPTimeout:   c.ICMPTimeout,
+	}
+}
+
+// dhcpV6ConfigToInternal converts c to the DHCPv6 server settings.
+func dhcpV6ConfigToInternal(c *configmgr.DHCPv6Config) (s dhcpd.V6ServerConf) {
+	if c == nil {
+		return dhcpd.V6ServerConf{}
+	}
+
+	return dhcpd.V6ServerConf{
+		RangeStart:    c.RangeStart,
+		LeaseDuration: c.LeaseDuration,
+		RASLAACOnly:   c.RASLAACOnly,
+		RAAllowSLAAC:  c.RAAllowSLAAC,
+	}
 }
 
 // initContextClients initializes Context clients and related fields.  All
@@ -352,32 +406,24 @@ func initContextClients(
 	workDir string,
 	hc *aghnet.HostsContainer,
 ) (err error) {
-	//lint:ignore SA1019 Migration is not over.
-	config.DHCP.WorkDir = workDir
-	config.DHCP.DataDir = filepath.Join(workDir, dataDir)
-	config.DHCP.HTTPReg = httpReg
-	config.DHCP.CommandConstructor = executil.SystemCommandConstructor{}
-	config.DHCP.Logger = logger.With(slogutil.KeyPrefix, "dhcpd")
-	config.DHCP.ConfModifier = confModifier
-
-	globalContext.dhcpServer, err = dhcpd.Create(ctx, config.DHCP)
+	serverConf := dhcpConfigToInternal(config.DHCP, logger, confModifier, httpReg, workDir)
+	globalContext.dhcpServer, err = dhcpd.Create(ctx, serverConf)
 	if globalContext.dhcpServer == nil || err != nil {
-		// TODO(a.garipov): There are a lot of places in the code right
-		// now which assume that the DHCP server can be nil despite this
-		// condition.  Inspect them and perhaps rewrite them to use
-		// Enabled() instead.
-		return fmt.Errorf("initing dhcp: %w", err)
+		// TODO(a.garipov):  There are a lot of places in the code right now
+		// which assume that the DHCP server can be nil despite this condition.
+		// Inspect them and perhaps rewrite them to use Enabled() instead.
+		return fmt.Errorf("initializing dhcp: %w", err)
 	}
 
 	var arpDB arpdb.Interface
 	if config.Clients.Sources.ARP {
-		arpDB = arpdb.New(logger.With(slogutil.KeyError, "arpdb"))
+		arpDB = arpdb.New(logger.With(slogutil.KeyPrefix, "arpdb"))
 	}
 
 	return globalContext.clients.Init(
 		ctx,
 		logger,
-		config.Clients.Persistent,
+		config.Clients,
 		globalContext.dhcpServer,
 		hc,
 		arpDB,
@@ -407,41 +453,20 @@ func pidFileRequired(opts options) (ok bool) {
 			opts.serviceControlAction == "run")
 }
 
-// setupBindOpts overrides bind host/port from the opts.
+// setupBindOpts overrides the bind address from opts, if any.
 func setupBindOpts(opts options) (err error) {
 	bindAddr := opts.bindAddr
-	if bindAddr != (netip.AddrPort{}) {
-		config.HTTPConfig.Address = bindAddr
-
-		if config.HTTPConfig.Address.Port() != 0 {
-			err = checkPorts()
-			if err != nil {
-				// Don't wrap the error, because it's informative enough as is.
-				return err
-			}
-		}
-
+	if bindAddr == (netip.AddrPort{}) {
 		return nil
 	}
 
-	if opts.bindPort != 0 {
-		config.HTTPConfig.Address = netip.AddrPortFrom(
-			config.HTTPConfig.Address.Addr(),
-			opts.bindPort,
-		)
-
-		err = checkPorts()
+	config.HTTPConfig.Address = bindAddr
+	if config.HTTPConfig.Address.Port() != 0 {
+		err = validateConfigPorts(config)
 		if err != nil {
 			// Don't wrap the error, because it's informative enough as is.
 			return err
 		}
-	}
-
-	if opts.bindHost.IsValid() {
-		config.HTTPConfig.Address = netip.AddrPortFrom(
-			opts.bindHost,
-			config.HTTPConfig.Address.Port(),
-		)
 	}
 
 	return nil
@@ -564,40 +589,12 @@ func setupDNSFilteringConf(
 	logger := baseLogger.With(slogutil.KeyPrefix, safesearch.LogPrefix)
 	conf.SafeSearch, err = safesearch.NewDefault(ctx, &safesearch.DefaultConfig{
 		Logger:         logger,
-		ServicesConfig: conf.SafeSearchConf,
+		ServicesConfig: &conf.SafeSearchConf,
 		CacheSize:      conf.SafeSearchCacheSize,
 		CacheTTL:       cacheTime,
 	})
 	if err != nil {
 		return fmt.Errorf("initializing safesearch: %w", err)
-	}
-
-	return nil
-}
-
-// checkPorts is a helper for ports validation in config.
-func checkPorts() (err error) {
-	tcpPorts := aghalg.UniqChecker[tcpPort]{}
-	addPorts(tcpPorts, tcpPort(config.HTTPConfig.Address.Port()))
-
-	udpPorts := aghalg.UniqChecker[udpPort]{}
-	addPorts(udpPorts, udpPort(config.DNS.Port))
-
-	if config.TLS.Enabled {
-		addPorts(
-			tcpPorts,
-			tcpPort(config.TLS.PortHTTPS),
-			tcpPort(config.TLS.PortDNSOverTLS),
-			tcpPort(config.TLS.PortDNSCrypt),
-		)
-
-		addPorts(udpPorts, udpPort(config.TLS.PortDNSOverQUIC))
-	}
-
-	if err = tcpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating tcp ports: %w", err)
-	} else if err = udpPorts.Validate(); err != nil {
-		return fmt.Errorf("validating udp ports: %w", err)
 	}
 
 	return nil
@@ -806,7 +803,7 @@ func run(
 	workDir string,
 	confPath string,
 	pidFilePath string,
-	hc *aghnet.HostsContainer,
+	legacyNoEtcHosts bool,
 ) {
 	aghtls.Init(ctx, baseLogger.With(slogutil.KeyPrefix, "aghtls"))
 
@@ -816,9 +813,15 @@ func run(
 	mux := http.NewServeMux()
 	httpReg := aghhttp.NewDefaultRegistrar(mux, mw.wrap)
 
-	setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun)
+	setupContext(ctx, baseLogger, opts, workDir, confPath, isFirstRun, legacyNoEtcHosts)
 
-	err := configureOS(ctx, baseLogger, config)
+	hcEnabled := config.DNS.HostsFileEnabled || config.Clients.Sources.HostsFile
+	hc, hcWatcher, err := newHostsContainer(ctx, baseLogger, hcEnabled)
+	fatalOnError(ctx, baseLogger, err)
+
+	sigHdlr.addHostsContainer(hc, hcWatcher)
+
+	err = configureOS(ctx, baseLogger, config)
 	fatalOnError(ctx, baseLogger, err)
 
 	// Clients package uses filtering package's static data
@@ -854,7 +857,7 @@ func run(
 	err = setupBindOpts(opts)
 	fatalOnError(ctx, baseLogger, err)
 
-	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, tlsMgr, isFirstRun, workDir, confPath)
+	upd, isCustomURL := initUpdate(ctx, baseLogger, opts, hc, tlsMgr, isFirstRun, workDir, confPath)
 
 	dataDirPath := filepath.Join(workDir, dataDir)
 	err = os.MkdirAll(dataDirPath, aghos.DefaultPermDir)
@@ -998,6 +1001,7 @@ func initUpdate(
 	ctx context.Context,
 	baseLogger *slog.Logger,
 	opts options,
+	hc *aghnet.HostsContainer,
 	tlsMgr aghtls.Manager,
 	isFirstRun bool,
 	workDir string,
@@ -1018,7 +1022,7 @@ func initUpdate(
 
 	// TODO(e.burkov): This could be made earlier, probably as the option's
 	// effect.
-	cmdlineUpdate(ctx, baseLogger, opts, upd, tlsMgr, isFirstRun)
+	cmdlineUpdate(ctx, baseLogger, opts, hc, upd, tlsMgr, isFirstRun)
 
 	if !isFirstRun {
 		// Save the updated config.
@@ -1304,13 +1308,13 @@ func exitWithError() {
 // from them.  If there is an error or an effect, loadCmdLineOpts processes them
 // and exits.
 //
-// TODO(m.kazantsev):  Consider refactoring the logs so that it
-// resembles AdGuard DNS CLI.
-func loadCmdLineOpts() (opts options) {
-	opts, eff, err := parseCmdOpts(os.Args[0], os.Args[1:])
+// TODO(m.kazantsev):  Consider refactoring the logs so that it resembles
+// AdGuard DNS CLI.
+func loadCmdLineOpts(args []string) (opts options) {
+	opts, eff, err := parseCmdOpts(args[0], args[1:])
 	if err != nil {
 		log.Printf("error: %s\n", err)
-		printHelp(os.Args[0])
+		printHelp(args[0])
 
 		exitWithError()
 	}
@@ -1319,6 +1323,7 @@ func loadCmdLineOpts() (opts options) {
 		err = eff()
 		if err != nil {
 			log.Printf("error: %s\n", err)
+
 			exitWithError()
 		}
 
@@ -1427,6 +1432,7 @@ func cmdlineUpdate(
 	ctx context.Context,
 	l *slog.Logger,
 	opts options,
+	hc *aghnet.HostsContainer,
 	upd *updater.Updater,
 	tlsMgr aghtls.Manager,
 	isFirstRun bool,
@@ -1446,6 +1452,7 @@ func cmdlineUpdate(
 			Logger:      l,
 			TLSManager:  tlsMgr,
 			PrivateNets: parseSubnetSet(config.DNS.PrivateNets),
+			EtcHosts:    hc,
 		},
 		nil,
 		agh.EmptyConfigModifier{},

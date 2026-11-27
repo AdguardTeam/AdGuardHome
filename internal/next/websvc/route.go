@@ -11,20 +11,20 @@ import (
 const (
 	PathPatternFrontend       = "/"
 	PathPatternHealthCheck    = "/health-check"
-	PathPatternV1SettingsAll  = "/api/v1/settings/all"
-	PathPatternV1SettingsDNS  = "/api/v1/settings/dns"
-	PathPatternV1SettingsHTTP = "/api/v1/settings/http"
-	PathPatternV1SystemInfo   = "/api/v1/system/info"
+	PathPatternV2SettingsAll  = "/api/v2/settings/all"
+	PathPatternV2SettingsDNS  = "/api/v2/settings/dns"
+	PathPatternV2SettingsHTTP = "/api/v2/settings/http"
+	PathPatternV2SystemInfo   = "/api/v2/system/info"
 )
 
 // Route pattern constants.
 const (
 	routePatternFrontend            = http.MethodGet + " " + PathPatternFrontend
-	routePatternGetV1SettingsAll    = http.MethodGet + " " + PathPatternV1SettingsAll
-	routePatternGetV1SystemInfo     = http.MethodGet + " " + PathPatternV1SystemInfo
+	routePatternGetV2SettingsAll    = http.MethodGet + " " + PathPatternV2SettingsAll
+	routePatternGetV2SystemInfo     = http.MethodGet + " " + PathPatternV2SystemInfo
 	routePatternHealthCheck         = http.MethodGet + " " + PathPatternHealthCheck
-	routePatternPatchV1SettingsDNS  = http.MethodPatch + " " + PathPatternV1SettingsDNS
-	routePatternPatchV1SettingsHTTP = http.MethodPatch + " " + PathPatternV1SettingsHTTP
+	routePatternPatchV2SettingsDNS  = http.MethodPatch + " " + PathPatternV2SettingsDNS
+	routePatternPatchV2SettingsHTTP = http.MethodPatch + " " + PathPatternV2SettingsHTTP
 )
 
 // route registers all necessary handlers in mux.
@@ -43,19 +43,19 @@ func (svc *Service) route(mux *http.ServeMux) {
 		isJSON:  false,
 	}, {
 		handler: http.HandlerFunc(svc.handleGetSettingsAll),
-		pattern: routePatternGetV1SettingsAll,
+		pattern: routePatternGetV2SettingsAll,
 		isJSON:  true,
 	}, {
 		handler: http.HandlerFunc(svc.handlePatchSettingsDNS),
-		pattern: routePatternPatchV1SettingsDNS,
+		pattern: routePatternPatchV2SettingsDNS,
 		isJSON:  true,
 	}, {
 		handler: http.HandlerFunc(svc.handlePatchSettingsHTTP),
-		pattern: routePatternPatchV1SettingsHTTP,
+		pattern: routePatternPatchV2SettingsHTTP,
 		isJSON:  true,
 	}, {
-		handler: http.HandlerFunc(svc.handleGetV1SystemInfo),
-		pattern: routePatternGetV1SystemInfo,
+		handler: http.HandlerFunc(svc.handleGetV2SystemInfo),
+		pattern: routePatternGetV2SystemInfo,
 		isJSON:  true,
 	}}
 

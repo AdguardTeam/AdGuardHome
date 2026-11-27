@@ -14,17 +14,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestService_handleGetV1SystemInfo(t *testing.T) {
+func TestService_handleGetV2SystemInfo(t *testing.T) {
 	confMgr := newConfigManager()
 	_, addr := newTestServer(t, confMgr)
 	u := &url.URL{
 		Scheme: urlutil.SchemeHTTP,
 		Host:   addr.String(),
-		Path:   websvc.PathPatternV1SystemInfo,
+		Path:   websvc.PathPatternV2SystemInfo,
 	}
 
 	body := httpGet(t, u, http.StatusOK)
-	resp := &websvc.RespGetV1SystemInfo{}
+	resp := &websvc.RespGetV2SystemInfo{}
 	err := json.Unmarshal(body, resp)
 	require.NoError(t, err)
 

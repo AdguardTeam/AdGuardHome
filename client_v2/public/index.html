@@ -13,30 +13,8 @@
         <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
         <title>AdGuard Home</title>
         <meta name="color-scheme" content="light dark" />
-        <script>
-            (function () {
-                var THEME_KEY = 'account_theme';
-                var theme = null;
-                try {
-                    var raw = window.localStorage.getItem(THEME_KEY);
-                    if (raw) {
-                        try {
-                            theme = JSON.parse(raw);
-                        } catch (e) {
-                            theme = raw;
-                        }
-                    }
-                } catch (e) {}
-                if (!theme || theme === 'auto') {
-                    var prefersDark =
-                        window.matchMedia &&
-                        window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    theme = prefersDark ? 'dark' : 'light';
-                }
-                document.documentElement.dataset.theme = theme;
-                document.documentElement.style.colorScheme = theme;
-            })();
-        </script>
+        <!-- Inlined from `public/theme-bootstrap.js` by webpack. -->
+        <%= themeBootstrapScript %>
     </head>
     <body>
         <noscript> You need to enable JavaScript to run this app. </noscript>

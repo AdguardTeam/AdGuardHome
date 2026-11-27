@@ -42,13 +42,14 @@ const ErrNoStaticIPInfo errors.Error = "no information about static ip"
 
 // IfaceHasStaticIP reports whether the interface has a static IP.  If the
 // status is indeterminate, it returns false with an error matching
-// [ErrNoStaticIPInfo].  cmdCons must not be nil.
+// [ErrNoStaticIPInfo].  l and cmdCons must not be nil.
 func IfaceHasStaticIP(
 	ctx context.Context,
+	l *slog.Logger,
 	cmdCons executil.CommandConstructor,
 	ifaceName string,
 ) (has bool, err error) {
-	return ifaceHasStaticIP(ctx, cmdCons, ifaceName)
+	return ifaceHasStaticIP(ctx, l, cmdCons, ifaceName)
 }
 
 // IfaceSetStaticIP sets a static IP address for network interface.  l and

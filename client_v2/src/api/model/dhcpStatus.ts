@@ -7,10 +7,10 @@ import type { DhcpStaticLease } from './dhcpStaticLease';
  * Built-in DHCP server configuration and status
  */
 export interface DhcpStatus {
-    enabled?: boolean;
-    interface_name?: string;
-    v4?: DhcpConfigV4;
-    v6?: DhcpConfigV6;
+    enabled: boolean;
+    interface_name: string;
+    v4: DhcpConfigV4;
+    v6: DhcpConfigV6;
     leases: DhcpLease[];
-    static_leases?: DhcpStaticLease[];
+    static_leases: DhcpStaticLease[];
 }

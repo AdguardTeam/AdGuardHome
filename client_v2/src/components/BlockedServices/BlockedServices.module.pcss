@@ -34,39 +34,23 @@
     }
 }
 
-.navItem {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: 16px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    text-decoration: none;
-    border-radius: 8px;
-
-    &:hover,
-    &:focus-visible {
-        background-color: var(--hovered-page-background);
-    }
+.toggle {
+    margin: 8px 0;
 }
 
-.navItemContent {
+.globalNote {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-}
-
-.navItemTitle {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--default-main-text);
-}
-
-.navItemDesc {
-    font-size: 14px;
-    line-height: 1.3;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 16px;
+    gap: 16px;
+    text-align: center;
     color: var(--default-description-text);
+}
+
+.globalNoteText {
+    max-width: 256px;
 }
 
 .search {
@@ -97,7 +81,6 @@
 .groupButton {
     min-height: 33px;
     padding: 4px 16px;
-    font-size: 14px;
     color: var(--default-main-text);
     border: 1px solid var(--default-inactive-input-stroke);
     border-radius: 200px;
@@ -108,18 +91,29 @@
     cursor: pointer;
     outline: none;
 
-    &:hover,
     &:focus-visible {
         background-color: var(--page-background-additional);
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--page-background-additional);
+        }
     }
 }
 
 .groupButtonActive {
     border-color: var(--default-link);
+    background-color: var(--fills-backgrounds-recent-activity);
 
-    &:hover,
     &:focus-visible {
-        background-color: transparent;
+        background-color: var(--fills-backgrounds-recent-activity);
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background-color: var(--fills-backgrounds-recent-activity);
+        }
     }
 }
 

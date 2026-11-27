@@ -13,10 +13,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -33,7 +33,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -76,7 +76,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -100,10 +100,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -120,7 +120,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -144,10 +144,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -164,7 +164,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -188,10 +188,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -208,7 +208,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -234,10 +234,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -254,7 +254,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -281,10 +281,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -301,7 +301,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -325,10 +325,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -345,7 +345,7 @@
       "edns_cs_enabled": true,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -371,10 +371,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -391,7 +391,7 @@
       "edns_cs_enabled": true,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -417,10 +417,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -437,7 +437,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -461,10 +461,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -481,7 +481,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": true,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -505,10 +505,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -525,7 +525,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 1024,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -550,10 +550,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -570,7 +570,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 1024,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -594,10 +594,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -638,10 +638,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -684,10 +684,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -704,7 +704,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -730,10 +730,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -750,7 +750,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -775,10 +775,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -795,7 +795,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -819,10 +819,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -839,7 +839,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -865,10 +865,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -885,7 +885,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -914,10 +914,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -934,7 +934,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -958,10 +958,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -978,7 +978,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -1004,10 +1004,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [
         "9.9.9.10"
@@ -1026,7 +1026,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -1050,10 +1050,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -1070,7 +1070,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -1097,10 +1097,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -1117,7 +1117,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,
@@ -1141,10 +1141,10 @@
       ],
       "upstream_dns_file": "",
       "bootstrap_dns": [
-        "9.9.9.10",
-        "149.112.112.10",
-        "2620:fe::10",
-        "2620:fe::fe:10"
+        "1.0.0.1",
+        "1.1.1.1",
+        "2606:4700:4700::1001",
+        "2606:4700:4700::1111"
       ],
       "fallback_dns": [],
       "protection_enabled": true,
@@ -1161,7 +1161,7 @@
       "edns_cs_enabled": false,
       "dnssec_enabled": false,
       "disable_ipv6": false,
-      "upstream_mode": "",
+      "upstream_mode": "load_balance",
       "cache_size": 0,
       "cache_ttl_min": 0,
       "cache_ttl_max": 0,

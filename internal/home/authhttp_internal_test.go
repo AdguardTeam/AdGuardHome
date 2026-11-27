@@ -417,16 +417,6 @@ func TestAuth_ServeHTTP_firstRun(t *testing.T) {
 		method:   http.MethodGet,
 		wantCode: http.StatusFound,
 	}, {
-		name:     "change_language",
-		path:     "/control/i18n/change_language",
-		method:   http.MethodGet,
-		wantCode: http.StatusFound,
-	}, {
-		name:     "current_language",
-		path:     "/control/i18n/current_language",
-		method:   http.MethodGet,
-		wantCode: http.StatusFound,
-	}, {
 		name:     "check_config",
 		path:     "/control/install/check_config",
 		method:   http.MethodPost,
@@ -559,16 +549,6 @@ func TestAuth_ServeHTTP_auth(t *testing.T) {
 		method   string
 		wantCode int
 	}{{
-		name:     "change_language",
-		path:     "/control/i18n/change_language",
-		method:   http.MethodPost,
-		wantCode: http.StatusInternalServerError,
-	}, {
-		name:     "current_language",
-		path:     "/control/i18n/current_language",
-		method:   http.MethodGet,
-		wantCode: http.StatusOK,
-	}, {
 		name:     "profile",
 		path:     "/control/profile",
 		method:   http.MethodGet,

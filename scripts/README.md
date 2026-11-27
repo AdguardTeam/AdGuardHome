@@ -8,7 +8,7 @@ Run `make init` from the project root.
 
 ## `make/`: Makefile scripts
 
-The release channels are: `development` (the default), `edge`, `beta`, and `release`. If verbosity levels aren’t documented here, there are only two: `0`, don’t print anything, and `1`, be verbose.
+The common release channels are: `development` (the default), `edge`, `beta`, and `release`. There is also the `candidate` pseudo-channel which is only used to generate proper versions for the release candidate builds. If verbosity levels aren’t documented here, there are only two: `0`, don’t print anything, and `1`, be verbose.
 
 ### `build-docker.sh`: Build a multi-architecture Docker image
 
@@ -187,6 +187,8 @@ Required environment:
 Builds the Snapcraft packages from the binaries created by `download.sh`.
 
 Optional environment:
+
+- `EXPECTED_VERSION`: the version that the release build has recorded for the channel.  If set and the binaries have a different version, `build.sh` fails instead of packing the snaps.  By default it’s empty, which means that no check is performed.
 
 - `SNAPCRAFT_CMD`: Overrides the Snapcraft command. Default: `snapcraft`.
 

@@ -77,6 +77,7 @@ type Config struct {
 	FallbackDNS []string `yaml:"fallback_dns"`
 
 	// UpstreamMode determines the logic through which upstreams will be used.
+	// It must be valid.
 	UpstreamMode proxy.UpstreamMode `yaml:"upstream_mode"`
 
 	// FastestTimeout replaces the default timeout for dialing IP addresses
@@ -201,7 +202,8 @@ type TLSConfig struct {
 	QUICListenAddrs []*net.UDPAddr
 
 	// HTTPSListenAddrs should be the addresses AdGuard Home is listening on for
-	// DoH connections.  These addresses are announced with DDR.  Each item in
+	// DoH connections.  These addresses are announced with DDR.  The field is
+	// set only if at least one DoH route is configured.  Each item in
 	// the list must be non-nil.
 	HTTPSListenAddrs []netip.AddrPort
 
@@ -466,11 +468,11 @@ func parseBogusNXDOMAIN(confBogusNXDOMAIN []string) (subnets []netip.Prefix, err
 // is configured
 func (s *Server) initDefaultSettings() {
 	if len(s.conf.UpstreamDNS) == 0 {
-		s.conf.UpstreamDNS = defaultDNS
+		s.conf.UpstreamDNS = defaultDNSUpstream
 	}
 
 	if len(s.conf.BootstrapDNS) == 0 {
-		s.conf.BootstrapDNS = defaultBootstrap
+		s.conf.BootstrapDNS = defaultDNSBootstrap
 	}
 
 	if s.conf.UDPListenAddrs == nil {

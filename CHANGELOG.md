@@ -2,27 +2,129 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [*Keep a Changelog*](https://keepachangelog.com/en/1.1.0/).
+
+This project adhered to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) before version 1.0.0.  After that, the versioning scheme is roughly as follows:
+
+- The patch version is incremented whenever there are bug fixes, security updates, and other minor changes.  These updates should mostly never break things, but see the security exception below.
+- The minor version is incremented whenever a feature has been added or significantly reworked.  APIs may be marked as deprecated and/or removed in a minor-version update.  We strive to always deprecate first and to always document these changes here and in the [API changelog][api-chlog].
+- The major version is incremented whenever a large-scale rewrite has been finished.  Just as with the minor version updates, we strive to update the APIs in a way that minimizes surprises regarding breaking changes.
+- Security concerns may force us to break compatibility in any of these releases.  We will document all such breakages.
+
+The information about older versions may be migrated into a separate document in the future.
+
+[api-chlog]: openapi/CHANGELOG.md
 
 ## [Unreleased]
 
 <!--
-## [v1.0.0] – TBA
+## [v1.1.0] – TBA
 
-## [v0.107.80] - 2026-09-03 (APPROX.)
+## [v1.0.1] - 2026-12-01 (APPROX.)
 
-See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
+See also the [v1.0.1 GitHub milestone][ms-v1.0.1].
 
-[ms-v0.107.80]: https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
+[ms-v1.0.1]: https://github.com/AdguardTeam/AdGuardHome/milestone/117?closed=1
 
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
-### Security
+### Changed
 
-- Go version has been updated to prevent the possibility of exploiting the Go vulnerabilities fixed in [1.27.2][go-1.27.2].
+- Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
 
 ### Fixed
+
+- The selected filter chips in the new web interface being hard to tell apart from the unselected ones ([#8745]).
+
+- The custom filtering rules editor in the new web interface no longer being resizable ([#8730]).
+
+- The dashboard percentages in the new web interface being formatted with a different number of decimals in each card ([#8763]).
+
+- The *Log out* button in the new web interface being shown when authentication is disabled ([#8746]).
+
+- The access settings in the new web interface resetting each other when one of them was saved ([#8748]).
+
+- The query log in the new web interface crashing on queries received over DNSCrypt ([#8754]).
+
+- The *Top upstreams* percentages in the new web interface not adding up to 100% ([#8738]).
+
+- The certificate details in the new web interface being hidden by a validation warning or a key/certificate mismatch ([#8727]).
+
+- The stats period labels in the new web interface showing the `last_days` key instead of the text in German and Slovak ([#8736]).
+
+- The custom rules examples and the rules editor placeholder in the new web interface missing the `^` at the end of block and allow rules ([#8726]).
+
+- Renaming a blocklist in the new web interface disabling it ([#8728]).
+
+- Caching behavior under reverse proxies ([#8599]).
+
+- Query log HTTP API panicking on invalid `limit` and `offset` query parameter values.
+
+[#8599]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8599
+[#8726]:       https://github.com/AdguardTeam/AdGuardHome/issues/8726
+[#8727]:       https://github.com/AdguardTeam/AdGuardHome/issues/8727
+[#8728]:       https://github.com/AdguardTeam/AdGuardHome/issues/8728
+[#8730]:       https://github.com/AdguardTeam/AdGuardHome/issues/8730
+[#8736]:       https://github.com/AdguardTeam/AdGuardHome/issues/8736
+[#8738]:       https://github.com/AdguardTeam/AdGuardHome/issues/8738
+[#8745]:       https://github.com/AdguardTeam/AdGuardHome/issues/8745
+[#8746]:       https://github.com/AdguardTeam/AdGuardHome/issues/8746
+[#8748]:       https://github.com/AdguardTeam/AdGuardHome/issues/8748
+[#8754]:       https://github.com/AdguardTeam/AdGuardHome/issues/8754
+[#8763]:       https://github.com/AdguardTeam/AdGuardHome/issues/8763
+
+<!--
+NOTE: Add new changes ABOVE THIS COMMENT.
+-->
+
+## [v1.0.0] - 2026-11-19
+
+See also the [v1.0.0 GitHub milestone][ms-v1.0.0].
+
+### Security
+
+- Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.4][go-1.27.4].
+
+### Changed
+
+- The default upstream and bootstrap addresses have been changed from Quad9 to Cloudflare DNS, since Quad9 is adding geography-based restrictions ([#8686]).
+
+    **NOTE:**  If you live in the affected area (France) and still have not changed your upstream, bootstrap, and possibly fallback addresses, it is recommended that you do so.
+
+    See our [list of known DNS providers][dns-kb-list].
+
+- Client settings in the new web interface: *Use global settings* now applies to Protection only, blocked services have a separate *Use global blocked services* switch, and upstream DNS servers and the DNS cache are always editable.
+
+### Fixed
+
+- The new web interface blanking out or silently reloading itself when the DNS server was not running or its status check failed; it now explains the state, lists the likely causes of a stopped DNS server, and offers a retry when the check itself failed.
+
+- The new web interface install wizard counting the minimum password length in UTF-8 bytes and letting the server reject a password it had accepted; the minimum is now counted in characters, as the server does.
+
+- Changing the theme in the new web interface failing with `unknown language: ""` on installations that never selected a language.
+
+- Init script actions not being passed to System V and OpenWrt services.
+
+- DNS rewrites with trailing dots not matching ([#8674]).
+
+- Shutdown deadlock when looking up clients for query accounting ([#8658]).
+
+- CLI update failing when an upstream is specified by a hostname defined only in `/etc/hosts`.
+
+- The *Check the filtering* result in the new web interface showing only the first matched rule ([#8677]).
+
+- Panic on binding to a busy port ([#8656]).
+
+- Expired dynamic leases are served by DNS ([#8671]).
+
+- The *Check for updates* button disappearing and raw or untranslated error messages being shown when the update check or the DNS server status check failed in the new web interface ([#8681]).
+
+- The theme selected in the new web interface not being saved to the server ([#8699]).
+
+- Invalid SVCB record from DDR when DoH routes are empty.
+
+- Schedule shift on clock change cases ([#8670]).
 
 - Incorrect behaviour on the first launch with the `--check-config` flag.
 
@@ -60,26 +162,84 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 - The *Log out* button opening the login page in a new tab in the new web interface ([#8661]).
 
+- Per-client blocked services schedules being reset when a client was saved in the new web interface ([#8638]).
+
+- Client sub-pages of the new web interface showing the default values instead of the client's settings when opened directly or reloaded.
+
+### Removed
+
+- The following deprecated HTTP APIs:
+    - `GET /control/blocked_services/list`
+    - `GET /control/blocked_services/services`
+    - `GET /control/clients/find`
+    - `GET /control/i18n/current_language`
+    - `GET /control/querylog_info`
+    - `GET /control/stats_info`
+    - `POST /control/blocked_services/set`
+    - `POST /control/i18n/change_language`
+    - `POST /control/querylog_config`
+    - `POST /control/safesearch/disable`
+    - `POST /control/safesearch/enable`
+    - `POST /control/stats_config`
+
+- The following deprecated properties and query parameters in HTTP APIs:
+    - Properties `"filterId"` and `"rule"` in the response of the `GET /control/querylog` HTTP API.
+    - Properties `"filter_id"` and `"rule"` in the response of the `GET /control/filtering/check_host` HTTP API.
+    - Property `"safesearch_enabled"` in the client APIs.
+    - Query parameter `response_status` in the `GET /control/querylog` HTTP API.
+
+- The deprecated usage of an empty value for the `"upstream_mode"` property in the `GET /control/dns_info` and `POST /control/dns_config` HTTP APIs.
+
+- The following deprecated command-line flags:
+    - `--host`/`-h` for the bind host; now it is only used to show the help message along with `--help`.
+    - `--no-mem-optimization`.
+    - `--no-etc-hosts`.
+    - `--port`/`-p`.
+
+[#8565]:       https://github.com/AdguardTeam/AdGuardHome/issues/8565
+[#8572]:       https://github.com/AdguardTeam/AdGuardHome/issues/8572
+[#8608]:       https://github.com/AdguardTeam/AdGuardHome/issues/8608
+[#8609]:       https://github.com/AdguardTeam/AdGuardHome/issues/8609
+[#8610]:       https://github.com/AdguardTeam/AdGuardHome/issues/8610
+[#8613]:       https://github.com/AdguardTeam/AdGuardHome/issues/8613
+[#8636]:       https://github.com/AdguardTeam/AdGuardHome/issues/8636
+[#8637]:       https://github.com/AdguardTeam/AdGuardHome/issues/8637
+[#8638]:       https://github.com/AdguardTeam/AdGuardHome/issues/8638
+[#8644]:       https://github.com/AdguardTeam/AdGuardHome/issues/8644
+[#8656]:       https://github.com/AdGuardTeam/AdGuardHome/issues/8656
+[#8658]:       https://github.com/AdguardTeam/AdGuardHome/issues/8658
+[#8661]:       https://github.com/AdguardTeam/AdGuardHome/issues/8661
+[#8670]:       https://github.com/AdguardTeam/AdGuardHome/issues/8670
+[#8671]:       https://github.com/AdguardTeam/AdGuardHome/issues/8671
+[#8674]:       https://github.com/AdguardTeam/AdGuardHome/issues/8674
+[#8677]:       https://github.com/AdguardTeam/AdGuardHome/issues/8677
+[#8681]:       https://github.com/AdguardTeam/AdGuardHome/issues/8681
+[#8686]:       https://github.com/AdguardTeam/AdGuardHome/issues/8686
+[#8699]:       https://github.com/AdguardTeam/AdGuardHome/issues/8699
+[dns-kb-list]: https://adguard-dns.io/kb/general/dns-providers/
+[go-1.27.4]:   https://groups.google.com/g/golang-announce/c/iY8TY0wWgbM/
+[ms-v1.0.0]:   https://github.com/AdguardTeam/AdGuardHome/milestone/116?closed=1
+
+## [v0.107.80] - 2026-11-03
+
+See also the [v0.107.80 GitHub milestone][ms-v0.107.80].
+
+### Security
+
+- Go version has been updated to mitigate the possibility of exploiting the Go vulnerabilities fixed in [1.27.3][go-1.27.3].
+
+- Support for Multipath TCP has been disabled to mitigate the possibility of exploiting the vulnerability described in [CVE-2026-98432][cve-2026-98432].
+
+    **NOTE:** This is merely a mitigation.  Users are encouraged to update their Linux systems as soon as possible.
+
 ### Removed
 
 - The support for macOS 13 Ventura, see [Go 1.27 release notes][go-1.27-notes].
 
-[#8565]:           https://github.com/AdguardTeam/AdGuardHome/issues/8565
-[#8572]:           https://github.com/AdguardTeam/AdGuardHome/issues/8572
-[#8608]:           https://github.com/AdguardTeam/AdGuardHome/issues/8608
-[#8609]:           https://github.com/AdguardTeam/AdGuardHome/issues/8609
-[#8610]:           https://github.com/AdguardTeam/AdGuardHome/issues/8610
-[#8613]:           https://github.com/AdguardTeam/AdGuardHome/issues/8613
-[#8636]:           https://github.com/AdguardTeam/AdGuardHome/issues/8636
-[#8637]:           https://github.com/AdguardTeam/AdGuardHome/issues/8637
-[#8644]:           https://github.com/AdguardTeam/AdGuardHome/issues/8644
-[#8661]:           https://github.com/AdguardTeam/AdGuardHome/issues/8661
-[go-1.27.2]:       https://groups.google.com/g/golang-announce/c/U2fTuyDJznI
-[go-1.27-notes]:   https://go.dev/doc/go1.27#darwin
-
-<!--
-NOTE: Add new changes ABOVE THIS COMMENT.
--->
+[cve-2026-98432]: https://nvd.nist.gov/vuln/detail/CVE-2026-98432
+[go-1.27-notes]:  https://go.dev/doc/go1.27#darwin
+[go-1.27.3]:      https://groups.google.com/g/golang-announce/c/66pojueaQek
+[ms-v0.107.80]:   https://github.com/AdguardTeam/AdGuardHome/milestone/115?closed=1
 
 ## [v0.107.79] - 2026-08-18
 
@@ -3797,11 +3957,13 @@ See also the [v0.104.2 GitHub milestone][ms-v0.104.2].
 [ms-v0.104.2]: https://github.com/AdguardTeam/AdGuardHome/milestone/28?closed=1
 
 <!--
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...HEAD
-[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.1...HEAD
+[v1.0.1]:     https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.0...v1.0.1
 -->
 
-[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...HEAD
+[Unreleased]: https://github.com/AdguardTeam/AdGuardHome/compare/v1.0.0...HEAD
+[v1.0.0]:     https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.80...v1.0.0
+[v0.107.80]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.79...v0.107.80
 [v0.107.79]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.78...v0.107.79
 [v0.107.78]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.77...v0.107.78
 [v0.107.77]:  https://github.com/AdguardTeam/AdGuardHome/compare/v0.107.76...v0.107.77

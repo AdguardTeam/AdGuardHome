@@ -10,6 +10,8 @@ type InputChangeEvent = Event & {
     target: HTMLInputElement;
 };
 
+export const INPUT_SIZES = ['small', 'medium', 'large'] as const;
+
 type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange' | 'onBlur'> & {
     label?: JSX.Element;
     class?: string;
@@ -25,7 +27,7 @@ type Props = Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size' | 'onChange'
     isClearable?: boolean;
     onClear?: () => void;
     inputError?: string;
-    size?: 'small' | 'medium' | 'large';
+    size?: (typeof INPUT_SIZES)[number];
     value?: string | number | readonly string[];
     defaultValue?: string;
     onChange?: (event: InputChangeEvent) => void;

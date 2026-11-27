@@ -7,7 +7,7 @@
   'description': |
     **!! WARNING!  API IS AT THE DRAFT STAGE! THINGS WILL BREAK! !!**
 
-    AdGuard Home REST API, V1 **DRAFT**.  Our administration web interface is built on top of this REST API.
+    AdGuard Home REST API, V2 **DRAFT**.  Our administration web interface is built on top of this REST API.
 
     This API is currently a **DRAFT** and is not covered by any stability guarantees.  Once this API reaches maturity, the old `/control/` API will mostly be removed.
 
@@ -80,13 +80,13 @@
   'license':
     'name': 'GNU General Public License v3.0'
     'url': 'https://www.gnu.org/licenses/gpl-3.0.txt'
-  'title': 'AdGuard Home V1 DRAFT API'
+  'title': 'AdGuard Home V2 DRAFT API'
   'version': '0.108'
 
 'servers':
 - 'description': >
-    The V1 HTTP API namespace.
-  'url': '/api/v1'
+    The V2 HTTP API namespace.
+  'url': '/api/v2'
 
 'security':
 - 'basicAuth': []
@@ -143,10 +143,10 @@
 
   '/accounts/profile':
     'get':
-      'operationId': 'GetV1AccountsProfile'
+      'operationId': 'GetV2AccountsProfile'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1AccountsProfileResp'
+          '$ref': '#/components/responses/GetV2AccountsProfileResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -155,12 +155,12 @@
       'tags':
       - 'accounts'
     'patch':
-      'operationId': 'PatchV1AccountsProfile'
+      'operationId': 'PatchV2AccountsProfile'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1AccountsProfileReq'
+        '$ref': '#/components/requestBodies/PatchV2AccountsProfileReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1AccountsProfileResp'
+          '$ref': '#/components/responses/PatchV2AccountsProfileResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -175,7 +175,7 @@
 
   '/accounts/session':
     'delete':
-      'operationId': 'DeleteV1AccountsSession'
+      'operationId': 'DeleteV2AccountsSession'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -185,9 +185,9 @@
       'tags':
       - 'accounts'
     'post':
-      'operationId': 'PostV1AccountsSession'
+      'operationId': 'PostV2AccountsSession'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1AccountsSessionReq'
+        '$ref': '#/components/requestBodies/PostV2AccountsSessionReq'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -203,13 +203,13 @@
 
   '/apple/doh.mobileconfig':
     'get':
-      'operationId': 'GetV1AppleDohMobileconfig'
+      'operationId': 'GetV2AppleDohMobileconfig'
       'parameters':
       - '$ref': '#/components/parameters/QueryClientId'
       - '$ref': '#/components/parameters/QueryHost'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1AppleDohMobileconfigResp'
+          '$ref': '#/components/responses/GetV2AppleDohMobileconfigResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '422':
@@ -223,13 +223,13 @@
 
   '/apple/dot.mobileconfig':
     'get':
-      'operationId': 'GetV1AppleDotMobileconfig'
+      'operationId': 'GetV2AppleDotMobileconfig'
       'parameters':
       - '$ref': '#/components/parameters/QueryHost'
       - '$ref': '#/components/parameters/QueryClientId'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1AppleDotMobileconfigResp'
+          '$ref': '#/components/responses/GetV2AppleDotMobileconfigResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '422':
@@ -243,10 +243,10 @@
 
   '/clients/persistent':
     'get':
-      'operationId': 'GetV1ClientsPersistent'
+      'operationId': 'GetV2ClientsPersistent'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1ClientsPersistentResp'
+          '$ref': '#/components/responses/GetV2ClientsPersistentResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -255,12 +255,12 @@
       'tags':
       - 'clients'
     'post':
-      'operationId': 'PostV1ClientsPersistent'
+      'operationId': 'PostV2ClientsPersistent'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1ClientsPersistentReq'
+        '$ref': '#/components/requestBodies/PostV2ClientsPersistentReq'
       'responses':
         '201':
-          '$ref': '#/components/responses/PostV1ClientsPersistentResp'
+          '$ref': '#/components/responses/PostV2ClientsPersistentResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -275,7 +275,7 @@
 
   '/clients/persistent/{client_uid}':
     'delete':
-      'operationId': 'DeleteV1ClientPersistent'
+      'operationId': 'DeleteV2ClientPersistent'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -291,12 +291,12 @@
     'parameters':
     - '$ref': '#/components/parameters/PathClientUid'
     'patch':
-      'operationId': 'PatchV1ClientPersistent'
+      'operationId': 'PatchV2ClientPersistent'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1ClientPersistentReq'
+        '$ref': '#/components/requestBodies/PatchV2ClientPersistentReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1ClientPersistentResp'
+          '$ref': '#/components/responses/PatchV2ClientPersistentResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -313,10 +313,10 @@
 
   '/clients/runtime':
     'get':
-      'operationId': 'GetV1ClientsRuntime'
+      'operationId': 'GetV2ClientsRuntime'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1ClientsRuntimeResp'
+          '$ref': '#/components/responses/GetV2ClientsRuntimeResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -327,10 +327,10 @@
 
   '/dhcp/leases':
     'get':
-      'operationId': 'GetV1DhcpLeases'
+      'operationId': 'GetV2DhcpLeases'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1DhcpLeasesResp'
+          '$ref': '#/components/responses/GetV2DhcpLeasesResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -339,12 +339,12 @@
       'tags':
       - 'dhcp'
     'post':
-      'operationId': 'PostV1DhcpLeases'
+      'operationId': 'PostV2DhcpLeases'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1DhcpLeasesReq'
+        '$ref': '#/components/requestBodies/PostV2DhcpLeasesReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1DhcpLeasesResp'
+          '$ref': '#/components/responses/PostV2DhcpLeasesResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -359,7 +359,7 @@
 
   '/dhcp/leases/{lease_uid}':
     'delete':
-      'operationId': 'DeleteV1DhcpLease'
+      'operationId': 'DeleteV2DhcpLease'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -375,12 +375,12 @@
     'parameters':
     - '$ref': '#/components/parameters/PathLeaseUid'
     'patch':
-      'operationId': 'PatchV1DhcpLease'
+      'operationId': 'PatchV2DhcpLease'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1DhcpLeaseReq'
+        '$ref': '#/components/requestBodies/PatchV2DhcpLeaseReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1DhcpLeaseResp'
+          '$ref': '#/components/responses/PatchV2DhcpLeaseResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -397,10 +397,10 @@
 
   '/dhcp/status':
     'get':
-      'operationId': 'GetV1DhcpStatus'
+      'operationId': 'GetV2DhcpStatus'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1DhcpStatusResp'
+          '$ref': '#/components/responses/GetV2DhcpStatusResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -411,12 +411,12 @@
 
   '/install/check':
     'post':
-      'operationId': 'PostV1InstallCheck'
+      'operationId': 'PostV2InstallCheck'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1InstallCheckReq'
+        '$ref': '#/components/requestBodies/PostV2InstallCheckReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1InstallCheckResp'
+          '$ref': '#/components/responses/PostV2InstallCheckResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -431,9 +431,9 @@
 
   '/install/configure':
     'post':
-      'operationId': 'PostV1InstallConfigure'
+      'operationId': 'PostV2InstallConfigure'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1InstallConfigureReq'
+        '$ref': '#/components/requestBodies/PostV2InstallConfigureReq'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -451,10 +451,10 @@
 
   '/install/info':
     'get':
-      'operationId': 'GetV1InstallInfo'
+      'operationId': 'GetV2InstallInfo'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1InstallInfoResp'
+          '$ref': '#/components/responses/GetV2InstallInfoResp'
         '404':
           '$ref': '#/components/responses/NotFoundResp'
         '500':
@@ -465,9 +465,9 @@
 
   '/log/clear':
     'post':
-      'operationId': 'PostV1LogClear'
+      'operationId': 'PostV2LogClear'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1LogClearReq'
+        '$ref': '#/components/requestBodies/PostV2LogClearReq'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -485,7 +485,7 @@
 
   '/log/search':
     'get':
-      'operationId': 'GetV1LogSearch'
+      'operationId': 'GetV2LogSearch'
       'parameters':
       - '$ref': '#/components/parameters/QueryBefore'
       - '$ref': '#/components/parameters/QueryLimit'
@@ -493,7 +493,7 @@
       - '$ref': '#/components/parameters/QueryTerm'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1LogSearchResp'
+          '$ref': '#/components/responses/GetV2LogSearchResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '422':
@@ -506,10 +506,10 @@
 
   '/protection/blocked_services':
     'get':
-      'operationId': 'GetV1ProtectionBlockedServices'
+      'operationId': 'GetV2ProtectionBlockedServices'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1ProtectionBlockedServicesResp'
+          '$ref': '#/components/responses/GetV2ProtectionBlockedServicesResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -518,12 +518,12 @@
       'tags':
       - 'protection'
     'put':
-      'operationId': 'PutV1ProtectionBlockedServices'
+      'operationId': 'PutV2ProtectionBlockedServices'
       'requestBody':
-        '$ref': '#/components/requestBodies/PutV1ProtectionBlockedServicesReq'
+        '$ref': '#/components/requestBodies/PutV2ProtectionBlockedServicesReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1ProtectionBlockedServicesResp'
+          '$ref': '#/components/responses/GetV2ProtectionBlockedServicesResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -538,12 +538,12 @@
 
   '/protection/check_custom_rules':
     'post':
-      'operationId': 'PostV1ProtectionCheckCustomRules'
+      'operationId': 'PostV2ProtectionCheckCustomRules'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1ProtectionCheckCustomRulesReq'
+        '$ref': '#/components/requestBodies/PostV2ProtectionCheckCustomRulesReq'
       'responses':
         '201':
-          '$ref': '#/components/responses/PostV1ProtectionCheckCustomRulesResp'
+          '$ref': '#/components/responses/PostV2ProtectionCheckCustomRulesResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -558,10 +558,10 @@
 
   '/protection/custom_rules':
     'get':
-      'operationId': 'GetV1ProtectionCustomRules'
+      'operationId': 'GetV2ProtectionCustomRules'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1ProtectionCustomRulesResp'
+          '$ref': '#/components/responses/GetV2ProtectionCustomRulesResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -570,9 +570,9 @@
       'tags':
       - 'protection'
     'put':
-      'operationId': 'PutV1ProtectionCustomRules'
+      'operationId': 'PutV2ProtectionCustomRules'
       'requestBody':
-        '$ref': '#/components/requestBodies/PutV1ProtectionCustomRulesReq'
+        '$ref': '#/components/requestBodies/PutV2ProtectionCustomRulesReq'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -590,10 +590,10 @@
 
   '/protection/dns_rewrites':
     'get':
-      'operationId': 'GetV1ProtectionDnsRewrites'
+      'operationId': 'GetV2ProtectionDnsRewrites'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1ProtectionDnsRewritesResp'
+          '$ref': '#/components/responses/GetV2ProtectionDnsRewritesResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -602,12 +602,12 @@
       'tags':
       - 'protection'
     'post':
-      'operationId': 'PostV1ProtectionDnsRewrites'
+      'operationId': 'PostV2ProtectionDnsRewrites'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1ProtectionDnsRewritesReq'
+        '$ref': '#/components/requestBodies/PostV2ProtectionDnsRewritesReq'
       'responses':
         '201':
-          '$ref': '#/components/responses/PostV1ProtectionDnsRewritesResp'
+          '$ref': '#/components/responses/PostV2ProtectionDnsRewritesResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -622,7 +622,7 @@
 
   '/protection/dns_rewrites/{dns_rewrite_uid}':
     'delete':
-      'operationId': 'DeleteV1ProtectionDnsRewrite'
+      'operationId': 'DeleteV2ProtectionDnsRewrite'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -640,10 +640,10 @@
 
   '/protection/filters':
     'get':
-      'operationId': 'GetV1ProtectionFilters'
+      'operationId': 'GetV2ProtectionFilters'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1ProtectionFiltersResp'
+          '$ref': '#/components/responses/GetV2ProtectionFiltersResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -652,12 +652,12 @@
       'tags':
       - 'protection'
     'post':
-      'operationId': 'PostV1ProtectionFilters'
+      'operationId': 'PostV2ProtectionFilters'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1ProtectionFiltersReq'
+        '$ref': '#/components/requestBodies/PostV2ProtectionFiltersReq'
       'responses':
         '201':
-          '$ref': '#/components/responses/PostV1ProtectionFiltersResp'
+          '$ref': '#/components/responses/PostV2ProtectionFiltersResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -672,7 +672,7 @@
 
   '/protection/filters/{filter_uid}':
     'delete':
-      'operationId': 'DeleteV1ProtectionFilter'
+      'operationId': 'DeleteV2ProtectionFilter'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -688,12 +688,12 @@
     'parameters':
     - '$ref': '#/components/parameters/PathFilterUid'
     'patch':
-      'operationId': 'PatchV1ProtectionFilter'
+      'operationId': 'PatchV2ProtectionFilter'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1ProtectionFilterReq'
+        '$ref': '#/components/requestBodies/PatchV2ProtectionFilterReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1ProtectionFilterResp'
+          '$ref': '#/components/responses/PatchV2ProtectionFilterResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -711,12 +711,12 @@
 
   '/protection/refresh_filters':
     'post':
-      'operationId': 'PostV1ProtectionRefreshFilters'
+      'operationId': 'PostV2ProtectionRefreshFilters'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1ProtectionRefreshFiltersReq'
+        '$ref': '#/components/requestBodies/PostV2ProtectionRefreshFiltersReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1ProtectionRefreshFiltersResp'
+          '$ref': '#/components/responses/PostV2ProtectionRefreshFiltersResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -734,12 +734,12 @@
     'parameters':
     - '$ref': '#/components/parameters/PathFilterUid'
     'post':
-      'operationId': 'PostV1ProtectionRefreshFilter'
+      'operationId': 'PostV2ProtectionRefreshFilter'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1ProtectionRefreshFilterReq'
+        '$ref': '#/components/requestBodies/PostV2ProtectionRefreshFilterReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1ProtectionRefreshFilterResp'
+          '$ref': '#/components/responses/PostV2ProtectionRefreshFilterResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -755,10 +755,10 @@
 
   '/settings/all':
     'get':
-      'operationId': 'GetV1SettingsAll'
+      'operationId': 'GetV2SettingsAll'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1SettingsAllResp'
+          '$ref': '#/components/responses/GetV2SettingsAllResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -769,12 +769,12 @@
 
   '/settings/dhcp':
     'patch':
-      'operationId': 'PatchV1SettingsDhcp'
+      'operationId': 'PatchV2SettingsDhcp'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1SettingsDhcpReq'
+        '$ref': '#/components/requestBodies/PatchV2SettingsDhcpReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1SettingsDhcpResp'
+          '$ref': '#/components/responses/PatchV2SettingsDhcpResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -789,12 +789,12 @@
 
   '/settings/dns':
     'patch':
-      'operationId': 'PatchV1SettingsDns'
+      'operationId': 'PatchV2SettingsDns'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1SettingsDnsReq'
+        '$ref': '#/components/requestBodies/PatchV2SettingsDnsReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1SettingsDnsResp'
+          '$ref': '#/components/responses/PatchV2SettingsDnsResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -812,10 +812,10 @@
       'description': >
         Get DNS access settings.  This is a separate API, because these lists
         can become quite big.
-      'operationId': 'GetV1SettingsDnsAccess'
+      'operationId': 'GetV2SettingsDnsAccess'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1SettingsDnsAccessResp'
+          '$ref': '#/components/responses/GetV2SettingsDnsAccessResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -827,9 +827,9 @@
       'description': >
         Update DNS access settings.  This is a separate API, because these lists
         can become quite big.
-      'operationId': 'PutV1SettingsDnsAccess'
+      'operationId': 'PutV2SettingsDnsAccess'
       'requestBody':
-        '$ref': '#/components/requestBodies/PutV1SettingsDnsAccessReq'
+        '$ref': '#/components/requestBodies/PutV2SettingsDnsAccessReq'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -847,12 +847,12 @@
 
   '/settings/dns/check':
     'post':
-      'operationId': 'PostV1SettingsDnsCheck'
+      'operationId': 'PostV2SettingsDnsCheck'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1SettingsDnsCheckReq'
+        '$ref': '#/components/requestBodies/PostV2SettingsDnsCheckReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1SettingsDnsCheckResp'
+          '$ref': '#/components/responses/PostV2SettingsDnsCheckResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -867,12 +867,12 @@
 
   '/settings/http':
     'patch':
-      'operationId': 'PatchV1SettingsHttp'
+      'operationId': 'PatchV2SettingsHttp'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1SettingsHttpReq'
+        '$ref': '#/components/requestBodies/PatchV2SettingsHttpReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1SettingsHttpResp'
+          '$ref': '#/components/responses/PatchV2SettingsHttpResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -887,12 +887,12 @@
 
   '/settings/log':
     'patch':
-      'operationId': 'PatchV1SettingsLog'
+      'operationId': 'PatchV2SettingsLog'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1SettingsLogReq'
+        '$ref': '#/components/requestBodies/PatchV2SettingsLogReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1SettingsLogResp'
+          '$ref': '#/components/responses/PatchV2SettingsLogResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -907,12 +907,12 @@
 
   '/settings/protection':
     'patch':
-      'operationId': 'PatchV1SettingsProtection'
+      'operationId': 'PatchV2SettingsProtection'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1SettingsProtectionReq'
+        '$ref': '#/components/requestBodies/PatchV2SettingsProtectionReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1SettingsProtectionResp'
+          '$ref': '#/components/responses/PatchV2SettingsProtectionResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -927,12 +927,12 @@
 
   '/settings/stats':
     'patch':
-      'operationId': 'PatchV1SettingsStats'
+      'operationId': 'PatchV2SettingsStats'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1SettingsStatsReq'
+        '$ref': '#/components/requestBodies/PatchV2SettingsStatsReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1SettingsStatsResp'
+          '$ref': '#/components/responses/PatchV2SettingsStatsResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -947,12 +947,12 @@
 
   '/settings/tls':
     'patch':
-      'operationId': 'PatchV1SettingsTls'
+      'operationId': 'PatchV2SettingsTls'
       'requestBody':
-        '$ref': '#/components/requestBodies/PatchV1SettingsTlsReq'
+        '$ref': '#/components/requestBodies/PatchV2SettingsTlsReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PatchV1SettingsTlsResp'
+          '$ref': '#/components/responses/PatchV2SettingsTlsResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -967,12 +967,12 @@
 
   '/settings/tls/check':
     'post':
-      'operationId': 'PostV1SettingsTlsCheck'
+      'operationId': 'PostV2SettingsTlsCheck'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1SettingsTlsCheckReq'
+        '$ref': '#/components/requestBodies/PostV2SettingsTlsCheckReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1SettingsTlsCheckResp'
+          '$ref': '#/components/responses/PostV2SettingsTlsCheckResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -987,10 +987,10 @@
 
   '/stats/all':
     'get':
-      'operationId': 'GetV1StatsAll'
+      'operationId': 'GetV2StatsAll'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1StatsAllResp'
+          '$ref': '#/components/responses/GetV2StatsAllResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -1001,9 +1001,9 @@
 
   '/stats/clear':
     'post':
-      'operationId': 'PostV1StatsClear'
+      'operationId': 'PostV2StatsClear'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1StatsClearReq'
+        '$ref': '#/components/requestBodies/PostV2StatsClearReq'
       'responses':
         '204':
           '$ref': '#/components/responses/NoContentResp'
@@ -1021,10 +1021,10 @@
 
   '/system/info':
     'get':
-      'operationId': 'GetV1SystemInfo'
+      'operationId': 'GetV2SystemInfo'
       'responses':
         '200':
-          '$ref': '#/components/responses/GetV1SystemInfoResp'
+          '$ref': '#/components/responses/GetV2SystemInfoResp'
         '401':
           '$ref': '#/components/responses/UnauthorizedResp'
         '500':
@@ -1035,12 +1035,12 @@
 
   '/system/reset':
     'post':
-      'operationId': 'PostV1SystemReset'
+      'operationId': 'PostV2SystemReset'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1SystemResetReq'
+        '$ref': '#/components/requestBodies/PostV2SystemResetReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1SystemResetResp'
+          '$ref': '#/components/responses/PostV2SystemResetResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -1055,12 +1055,12 @@
 
   '/system/update':
     'post':
-      'operationId': 'PostV1SystemUpdate'
+      'operationId': 'PostV2SystemUpdate'
       'requestBody':
-        '$ref': '#/components/requestBodies/PostV1SystemUpdateReq'
+        '$ref': '#/components/requestBodies/PostV2SystemUpdateReq'
       'responses':
         '200':
-          '$ref': '#/components/responses/PostV1SystemUpdateResp'
+          '$ref': '#/components/responses/PostV2SystemUpdateResp'
         '400':
           '$ref': '#/components/responses/BadRequestResp'
         '401':
@@ -1178,214 +1178,214 @@
         'type': 'string'
 
   'requestBodies':
-    'PatchV1AccountsProfileReq':
+    'PatchV2AccountsProfileReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1AccountsProfileReq'
+            '$ref': '#/components/schemas/PatchV2AccountsProfileReq'
       'required': true
 
-    'PatchV1ClientPersistentReq':
+    'PatchV2ClientPersistentReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1ClientPersistentReq'
+            '$ref': '#/components/schemas/PatchV2ClientPersistentReq'
       'required': true
 
-    'PatchV1DhcpLeaseReq':
+    'PatchV2DhcpLeaseReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1DhcpLeaseReq'
+            '$ref': '#/components/schemas/PatchV2DhcpLeaseReq'
       'required': true
 
-    'PatchV1ProtectionFilterReq':
+    'PatchV2ProtectionFilterReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1ProtectionFilterReq'
+            '$ref': '#/components/schemas/PatchV2ProtectionFilterReq'
       'required': true
 
-    'PatchV1SettingsDhcpReq':
+    'PatchV2SettingsDhcpReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsDhcpReq'
+            '$ref': '#/components/schemas/PatchV2SettingsDhcpReq'
       'required': true
 
-    'PatchV1SettingsDnsReq':
+    'PatchV2SettingsDnsReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsDnsReq'
+            '$ref': '#/components/schemas/PatchV2SettingsDnsReq'
       'required': true
 
-    'PatchV1SettingsHttpReq':
+    'PatchV2SettingsHttpReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsHttpReq'
+            '$ref': '#/components/schemas/PatchV2SettingsHttpReq'
       'required': true
 
-    'PatchV1SettingsLogReq':
+    'PatchV2SettingsLogReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsLogReq'
+            '$ref': '#/components/schemas/PatchV2SettingsLogReq'
       'required': true
 
-    'PatchV1SettingsProtectionReq':
+    'PatchV2SettingsProtectionReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsProtectionReq'
+            '$ref': '#/components/schemas/PatchV2SettingsProtectionReq'
       'required': true
 
-    'PatchV1SettingsStatsReq':
+    'PatchV2SettingsStatsReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsStatsReq'
+            '$ref': '#/components/schemas/PatchV2SettingsStatsReq'
       'required': true
 
-    'PatchV1SettingsTlsReq':
+    'PatchV2SettingsTlsReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsTlsReq'
+            '$ref': '#/components/schemas/PatchV2SettingsTlsReq'
       'required': true
 
-    'PostV1AccountsSessionReq':
+    'PostV2AccountsSessionReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1AccountsSessionReq'
+            '$ref': '#/components/schemas/PostV2AccountsSessionReq'
       'required': true
 
-    'PostV1ClientsPersistentReq':
+    'PostV2ClientsPersistentReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ClientsPersistentReq'
+            '$ref': '#/components/schemas/PostV2ClientsPersistentReq'
       'required': true
 
-    'PostV1DhcpLeasesReq':
+    'PostV2DhcpLeasesReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1DhcpLeasesReq'
+            '$ref': '#/components/schemas/PostV2DhcpLeasesReq'
       'required': true
 
-    'PostV1InstallCheckReq':
+    'PostV2InstallCheckReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1InstallCheckReq'
+            '$ref': '#/components/schemas/PostV2InstallCheckReq'
       'required': true
 
-    'PostV1InstallConfigureReq':
+    'PostV2InstallConfigureReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1InstallConfigureReq'
+            '$ref': '#/components/schemas/PostV2InstallConfigureReq'
       'required': true
 
-    'PostV1LogClearReq':
+    'PostV2LogClearReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1LogClearReq'
+            '$ref': '#/components/schemas/PostV2LogClearReq'
       'required': true
 
-    'PostV1ProtectionCheckCustomRulesReq':
+    'PostV2ProtectionCheckCustomRulesReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionCheckCustomRulesReq'
+            '$ref': '#/components/schemas/PostV2ProtectionCheckCustomRulesReq'
       'required': true
 
-    'PostV1ProtectionDnsRewritesReq':
+    'PostV2ProtectionDnsRewritesReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionDnsRewritesReq'
+            '$ref': '#/components/schemas/PostV2ProtectionDnsRewritesReq'
       'required': true
 
-    'PostV1ProtectionFiltersReq':
+    'PostV2ProtectionFiltersReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionFiltersReq'
+            '$ref': '#/components/schemas/PostV2ProtectionFiltersReq'
       'required': true
 
-    'PostV1ProtectionRefreshFilterReq':
+    'PostV2ProtectionRefreshFilterReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionRefreshFilterReq'
+            '$ref': '#/components/schemas/PostV2ProtectionRefreshFilterReq'
       'required': true
 
-    'PostV1ProtectionRefreshFiltersReq':
+    'PostV2ProtectionRefreshFiltersReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionRefreshFiltersReq'
+            '$ref': '#/components/schemas/PostV2ProtectionRefreshFiltersReq'
       'required': true
 
-    'PostV1SettingsDnsCheckReq':
+    'PostV2SettingsDnsCheckReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SettingsDnsCheckReq'
+            '$ref': '#/components/schemas/PostV2SettingsDnsCheckReq'
       'required': true
 
-    'PostV1SettingsTlsCheckReq':
+    'PostV2SettingsTlsCheckReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SettingsTlsCheckReq'
+            '$ref': '#/components/schemas/PostV2SettingsTlsCheckReq'
       'required': true
 
-    'PostV1StatsClearReq':
+    'PostV2StatsClearReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1StatsClearReq'
+            '$ref': '#/components/schemas/PostV2StatsClearReq'
       'required': true
 
-    'PostV1SystemResetReq':
+    'PostV2SystemResetReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SystemResetReq'
+            '$ref': '#/components/schemas/PostV2SystemResetReq'
       'required': true
 
-    'PostV1SystemUpdateReq':
+    'PostV2SystemUpdateReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SystemUpdateReq'
+            '$ref': '#/components/schemas/PostV2SystemUpdateReq'
       'required': true
 
-    'PutV1ProtectionBlockedServicesReq':
+    'PutV2ProtectionBlockedServicesReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PutV1ProtectionBlockedServicesReq'
+            '$ref': '#/components/schemas/PutV2ProtectionBlockedServicesReq'
       'required': true
 
-    'PutV1ProtectionCustomRulesReq':
+    'PutV2ProtectionCustomRulesReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PutV1ProtectionCustomRulesReq'
+            '$ref': '#/components/schemas/PutV2ProtectionCustomRulesReq'
       'required': true
 
-    'PutV1SettingsDnsAccessReq':
+    'PutV2SettingsDnsAccessReq':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PutV1SettingsDnsAccessReq'
+            '$ref': '#/components/schemas/PutV2SettingsDnsAccessReq'
       'required': true
 
   'responses':
@@ -1403,144 +1403,144 @@
         Generic bad request response.  Sent when the request data is malformed
         (for example, invalid JSON).
 
-    'GetV1AccountsProfileResp':
+    'GetV2AccountsProfileResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1AccountsProfileResp'
+            '$ref': '#/components/schemas/GetV2AccountsProfileResp'
       'description': >
-        A successful response to a `GET /api/v1/accounts/profile` request.
+        A successful response to a `GET /api/v2/accounts/profile` request.
 
-    'GetV1AppleDohMobileconfigResp':
+    'GetV2AppleDohMobileconfigResp':
       'content':
         'application/xml':
           'schema':
-            '$ref': '#/components/schemas/GetV1AppleDohMobileconfigResp'
+            '$ref': '#/components/schemas/GetV2AppleDohMobileconfigResp'
       'description': >
-        A successful response to a `GET /api/v1/apple/doh.mobileconfig` request.
+        A successful response to a `GET /api/v2/apple/doh.mobileconfig` request.
 
-    'GetV1AppleDotMobileconfigResp':
+    'GetV2AppleDotMobileconfigResp':
       'content':
         'application/xml':
           'schema':
-            '$ref': '#/components/schemas/GetV1AppleDotMobileconfigResp'
+            '$ref': '#/components/schemas/GetV2AppleDotMobileconfigResp'
       'description': >
-        A successful response to a `GET /api/v1/apple/dot.mobileconfig` request.
+        A successful response to a `GET /api/v2/apple/dot.mobileconfig` request.
 
-    'GetV1ClientsPersistentResp':
+    'GetV2ClientsPersistentResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1ClientsPersistentResp'
+            '$ref': '#/components/schemas/GetV2ClientsPersistentResp'
       'description': >
-        A successful response to a `GET /api/v1/clients/persistent` request.
+        A successful response to a `GET /api/v2/clients/persistent` request.
 
-    'GetV1ClientsRuntimeResp':
+    'GetV2ClientsRuntimeResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1ClientsRuntimeResp'
+            '$ref': '#/components/schemas/GetV2ClientsRuntimeResp'
       'description': >
-        A successful response to a `GET /api/v1/clients/runtime` request.
+        A successful response to a `GET /api/v2/clients/runtime` request.
 
-    'GetV1DhcpLeasesResp':
+    'GetV2DhcpLeasesResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1DhcpLeasesResp'
+            '$ref': '#/components/schemas/GetV2DhcpLeasesResp'
       'description': >
-        A successful response to a `GET /api/v1/dhcp/leases` request.
+        A successful response to a `GET /api/v2/dhcp/leases` request.
 
-    'GetV1DhcpStatusResp':
+    'GetV2DhcpStatusResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1DhcpStatusResp'
+            '$ref': '#/components/schemas/GetV2DhcpStatusResp'
       'description': >
-        A successful response to a `GET /api/v1/dhcp/status` request.
+        A successful response to a `GET /api/v2/dhcp/status` request.
 
-    'GetV1InstallInfoResp':
+    'GetV2InstallInfoResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1InstallInfoResp'
+            '$ref': '#/components/schemas/GetV2InstallInfoResp'
       'description': >
-        A successful response to a `GET /api/v1/install/info` request.
+        A successful response to a `GET /api/v2/install/info` request.
 
-    'GetV1LogSearchResp':
+    'GetV2LogSearchResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1LogSearchResp'
+            '$ref': '#/components/schemas/GetV2LogSearchResp'
       'description': >
-        A successful response to a `GET /api/v1/log/search` request.
+        A successful response to a `GET /api/v2/log/search` request.
 
-    'GetV1ProtectionBlockedServicesResp':
+    'GetV2ProtectionBlockedServicesResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1ProtectionBlockedServicesResp'
+            '$ref': '#/components/schemas/GetV2ProtectionBlockedServicesResp'
       'description': >
-        A successful response to a `GET /api/v1/protection/blocked_services`
-        or a `PUT /api/v1/protection/blocked_services` request.
+        A successful response to a `GET /api/v2/protection/blocked_services`
+        or a `PUT /api/v2/protection/blocked_services` request.
 
-    'GetV1ProtectionCustomRulesResp':
+    'GetV2ProtectionCustomRulesResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1ProtectionCustomRulesResp'
+            '$ref': '#/components/schemas/GetV2ProtectionCustomRulesResp'
       'description': >
-        A successful response to a `GET /api/v1/protection/custom_rules`
+        A successful response to a `GET /api/v2/protection/custom_rules`
         request.
 
-    'GetV1ProtectionDnsRewritesResp':
+    'GetV2ProtectionDnsRewritesResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1ProtectionDnsRewritesResp'
+            '$ref': '#/components/schemas/GetV2ProtectionDnsRewritesResp'
       'description': >
-        A successful response to a `GET /api/v1/protection/dns_rewrites`
+        A successful response to a `GET /api/v2/protection/dns_rewrites`
         request.
 
-    'GetV1ProtectionFiltersResp':
+    'GetV2ProtectionFiltersResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1ProtectionFiltersResp'
+            '$ref': '#/components/schemas/GetV2ProtectionFiltersResp'
       'description': >
-        A successful response to a `GET /api/v1/protection/filters` request.
+        A successful response to a `GET /api/v2/protection/filters` request.
 
-    'GetV1SettingsAllResp':
+    'GetV2SettingsAllResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1SettingsAllResp'
+            '$ref': '#/components/schemas/GetV2SettingsAllResp'
       'description': >
-        A successful response to a `GET /api/v1/settings/all` request.
+        A successful response to a `GET /api/v2/settings/all` request.
 
-    'GetV1SettingsDnsAccessResp':
+    'GetV2SettingsDnsAccessResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1SettingsDnsAccessResp'
+            '$ref': '#/components/schemas/GetV2SettingsDnsAccessResp'
       'description': >
-        A successful response to a `GET /api/v1/settings/dns/access` request.
+        A successful response to a `GET /api/v2/settings/dns/access` request.
 
-    'GetV1StatsAllResp':
+    'GetV2StatsAllResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1StatsAllResp'
+            '$ref': '#/components/schemas/GetV2StatsAllResp'
       'description': >
-        A successful response to a `GET /api/v1/stats/all` request.
+        A successful response to a `GET /api/v2/stats/all` request.
 
-    'GetV1SystemInfoResp':
+    'GetV2SystemInfoResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/GetV1SystemInfoResp'
+            '$ref': '#/components/schemas/GetV2SystemInfoResp'
       'description': >
-        A successful response to a `GET /api/v1/server/info` request.
+        A successful response to a `GET /api/v2/server/info` request.
 
     'InternalServerErrorResp':
       'content':
@@ -1572,195 +1572,195 @@
       'description': >
         Generic not found response.
 
-    'PatchV1AccountsProfileResp':
+    'PatchV2AccountsProfileResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1AccountsProfileResp'
+            '$ref': '#/components/schemas/PatchV2AccountsProfileResp'
       'description': >
-        A successful response to a `PATCH /api/v1/accounts/profile` request.
+        A successful response to a `PATCH /api/v2/accounts/profile` request.
 
-    'PatchV1ClientPersistentResp':
+    'PatchV2ClientPersistentResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1ClientPersistentResp'
+            '$ref': '#/components/schemas/PatchV2ClientPersistentResp'
       'description': >
         A successful response to
-        a `PATCH /api/v1/clients/persistent/{client_uid}` request.
+        a `PATCH /api/v2/clients/persistent/{client_uid}` request.
 
-    'PatchV1DhcpLeaseResp':
+    'PatchV2DhcpLeaseResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1DhcpLeaseResp'
+            '$ref': '#/components/schemas/PatchV2DhcpLeaseResp'
       'description': >
-        A successful response to a `PATCH /api/v1/dhcp/leases/{lease_uid}`
+        A successful response to a `PATCH /api/v2/dhcp/leases/{lease_uid}`
         request.
 
-    'PatchV1ProtectionFilterResp':
+    'PatchV2ProtectionFilterResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1ProtectionFilterResp'
+            '$ref': '#/components/schemas/PatchV2ProtectionFilterResp'
       'description': >
-        A successful response to a `PATCH /api/v1/filters/{filter_uid}` request.
+        A successful response to a `PATCH /api/v2/protection/filters/{filter_uid}` request.
 
-    'PatchV1SettingsDhcpResp':
+    'PatchV2SettingsDhcpResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsDhcpResp'
+            '$ref': '#/components/schemas/PatchV2SettingsDhcpResp'
       'description': >
-        A successful response to a `PATCH /api/v1/settings/dhcp` request.
+        A successful response to a `PATCH /api/v2/settings/dhcp` request.
 
-    'PatchV1SettingsDnsResp':
+    'PatchV2SettingsDnsResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsDnsResp'
+            '$ref': '#/components/schemas/PatchV2SettingsDnsResp'
       'description': >
-        A successful response to a `PATCH /api/v1/settings/dns` request.
+        A successful response to a `PATCH /api/v2/settings/dns` request.
 
-    'PatchV1SettingsHttpResp':
+    'PatchV2SettingsHttpResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsHttpResp'
+            '$ref': '#/components/schemas/PatchV2SettingsHttpResp'
       'description': >
-        A successful response to a `PATCH /api/v1/settings/http` request.
+        A successful response to a `PATCH /api/v2/settings/http` request.
 
-    'PatchV1SettingsLogResp':
+    'PatchV2SettingsLogResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsLogResp'
+            '$ref': '#/components/schemas/PatchV2SettingsLogResp'
       'description': >
-        A successful response to a `PATCH /api/v1/settings/log` request.
+        A successful response to a `PATCH /api/v2/settings/log` request.
 
-    'PatchV1SettingsProtectionResp':
+    'PatchV2SettingsProtectionResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsProtectionResp'
+            '$ref': '#/components/schemas/PatchV2SettingsProtectionResp'
       'description': >
-        A successful response to a `PATCH /api/v1/settings/protection` request.
+        A successful response to a `PATCH /api/v2/settings/protection` request.
 
-    'PatchV1SettingsStatsResp':
+    'PatchV2SettingsStatsResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsStatsResp'
+            '$ref': '#/components/schemas/PatchV2SettingsStatsResp'
       'description': >
-        A successful response to a `PATCH /api/v1/settings/stats` request.
+        A successful response to a `PATCH /api/v2/settings/stats` request.
 
-    'PatchV1SettingsTlsResp':
+    'PatchV2SettingsTlsResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PatchV1SettingsTlsResp'
+            '$ref': '#/components/schemas/PatchV2SettingsTlsResp'
       'description': >
-        A successful response to a `PATCH /api/v1/settings/tls` request.
+        A successful response to a `PATCH /api/v2/settings/tls` request.
 
-    'PostV1ClientsPersistentResp':
+    'PostV2ClientsPersistentResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ClientsPersistentResp'
+            '$ref': '#/components/schemas/PostV2ClientsPersistentResp'
       'description': >
-        A successful response to a `POST /api/v1/clients/persistent` request.
+        A successful response to a `POST /api/v2/clients/persistent` request.
 
-    'PostV1DhcpLeasesResp':
+    'PostV2DhcpLeasesResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1DhcpLeasesResp'
+            '$ref': '#/components/schemas/PostV2DhcpLeasesResp'
       'description': >
-        A successful response to a `POST /api/v1/dhcp/leases` request.
+        A successful response to a `POST /api/v2/dhcp/leases` request.
 
-    'PostV1InstallCheckResp':
+    'PostV2InstallCheckResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1InstallCheckResp'
+            '$ref': '#/components/schemas/PostV2InstallCheckResp'
       'description': >
-        A successful response to a `POST /api/v1/install/check` request.
+        A successful response to a `POST /api/v2/install/check` request.
 
-    'PostV1ProtectionCheckCustomRulesResp':
+    'PostV2ProtectionCheckCustomRulesResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionCheckCustomRulesResp'
+            '$ref': '#/components/schemas/PostV2ProtectionCheckCustomRulesResp'
       'description': >
-        A successful response to a `POST /api/v1/protection/check_custom_rules`
+        A successful response to a `POST /api/v2/protection/check_custom_rules`
         request.
 
-    'PostV1ProtectionDnsRewritesResp':
+    'PostV2ProtectionDnsRewritesResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionDnsRewritesResp'
+            '$ref': '#/components/schemas/PostV2ProtectionDnsRewritesResp'
       'description': >
-        A successful response to a `POST /api/v1/protection/dns_rewrites`
+        A successful response to a `POST /api/v2/protection/dns_rewrites`
         request.
 
-    'PostV1ProtectionFiltersResp':
+    'PostV2ProtectionFiltersResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionFiltersResp'
+            '$ref': '#/components/schemas/PostV2ProtectionFiltersResp'
       'description': >
-        A successful response to a `POST /api/v1/protection/filters` request.
+        A successful response to a `POST /api/v2/protection/filters` request.
 
-    'PostV1ProtectionRefreshFilterResp':
+    'PostV2ProtectionRefreshFilterResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionRefreshFilterResp'
+            '$ref': '#/components/schemas/PostV2ProtectionRefreshFilterResp'
       'description': >
         A successful response to
-        a `POST /api/v1/protection/refresh_filters/{filter_uid}` request.
+        a `POST /api/v2/protection/refresh_filters/{filter_uid}` request.
 
-    'PostV1ProtectionRefreshFiltersResp':
+    'PostV2ProtectionRefreshFiltersResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1ProtectionRefreshFiltersResp'
+            '$ref': '#/components/schemas/PostV2ProtectionRefreshFiltersResp'
       'description': >
-        A successful response to a `POST /api/v1/protection/refresh_filters`
+        A successful response to a `POST /api/v2/protection/refresh_filters`
         request.
 
-    'PostV1SettingsDnsCheckResp':
+    'PostV2SettingsDnsCheckResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SettingsDnsCheckResp'
+            '$ref': '#/components/schemas/PostV2SettingsDnsCheckResp'
       'description': >
-        A successful response to a `POST /api/v1/settings/dns/check` request.
+        A successful response to a `POST /api/v2/settings/dns/check` request.
 
-    'PostV1SettingsTlsCheckResp':
+    'PostV2SettingsTlsCheckResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SettingsTlsCheckResp'
+            '$ref': '#/components/schemas/PostV2SettingsTlsCheckResp'
       'description': >
-        A successful response to a `POST /api/v1/settings/tls/check` request.
+        A successful response to a `POST /api/v2/settings/tls/check` request.
 
-    'PostV1SystemResetResp':
+    'PostV2SystemResetResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SystemResetResp'
+            '$ref': '#/components/schemas/PostV2SystemResetResp'
       'description': >
-        A successful response to a `POST /api/v1/system/reset` request.
+        A successful response to a `POST /api/v2/system/reset` request.
 
-    'PostV1SystemUpdateResp':
+    'PostV2SystemUpdateResp':
       'content':
         'application/json':
           'schema':
-            '$ref': '#/components/schemas/PostV1SystemUpdateResp'
+            '$ref': '#/components/schemas/PostV2SystemUpdateResp'
       'description': >
-        A successful response to a `POST /api/v1/system/update` request.
+        A successful response to a `POST /api/v2/system/update` request.
 
     'UnauthorizedResp':
       'content':
@@ -2666,12 +2666,12 @@
       - 'text'
       'type': 'object'
 
-    'GetV1AccountsProfileResp':
+    'GetV2AccountsProfileResp':
       '$ref': '#/components/schemas/Profile'
 
     # TODO(a.garipov): Find a way to describe such XML documents using OpenAPI.
     # If that is even possible.
-    'GetV1AppleDohMobileconfigResp':
+    'GetV2AppleDohMobileconfigResp':
       'example': |
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -2723,8 +2723,8 @@
         </plist>
       'type': 'object'
 
-    # TODO(a.garipov): See the comment on GetV1AppleDohMobileconfigResp.
-    'GetV1AppleDotMobileconfigResp':
+    # TODO(a.garipov): See the comment on GetV2AppleDohMobileconfigResp.
+    'GetV2AppleDotMobileconfigResp':
       'example': |
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -2774,7 +2774,7 @@
         </plist>
       'type': 'object'
 
-    'GetV1ClientsPersistentResp':
+    'GetV2ClientsPersistentResp':
       'description': >
         Persistent clients.
       'example':
@@ -2816,7 +2816,7 @@
       - 'clients'
       'type': 'object'
 
-    'GetV1ClientsRuntimeResp':
+    'GetV2ClientsRuntimeResp':
       'description': >
         Runtime clients.
       'example':
@@ -2846,7 +2846,7 @@
       - 'clients'
       'type': 'object'
 
-    'GetV1DhcpLeasesResp':
+    'GetV2DhcpLeasesResp':
       'description': >
         All dynamic and static DHCP leases.
       'example':
@@ -2871,7 +2871,7 @@
       - 'leases'
       'type': 'object'
 
-    'GetV1DhcpStatusResp':
+    'GetV2DhcpStatusResp':
       'description': >
         Current DHCP server status and data for enabling it.
       'example':
@@ -2904,11 +2904,11 @@
             '$ref': '#/components/schemas/NetworkInterface'
           'type': 'array'
         'ipv4_other_servers':
-          '$ref': '#/components/schemas/GetV1DhcpStatusRespOtherServer'
+          '$ref': '#/components/schemas/GetV2DhcpStatusRespOtherServer'
         'ipv4_static_ip':
           '$ref': '#/components/schemas/StaticIpCheckResult'
         'ipv6_other_servers':
-          '$ref': '#/components/schemas/GetV1DhcpStatusRespOtherServer'
+          '$ref': '#/components/schemas/GetV2DhcpStatusRespOtherServer'
         'ipv6_static_ip':
           '$ref': '#/components/schemas/StaticIpCheckResult'
       'required':
@@ -2919,7 +2919,7 @@
       - 'ipv6_static_ip'
       'type': 'object'
 
-    'GetV1DhcpStatusRespOtherServer':
+    'GetV2DhcpStatusRespOtherServer':
       'properties':
         'error':
           'description': >
@@ -2932,7 +2932,7 @@
       - 'ips'
       'type': 'object'
 
-    'GetV1InstallInfoResp':
+    'GetV2InstallInfoResp':
       'description': >
         AdGuard Home addresses configuration.
       'example':
@@ -2972,7 +2972,7 @@
       - 'web_port'
       'type': 'object'
 
-    'GetV1LogSearchResp':
+    'GetV2LogSearchResp':
       'description': >
         Query log search results.
       'example':
@@ -3016,13 +3016,13 @@
       - 'results'
       'type': 'object'
 
-    'GetV1ProtectionBlockedServicesResp':
+    'GetV2ProtectionBlockedServicesResp':
       '$ref': '#/components/schemas/BlockedServices'
 
-    'GetV1ProtectionCustomRulesResp':
+    'GetV2ProtectionCustomRulesResp':
       '$ref': '#/components/schemas/CustomRules'
 
-    'GetV1ProtectionDnsRewritesResp':
+    'GetV2ProtectionDnsRewritesResp':
       'description': >
         Classic DNS rewrites.
       'example':
@@ -3047,7 +3047,7 @@
       - 'rules'
       'type': 'object'
 
-    'GetV1ProtectionFiltersResp':
+    'GetV2ProtectionFiltersResp':
       'description': >
         Filters.
       'example':
@@ -3079,7 +3079,7 @@
 
     # Perhaps a lot of these belong in separate APIs, but our colleagues asked
     # to pack as much data into every request as reasonably possible.
-    'GetV1SettingsAllResp':
+    'GetV2SettingsAllResp':
       'description': >
         Most settings.
       # Don't add examples, as are provided by the subclasses.
@@ -3108,11 +3108,11 @@
       - 'tls'
       'type': 'object'
 
-    'GetV1SettingsDnsAccessResp':
+    'GetV2SettingsDnsAccessResp':
       '$ref': '#/components/schemas/DnsAccessSettings'
 
-    # See the comment on the GetV1SettingsAllResp schema.
-    'GetV1StatsAllResp':
+    # See the comment on the GetV2SettingsAllResp schema.
+    'GetV2StatsAllResp':
       'description': >
         All statistics.
       'example':
@@ -3326,7 +3326,7 @@
           'description': >
             Top blocked queried domains.  Sorted by number in descending order.
           'items':
-            '$ref': '#/components/schemas/GetV1StatsAllRespTopsItem'
+            '$ref': '#/components/schemas/GetV2StatsAllRespTopsItem'
           'type': 'array'
         'top_clients':
           'description': >
@@ -3338,7 +3338,7 @@
           'description': >
             Top queried domains.  Sorted by number in descending order.
           'items':
-            '$ref': '#/components/schemas/GetV1StatsAllRespTopsItem'
+            '$ref': '#/components/schemas/GetV2StatsAllRespTopsItem'
           'type': 'array'
         'total_blocked_ad_queries':
           'description': >
@@ -3422,7 +3422,7 @@
       - 'total_queries'
       'type': 'object'
 
-    'GetV1StatsAllRespTopsItem':
+    'GetV2StatsAllRespTopsItem':
       'description': >
         A top array item.
       'properties':
@@ -3442,7 +3442,7 @@
       - 'num'
       'type': 'object'
 
-    'GetV1SystemInfoResp':
+    'GetV2SystemInfoResp':
       'description': >
         Information about the AdGuard Home server.
       'example':
@@ -3791,7 +3791,7 @@
       - 'msg'
       'type': 'object'
 
-    'PatchV1AccountsProfileReq':
+    'PatchV2AccountsProfileReq':
       'example':
         'lang': 'ru'
       'properties':
@@ -3799,67 +3799,67 @@
           '$ref': '#/components/schemas/Lang'
       'type': 'object'
 
-    'PatchV1AccountsProfileResp':
+    'PatchV2AccountsProfileResp':
       '$ref': '#/components/schemas/Profile'
 
-    'PatchV1ClientPersistentReq':
+    'PatchV2ClientPersistentReq':
       '$ref': '#/components/schemas/PersistentClientPatch'
 
-    'PatchV1ClientPersistentResp':
+    'PatchV2ClientPersistentResp':
       '$ref': '#/components/schemas/PersistentClient'
 
-    'PatchV1DhcpLeaseReq':
+    'PatchV2DhcpLeaseReq':
       '$ref': '#/components/schemas/DhcpLeasePatch'
 
-    'PatchV1DhcpLeaseResp':
+    'PatchV2DhcpLeaseResp':
       '$ref': '#/components/schemas/DhcpLease'
 
-    'PatchV1ProtectionFilterReq':
+    'PatchV2ProtectionFilterReq':
       '$ref': '#/components/schemas/FilterPatch'
 
-    'PatchV1ProtectionFilterResp':
+    'PatchV2ProtectionFilterResp':
       '$ref': '#/components/schemas/Filter'
 
-    'PatchV1SettingsDhcpReq':
+    'PatchV2SettingsDhcpReq':
       '$ref': '#/components/schemas/DhcpSettingsPatch'
 
-    'PatchV1SettingsDhcpResp':
+    'PatchV2SettingsDhcpResp':
       '$ref': '#/components/schemas/DhcpSettings'
 
-    'PatchV1SettingsDnsReq':
+    'PatchV2SettingsDnsReq':
       '$ref': '#/components/schemas/DnsSettingsPatch'
 
-    'PatchV1SettingsDnsResp':
+    'PatchV2SettingsDnsResp':
       '$ref': '#/components/schemas/DnsSettings'
 
-    'PatchV1SettingsHttpReq':
+    'PatchV2SettingsHttpReq':
       '$ref': '#/components/schemas/HttpSettingsPatch'
 
-    'PatchV1SettingsHttpResp':
+    'PatchV2SettingsHttpResp':
       '$ref': '#/components/schemas/HttpSettings'
 
-    'PatchV1SettingsLogReq':
+    'PatchV2SettingsLogReq':
       '$ref': '#/components/schemas/LogSettingsPatch'
 
-    'PatchV1SettingsLogResp':
+    'PatchV2SettingsLogResp':
       '$ref': '#/components/schemas/LogSettings'
 
-    'PatchV1SettingsProtectionReq':
+    'PatchV2SettingsProtectionReq':
       '$ref': '#/components/schemas/ProtectionSettingsPatch'
 
-    'PatchV1SettingsProtectionResp':
+    'PatchV2SettingsProtectionResp':
       '$ref': '#/components/schemas/ProtectionSettings'
 
-    'PatchV1SettingsStatsReq':
+    'PatchV2SettingsStatsReq':
       '$ref': '#/components/schemas/StatsSettingsPatch'
 
-    'PatchV1SettingsStatsResp':
+    'PatchV2SettingsStatsResp':
       '$ref': '#/components/schemas/StatsSettings'
 
-    'PatchV1SettingsTlsReq':
+    'PatchV2SettingsTlsReq':
       '$ref': '#/components/schemas/TlsSettingsPatch'
 
-    'PatchV1SettingsTlsResp':
+    'PatchV2SettingsTlsResp':
       '$ref': '#/components/schemas/TlsSettings'
 
     'PersistentClient':
@@ -4045,7 +4045,7 @@
       - 'user_regular'
       'type': 'string'
 
-    'PostV1AccountsSessionReq':
+    'PostV2AccountsSessionReq':
       'example':
         'password': 'G00dp455word!'
         'username': 'admin'
@@ -4064,19 +4064,19 @@
       - 'username'
       'type': 'object'
 
-    'PostV1ClientsPersistentReq':
+    'PostV2ClientsPersistentReq':
       '$ref': '#/components/schemas/PersistentClientPost'
 
-    'PostV1ClientsPersistentResp':
+    'PostV2ClientsPersistentResp':
       '$ref': '#/components/schemas/PersistentClient'
 
-    'PostV1DhcpLeasesReq':
+    'PostV2DhcpLeasesReq':
       '$ref': '#/components/schemas/DhcpLeasePost'
 
-    'PostV1DhcpLeasesResp':
+    'PostV2DhcpLeasesResp':
       '$ref': '#/components/schemas/DhcpLease'
 
-    'PostV1InstallCheckReq':
+    'PostV2InstallCheckReq':
       'description': >
         Configuration for checking.
       'example':
@@ -4091,20 +4091,20 @@
           'port': 80
       'properties':
         'dns':
-          '$ref': '#/components/schemas/PostV1InstallCheckReqServer'
+          '$ref': '#/components/schemas/PostV2InstallCheckReqServer'
         'static_ip':
           'description': >
             If `true`, check if a static IP is set or can be set.
           'type': 'boolean'
         'web':
-          '$ref': '#/components/schemas/PostV1InstallCheckReqServer'
+          '$ref': '#/components/schemas/PostV2InstallCheckReqServer'
       'required':
       - 'dns'
       - 'static_ip'
       - 'web'
       'type': 'object'
 
-    'PostV1InstallCheckReqServer':
+    'PostV2InstallCheckReqServer':
       'description': >
         A configuration for a server check.
       'properties':
@@ -4127,7 +4127,7 @@
       - 'port'
       'type': 'object'
 
-    'PostV1InstallCheckResp':
+    'PostV2InstallCheckResp':
       'description': >
         Configuration checking response.
       'example':
@@ -4140,18 +4140,18 @@
         'web': {}
       'properties':
         'dns':
-          '$ref': '#/components/schemas/PostV1InstallCheckRespNetwork'
+          '$ref': '#/components/schemas/PostV2InstallCheckRespNetwork'
         'static_ip':
           '$ref': '#/components/schemas/StaticIpCheckResult'
         'web':
-          '$ref': '#/components/schemas/PostV1InstallCheckRespNetwork'
+          '$ref': '#/components/schemas/PostV2InstallCheckRespNetwork'
       'required':
       - 'dns'
       - 'static_ip'
       - 'web'
       'type': 'object'
 
-    'PostV1InstallCheckRespNetwork':
+    'PostV2InstallCheckRespNetwork':
       'properties':
         'error':
           'description': >
@@ -4159,7 +4159,7 @@
           'type': 'string'
       'type': 'object'
 
-    'PostV1InstallConfigureReq':
+    'PostV2InstallConfigureReq':
       'description': >
         AdGuard Home initial configuration.
       'example':
@@ -4215,12 +4215,12 @@
       - 'web_port'
       'type': 'object'
 
-    'PostV1LogClearReq':
+    'PostV2LogClearReq':
       'description': >
         Currently empty, may get more fields in the future.
       'type': 'object'
 
-    'PostV1ProtectionCheckCustomRulesReq':
+    'PostV2ProtectionCheckCustomRulesReq':
       'description': >
         Data to check using custom filtering rules.
       'example':
@@ -4234,7 +4234,7 @@
       - 'host'
       'type': 'object'
 
-    'PostV1ProtectionCheckCustomRulesResp':
+    'PostV2ProtectionCheckCustomRulesResp':
       'description': >
         Custom filtering rules check results.
       'example':
@@ -4271,27 +4271,27 @@
       - 'rules'
       'type': 'object'
 
-    'PostV1ProtectionDnsRewritesReq':
+    'PostV2ProtectionDnsRewritesReq':
       '$ref': '#/components/schemas/DnsRewritePost'
 
-    'PostV1ProtectionDnsRewritesResp':
+    'PostV2ProtectionDnsRewritesResp':
       '$ref': '#/components/schemas/DnsRewrite'
 
-    'PostV1ProtectionFiltersReq':
+    'PostV2ProtectionFiltersReq':
       '$ref': '#/components/schemas/FilterPost'
 
-    'PostV1ProtectionFiltersResp':
+    'PostV2ProtectionFiltersResp':
       '$ref': '#/components/schemas/Filter'
 
-    'PostV1ProtectionRefreshFilterReq':
+    'PostV2ProtectionRefreshFilterReq':
       'description': >
         Currently empty, may get more fields in the future.
       'type': 'object'
 
-    'PostV1ProtectionRefreshFilterResp':
+    'PostV2ProtectionRefreshFilterResp':
       '$ref': '#/components/schemas/Filter'
 
-    'PostV1ProtectionRefreshFiltersReq':
+    'PostV2ProtectionRefreshFiltersReq':
       'description': >
         Filters refresh parameters.
       'example':
@@ -4311,7 +4311,7 @@
       - 'blocklist'
       'type': 'object'
 
-    'PostV1ProtectionRefreshFiltersResp':
+    'PostV2ProtectionRefreshFiltersResp':
       'description': >
         Refresh results.
       'example':
@@ -4344,7 +4344,7 @@
       - 'refreshed'
       'type': 'object'
 
-    'PostV1SettingsDnsCheckReq':
+    'PostV2SettingsDnsCheckReq':
       'description': >
         Validatable DNS settings.
       'example':
@@ -4372,7 +4372,7 @@
       - 'upstream_servers'
       'type': 'object'
 
-    'PostV1SettingsDnsCheckResp':
+    'PostV2SettingsDnsCheckResp':
       'description': >
         DNS settings validation results.
       'example':
@@ -4398,7 +4398,7 @@
             errors, this field is absent.
       'type': 'object'
 
-    'PostV1SettingsTlsCheckReq':
+    'PostV2SettingsTlsCheckReq':
       'description': >
         Validatable TLS settings.
       'example':
@@ -4475,7 +4475,7 @@
       - 'server_name'
       'type': 'object'
 
-    'PostV1SettingsTlsCheckResp':
+    'PostV2SettingsTlsCheckResp':
       'description': >
         TLS settings validation results.
       'example':
@@ -4570,27 +4570,27 @@
       - 'warnings'
       'type': 'object'
 
-    'PostV1StatsClearReq':
+    'PostV2StatsClearReq':
       'description': >
         Currently empty, may get more fields in the future.
       'type': 'object'
 
-    'PostV1SystemResetReq':
+    'PostV2SystemResetReq':
       'description': >
         Currently empty, may get more fields in the future.
       'type': 'object'
 
-    'PostV1SystemResetResp':
+    'PostV2SystemResetResp':
       'description': >
         Currently empty, may get more fields in the future.
       'type': 'object'
 
-    'PostV1SystemUpdateReq':
+    'PostV2SystemUpdateReq':
       'description': >
         Currently empty, may get more fields in the future.
       'type': 'object'
 
-    'PostV1SystemUpdateResp':
+    'PostV2SystemUpdateResp':
       'example':
         'reload': 10000
       'properties':
@@ -4698,13 +4698,13 @@
       - 'paused'
       'type': 'string'
 
-    'PutV1ProtectionBlockedServicesReq':
+    'PutV2ProtectionBlockedServicesReq':
       '$ref': '#/components/schemas/BlockedServices'
 
-    'PutV1ProtectionCustomRulesReq':
+    'PutV2ProtectionCustomRulesReq':
       '$ref': '#/components/schemas/CustomRules'
 
-    'PutV1SettingsDnsAccessReq':
+    'PutV2SettingsDnsAccessReq':
       '$ref': '#/components/schemas/DnsAccessSettings'
 
     'RefreshFilterError':
@@ -4841,7 +4841,7 @@
     'TimeUnit':
       'description': >
         Time units used for statistics.  See the documentation for the
-        `GET /api/v1/stats/all` request.
+        `GET /api/v2/stats/all` request.
       'enum':
       - 'hour'
       - 'day'

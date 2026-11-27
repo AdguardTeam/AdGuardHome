@@ -7,6 +7,7 @@ import { Link } from 'panel/common/ui/Link';
 import { type QueryParams, type RoutePathKey } from 'panel/components/Routes/Paths';
 import cn from 'clsx';
 import { formatCompactNumber } from 'panel/helpers/helpers';
+import { formatPercent } from 'panel/helpers/statistics';
 
 import { RowTooltip } from '../RowTooltip';
 import s from './StatRow.module.pcss';
@@ -42,7 +43,7 @@ export const StatRow = (props: StatRowProps) => {
                 when={props.isTotal}
                 fallback={
                     <Show when={props.percent !== undefined && props.percent! > 0}>
-                        <span>({props.percent!.toFixed(1)}%)</span>
+                        <span>({formatPercent(props.percent ?? 0)}%)</span>
                     </Show>
                 }
             >

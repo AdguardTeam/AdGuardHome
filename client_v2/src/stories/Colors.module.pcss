@@ -1,0 +1,76 @@
+.section + .section {
+    margin-top: 40px;
+}
+
+.sectionTitle {
+    margin-bottom: 8px;
+}
+
+.hint {
+    margin-bottom: 24px;
+    color: var(--default-description-text);
+}
+
+.group + .group {
+    margin-top: 24px;
+}
+
+.groupTitle {
+    margin-bottom: 8px;
+}
+
+.ramp + .ramp {
+    margin-top: 16px;
+}
+
+.rampSteps,
+.rampLabels {
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+}
+
+.rampSteps {
+    overflow: hidden;
+    border: 1px solid var(--default-item-divider);
+    border-radius: 8px;
+}
+
+.rampStep {
+    height: 56px;
+    background-color: var(--swatch);
+}
+
+.rampLabels {
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.rampLabel {
+    color: var(--default-description-text);
+    text-align: center;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.swatch {
+    height: 48px;
+    border: 1px solid var(--default-item-divider);
+    border-radius: 8px;
+    background-color: var(--swatch);
+}
+
+.name {
+    color: var(--default-description-text);
+    overflow-wrap: anywhere;
+}

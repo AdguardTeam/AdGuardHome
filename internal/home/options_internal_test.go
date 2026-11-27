@@ -63,33 +63,6 @@ func TestParseWorkDir(t *testing.T) {
 	testParseParamMissing(t, "--work-dir")
 }
 
-func TestParseBindHost(t *testing.T) {
-	wantAddr := netip.MustParseAddr("1.2.3.4")
-
-	assert.Zero(t, testParseOK(t).bindHost, "empty is not host")
-	assert.Equal(t, wantAddr, testParseOK(t, "-h", "1.2.3.4").bindHost, "-h is host")
-	testParseParamMissing(t, "-h")
-
-	assert.Equal(t, wantAddr, testParseOK(t, "--host", "1.2.3.4").bindHost, "--host is host")
-	testParseParamMissing(t, "--host")
-}
-
-func TestParseBindPort(t *testing.T) {
-	assert.Equal(t, uint16(0), testParseOK(t).bindPort, "empty is port 0")
-	assert.Equal(t, uint16(65535), testParseOK(t, "-p", "65535").bindPort, "-p is port")
-	testParseParamMissing(t, "-p")
-
-	assert.Equal(t, uint16(65535), testParseOK(t, "--port", "65535").bindPort, "--port is port")
-	testParseParamMissing(t, "--port")
-
-	testParseErr(t, "not an int", "-p", "x")
-	testParseErr(t, "hex not supported", "-p", "0x100")
-	testParseErr(t, "port negative", "-p", "-1")
-	testParseErr(t, "port too high", "-p", "65536")
-	testParseErr(t, "port too high", "-p", "4294967297")           // 2^32 + 1
-	testParseErr(t, "port too high", "-p", "18446744073709551617") // 2^64 + 1
-}
-
 func TestParseBindAddr(t *testing.T) {
 	wantAddrPort := netip.MustParseAddrPort("1.2.3.4:8089")
 
@@ -133,15 +106,6 @@ func TestParsePerformUpdate(t *testing.T) {
 	assert.True(t, testParseOK(t, "--update").performUpdate, "--update is perform update")
 }
 
-// TODO(e.burkov):  Remove after v0.108.0.
-func TestParseDisableMemoryOptimization(t *testing.T) {
-	o, eff, err := parseCmdOpts("", []string{"--no-mem-optimization"})
-	require.NoError(t, err)
-
-	assert.Nil(t, eff)
-	assert.Zero(t, o)
-}
-
 func TestParseService(t *testing.T) {
 	assert.Equal(t, "", testParseOK(t).serviceControlAction, "empty is not service cmd")
 	assert.Equal(t, "cmd", testParseOK(t, "-s", "cmd").serviceControlAction, "-s is service cmd")
@@ -179,14 +143,6 @@ func TestOptsToArgs(t *testing.T) {
 		name: "work_dir",
 		args: []string{"-w", "path"},
 		opts: options{workDir: "path"},
-	}, {
-		name: "bind_host",
-		opts: options{bindHost: netip.MustParseAddr("1.2.3.4")},
-		args: []string{"-h", "1.2.3.4"},
-	}, {
-		name: "bind_port",
-		args: []string{"-p", "666"},
-		opts: options{bindPort: 666},
 	}, {
 		name: "web-addr",
 		args: []string{"--web-addr", "1.2.3.4:8080"},

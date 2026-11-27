@@ -23,8 +23,14 @@ func defaultResponse() *dhcpStatusResponse {
 	conf4.LeaseDuration = 86400
 
 	resp := &dhcpStatusResponse{
-		V4:           *conf4,
-		V6:           V6ServerConf{},
+		V4: &v4ServerConfJSON{
+			GatewayIP:     conf4.GatewayIP,
+			RangeStart:    conf4.RangeStart,
+			RangeEnd:      conf4.RangeEnd,
+			SubnetMask:    conf4.SubnetMask,
+			LeaseDuration: conf4.LeaseDuration,
+		},
+		V6:           &v6ServerConfJSON{},
 		Leases:       []*leaseDynamic{},
 		StaticLeases: []*leaseStatic{},
 		Enabled:      true,

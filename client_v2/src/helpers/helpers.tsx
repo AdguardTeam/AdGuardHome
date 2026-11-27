@@ -116,8 +116,6 @@ export const normalizeLogs = (logs: QueryLogItem[]): NormalizedQueryLogItem[] =>
             reason,
             status,
             time,
-            filterId,
-            rule,
             rules,
             service_name,
             original_answer,
@@ -141,17 +139,6 @@ export const normalizeLogs = (logs: QueryLogItem[]): NormalizedQueryLogItem[] =>
                   })
                 : [];
 
-        let newRules = Array.isArray(rules) ? rules : [];
-        /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
-        if (rule !== undefined && filterId !== undefined && newRules.length === 0) {
-            newRules = [
-                {
-                    filter_list_id: filterId,
-                    text: rule,
-                },
-            ];
-        }
-
         return {
             time,
             domain,
@@ -168,10 +155,7 @@ export const normalizeLogs = (logs: QueryLogItem[]): NormalizedQueryLogItem[] =>
                       whois: client_info.whois || {},
                   }
                 : null,
-            /* TODO 'filterId' and 'rule' are deprecated, will be removed in 0.106 */
-            filterId,
-            rule,
-            rules: newRules,
+            rules: Array.isArray(rules) ? rules : [],
             status,
             service_name,
             serviceName: service_name,
@@ -883,7 +867,7 @@ export const setTheme = (theme: string): void => {
  */
 
 export const getTheme = () =>
-    LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.THEME) || THEMES.light;
+    LocalStorageHelper.getItem<string>(LOCAL_STORAGE_KEYS.THEME) || THEMES.auto;
 
 /**
  * Sets UI theme.
@@ -891,16 +875,21 @@ export const getTheme = () =>
  * @param theme
  */
 export const setUITheme = (theme?: string): void => {
-    let currentTheme = theme || getTheme();
+    const requestedTheme = theme || getTheme();
+    let appliedTheme = requestedTheme;
 
-    if (currentTheme === THEMES.auto) {
+    if (appliedTheme === THEMES.auto) {
         const prefersDark =
             window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        currentTheme = prefersDark ? THEMES.dark : THEMES.light;
+        appliedTheme = prefersDark ? THEMES.dark : THEMES.light;
     }
-    setTheme(currentTheme);
-    document.documentElement.dataset.theme = currentTheme;
-    document.documentElement.style.colorScheme = currentTheme;
+
+    // Persist the requested theme rather than the resolved one, so that
+    // "auto" survives a reload and the inlined pre-paint script can resolve it
+    // itself.
+    setTheme(requestedTheme);
+    document.documentElement.dataset.theme = appliedTheme;
+    document.documentElement.style.colorScheme = appliedTheme;
 };
 
 /**

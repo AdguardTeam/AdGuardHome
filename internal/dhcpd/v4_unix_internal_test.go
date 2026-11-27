@@ -49,7 +49,7 @@ func defaultSrv(tb testing.TB) (s DHCPServer) {
 	tb.Helper()
 
 	var err error
-	s, err = v4Create(defaultV4ServerConf())
+	s, err = newV4Server(defaultV4ServerConf())
 	require.NoError(tb, err)
 
 	return s
@@ -353,7 +353,7 @@ func TestV4Server_handle_optionsPriority(t *testing.T) {
 		}
 
 		var err error
-		s, err = v4Create(conf)
+		s, err = newV4Server(conf)
 		require.NoError(t, err)
 
 		s.conf.dnsIPAddrs = []netip.Addr{defaultIP}
@@ -485,7 +485,7 @@ func TestV4Server_updateOptions(t *testing.T) {
 		conf := defaultV4ServerConf()
 		conf.Options = tc.confOpts
 
-		s, err := v4Create(conf)
+		s, err := newV4Server(conf)
 		require.NoError(t, err)
 		require.IsType(t, (*v4Server)(nil), s)
 
@@ -604,7 +604,7 @@ func TestV4DynamicLease_Get(t *testing.T) {
 		"82 ip 1.2.3.4",
 	}
 
-	s, err := v4Create(conf)
+	s, err := newV4Server(conf)
 	require.NoError(t, err)
 
 	s.conf.dnsIPAddrs = []netip.Addr{netip.MustParseAddr("192.168.10.1")}
@@ -980,6 +980,134 @@ func TestV4Server_validateStaticLease_emptyHostname(t *testing.T) {
 			// leases.
 			err = s4.validateStaticLease(tc.lease)
 			testutil.AssertErrorMsg(t, tc.wantErr, err)
+		})
+	}
+}
+
+// Common IPv4 address from the TEST-NET-1 range used for tests.
+var (
+	testIP  = netip.MustParseAddr("192.0.2.1")
+	testIP2 = testIP.Next()
+	testIP3 = testIP2.Next()
+)
+
+// Hostnames used for testing static and dynamic leases.
+const (
+	staticName         = "static-client"
+	dynamicName        = "dynamic-client"
+	dynamicNameExpired = "expired-client"
+)
+
+func TestV4Server_HostByIP(t *testing.T) {
+	t.Parallel()
+
+	s := &v4Server{
+		leases: []*dhcpsvc.Lease{{
+			Hostname: staticName,
+			IP:       testIP,
+			IsStatic: true,
+		}, {
+			Hostname: dynamicNameExpired,
+			IP:       testIP2,
+			Expiry:   time.Unix(10, 0),
+		}, {
+			Hostname: dynamicName,
+			IP:       testIP3,
+			Expiry:   time.Now().Add(time.Minute),
+		}},
+	}
+	s.ipIndex = map[netip.Addr]*dhcpsvc.Lease{
+		testIP:  s.leases[0],
+		testIP2: s.leases[1],
+		testIP3: s.leases[2],
+	}
+
+	testCases := []struct {
+		name string
+		want string
+		ip   netip.Addr
+	}{{
+		name: "static_success",
+		ip:   testIP,
+		want: staticName,
+	}, {
+		name: "dynamic_expired",
+		ip:   testIP2,
+		want: "",
+	}, {
+		name: "dynamic_not_expired",
+		ip:   testIP3,
+		want: dynamicName,
+	}, {
+		name: "not_found",
+		ip:   testIP3.Next(),
+		want: "",
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := s.HostByIP(tc.ip)
+
+			require.Equal(t, tc.want, host)
+		})
+	}
+}
+
+func TestV4Server_IPByHost(t *testing.T) {
+	t.Parallel()
+
+	s := &v4Server{
+		leases: []*dhcpsvc.Lease{{
+			Hostname: staticName,
+			IP:       testIP,
+			IsStatic: true,
+		}, {
+			Hostname: dynamicName,
+			IP:       testIP2,
+			Expiry:   time.Now().Add(time.Minute),
+		}, {
+			Hostname: dynamicNameExpired,
+			IP:       testIP3,
+			Expiry:   time.Unix(10, 0),
+		}},
+	}
+	s.hostsIndex = map[string]*dhcpsvc.Lease{
+		staticName:         s.leases[0],
+		dynamicName:        s.leases[1],
+		dynamicNameExpired: s.leases[2],
+	}
+
+	testCases := []struct {
+		name string
+		host string
+		want netip.Addr
+	}{{
+		name: "static_success",
+		host: staticName,
+		want: testIP,
+	}, {
+		name: "dynamic_not_expired",
+		host: dynamicName,
+		want: testIP2,
+	}, {
+		name: "not_found",
+		host: "not-found",
+		want: netip.Addr{},
+	}, {
+		name: "dynamic_expired",
+		host: dynamicNameExpired,
+		want: netip.Addr{},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			ip := s.IPByHost(tc.host)
+
+			require.Equal(t, tc.want, ip)
 		})
 	}
 }

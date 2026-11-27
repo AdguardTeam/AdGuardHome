@@ -16,11 +16,13 @@
     - [Architecture](#architecture)
     - [Code Quality](#code-quality)
     - [Testing](#testing)
+    - [Storybook](#storybook)
     - [Dependency Management](#dependency-management)
     - [Configuration \& Documentation](#configuration--documentation)
     - [Markdown Formatting](#markdown-formatting)
     - [Other](#other)
         - [Accessibility](#accessibility)
+        - [Commits](#commits)
         - [Translations](#translations)
 
 # Project Overview
@@ -60,9 +62,15 @@ Playwright (e2e).
   (generated from `.twosky.json` via `npm run locales:generate`)
 - **Testing**: Vitest 4 + `@solidjs/testing-library` (unit);
   Playwright 1.56 (e2e against a real backend)
+- **Component catalog**: Storybook 10 with `storybook-solidjs-vite` on a Vite
+  builder — development/documentation only, the production build stays on
+  Webpack
 - **Linting/Formatting**: ESLint 8 (`@typescript-eslint`, `eslint-plugin-solid`,
   `eslint-plugin-prettier`), Prettier 3
-- **Storage**: Browser `localStorage` (language, theme); no database
+- **Storage**: Browser `localStorage` (language, theme); no database.  The theme
+  of a signed-in operator lives in the server profile and is mirrored to
+  `localStorage['account_theme']` for the inlined pre-paint script; a userless
+  (auth-disabled or GL-iNet) install keeps the theme only in `localStorage`
 - **Target Platform**: Modern evergreen browsers (see `browserslist` in
   `package.json`); output is static assets served by the Go backend
 - **Project Type**: Website (single, browser-resident SPA)
@@ -100,9 +108,12 @@ client_v2/
 │   ├── install/                   # Standalone install-wizard entry
 │   ├── forgot_password/           # Standalone password-reset entry
 │   ├── __locales/                 # Translation JSON (en, ru, de, …)
+│   ├── stories/                   # Storybook docs pages (theme tokens, icon gallery)
 │   └── __tests__/                 # Vitest unit/integration tests
 ├── tests/e2e/                     # Playwright e2e specs
-├── scripts/                       # check-translations.js, translation-audit.js
+├── .storybook/                    # Storybook config (Vite preview, docs)
+├── public/                        # HTML entry points + `theme-bootstrap.js` (inlined pre-paint theme script)
+├── scripts/                       # check-translations.js, translation-audit.js, theme-bootstrap-template.js
 ├── webpack.common.js              # 4 entry points, loaders, path aliases
 ├── webpack.dev.js                 # Dev server + backend proxy
 ├── webpack.prod.js                # Production build
@@ -126,6 +137,8 @@ never run `npm`/`npx` from the repo root.
 | Production build                     | `npm run build-prod`           |
 | Dev build (no server)                | `npm run build-dev`            |
 | Watch build                          | `npm run watch`                |
+| Storybook (component catalog)        | `npm run storybook`            |
+| Storybook static build               | `npm run build-storybook`      |
 | Type check                           | `npm run typecheck`            |
 | Lint                                 | `npm run lint`                 |
 | Lint + format fix                    | `npm run lint:fix`             |
@@ -274,7 +287,16 @@ no server process of its own. Design for the browser environment:
 - **Theme via attributes, not JS state.** Theming is driven by the
   `data-theme` attribute on `<html>` and CSS custom properties; switch themes
   through `setUITheme` in `src/helpers/helpers.tsx`, not by toggling
-  component-level classes.
+  component-level classes.  The server profile is authoritative for the
+  signed-in operator: `getProfileData` in `src/stores/dashboard.ts` feeds its
+  theme into the `App` effect, and `setUITheme` persists the *requested* value
+  (including `"auto"`) to `localStorage['account_theme']`.  The pre-paint
+  script, `public/theme-bootstrap.js`, reads that key; `webpack.common.js`
+  inlines it into every entry point via the `themeBootstrapScript` parameter,
+  so the key must match `LOCAL_STORAGE_KEYS.THEME`
+  (`src/__tests__/theme-bootstrap.spec.ts` guards this).  A userless install
+  ignores the profile theme, since the API only echoes the config default
+  there, and falls back to `getTheme()`.
 - **Static asset output.** The production build emits static files into
   `../build/static/` which the Go binary embeds. Do not introduce runtime
   server requirements (Node, databases, etc.) — the built output must be
@@ -460,6 +482,45 @@ must not depend on stores or components. Helpers are pure and dependency-free.
   `npm run test:e2e`.
 - **All unit tests must pass before merge** (`npm run test`).
 
+### Storybook
+
+- Storybook is a **development and documentation** build on Vite. Webpack
+  stays the production build; never import Storybook-only code from
+  application modules.
+- A component's story sits next to it as `<Component>.stories.tsx`
+  (e.g. `src/common/ui/Button/Button.stories.tsx`). The glob loads every
+  `*.stories.tsx` under `src/`; pages and store-backed components are out of
+  scope. The sidebar group comes from the story `title`, not from the file
+  location — `Controls/*` for `src/common/controls/`, `UI/*` for
+  `src/common/ui/`.
+- Docs-only pages with no component behind them live in `src/stories/`, next
+  to the shared story layout helpers in `src/stories/Stories.module.pcss`.
+  The design tokens are grouped as `Theme/*`, the icon gallery as `UI/Icons`.
+- Add or update a story when a common component's props or states change.
+  Stories are typechecked and linted with the rest of `src`, so a broken
+  story fails `npm run check`.
+- Storybook does not type `argTypes`, so a select control's `options` must
+  come from the component, never from a hand-copied list: export the values
+  as an `as const` list and derive the prop union from it
+  (`BUTTON_VARIANTS`/`BUTTON_SIZES`, `SELECT_SIZES`, `SELECT_MENU_SIZES`,
+  `TOOLTIP_POSITIONS`, `INPUT_SIZES`, `TEXTAREA_SIZES`), then spread it in
+  the story. A typed hand-copy only rejects invalid values; a newly added
+  member is still missed. Controls whose values are a curated subset of a
+  DOM union (e.g. `Input`'s `type`) keep a literal list.
+- The preview imports `src/index.pcss`, mounts the `<Icons/>` sprite once and
+  pins the locale to English from `.storybook/preview-head.html`. Switch the
+  theme with the `Theme` toolbar, which sets `data-theme` on `<html>`.
+- CSS-module class names are exported as-is, matching webpack
+  (`s.height_xs`). Vite has no `localsConvention: 'asIs'` value and setting
+  it empties the class map; Vite's default already matches webpack.
+- `storybook-solidjs-vite` ships its own TypeScript 6 for docgen, which takes
+  over the `node_modules/.bin/tsc` link, so `npm run typecheck` runs the
+  project compiler directly
+  (`node ./node_modules/typescript/bin/tsc`). Keep it that way.
+- `npm run build-storybook` writes `storybook-static/` (git-ignored). It is a
+  local development tool: nothing from it ships and it is not run in CI.
+  Stories are still covered there by `npm run typecheck` and `npm run lint`.
+
 ## Dependency Management
 
 - **Pin all dependency versions explicitly.** Do not introduce version ranges
@@ -500,8 +561,9 @@ vulnerabilities, supply-chain risk, and long-term maintenance cost.
   in npm scripts and read from `constants.js`. `BASE_URL = 'control'` is the
   API path prefix.
 - **Path aliases**: Defined in `tsconfig.json` (`panel/*`, `Twosky`) and
-  consumed by Webpack, Vitest, and ESLint. Update `tsconfig.json` when adding
-  new aliases.
+  consumed by Webpack, Storybook, and Vitest (all read `compilerOptions.paths`
+  through `scripts/tsconfig-aliases.js`) and by ESLint (through its TypeScript
+  import resolver). Update `tsconfig.json` when adding new aliases.
 - **i18n**: Locale JSON files live in `src/__locales/`. The base locale and
   language list come from the root `.twosky.json` (via the `Twosky` alias in
   `src/helpers/twosky.ts`). Run `npm run translations:check` after editing
@@ -556,6 +618,20 @@ All Markdown files MUST follow these formatting rules:
 **Rationale**: Uniform Markdown formatting improves readability for both
 humans and AI agents that consume project documentation.
 
+### CHANGELOG.md Formatting
+
+The root `CHANGELOG.md` follows these rules when adding entries:
+
+- Add entries to the `## [Unreleased]` section between the
+  "NOTE: Add new changes BELOW THIS COMMENT." and
+  "NOTE: Add new changes ABOVE THIS COMMENT." markers.
+- Within a `###` subsection, new entries go ABOVE older ones (newest first).
+- Write each entry as a single-line bullet matching the surrounding block's
+  indentation — do not wrap entries onto continuation lines.
+- Reference issues as `([#1234])` and add the link reference at the bottom of
+  the block, keeping the list sorted and aligned with neighboring references.
+- Do not reword or reorder existing entries.
+
 ## Other
 
 ### Accessibility
@@ -574,6 +650,18 @@ friendly:
 - Focusable rows acting as buttons must be keyboard-activatable: `tabindex` of
   `0` plus an `onKeyDown` handler for Enter/Space.
 - Any `id` used for labeling must be unique per rendered instance.
+
+### Commits
+
+- Follow the AdGuard Git guidelines for commit headers:
+  `pkg: lowercase description`, where `pkg` is the affected directory, or
+  `all` for cross-cutting changes. Keep headers within 80 columns. See
+  <https://github.com/AdguardTeam/CodeGuidelines/blob/master/Go/Git.md>.
+- You MUST NOT put `#<number>` references in a commit message. The remote
+  rejects a message that matches the pattern `(?m)(^|[\s(])#\d+\b`.
+- Prefix the subject of code commits with the Jira key, for example
+  `AGDNS-4717 client_v2: fix the recheck button after a failed update check`.
+  Put the GitHub issue link in `CHANGELOG.md`, not in the commit message.
 
 ### Translations
 

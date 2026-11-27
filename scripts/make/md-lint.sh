@@ -9,17 +9,17 @@ verbose="${VERBOSE:-0}"
 readonly verbose
 
 # Don't use -f, because we use globs in this script.
-set -e -u
+set -e -o 'pipefail' -u
 
 if [ "$verbose" -gt '0' ]; then
 	set -x
 fi
 
-# TODO(e.burkov):  Add README.md and possibly AGHTechDoc.md.
 markdownlint \
 	./CHANGELOG.md \
 	./CONTRIBUTING.md \
 	./HACKING.md \
+	./README.md \
 	./SECURITY.md \
 	./internal/next/changelog.md \
 	./internal/dhcpd/*.md \

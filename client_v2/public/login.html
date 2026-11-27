@@ -9,16 +9,8 @@
         <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
         <title>Login</title>
         <meta name="color-scheme" content="light dark" />
-        <script>
-            (function () {
-                var prefersDark =
-                    window.matchMedia &&
-                    window.matchMedia('(prefers-color-scheme: dark)').matches;
-                var theme = prefersDark ? 'dark' : 'light';
-                document.documentElement.dataset.theme = theme;
-                document.documentElement.style.colorScheme = theme;
-            })();
-        </script>
+        <!-- Inlined from `public/theme-bootstrap.js` by webpack. -->
+        <%= themeBootstrapScript %>
     </head>
     <body>
         <noscript>

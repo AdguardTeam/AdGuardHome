@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AdguardTeam/AdGuardHome/internal/configmgr"
 	"github.com/AdguardTeam/AdGuardHome/internal/dhcpsvc"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/timeutil"
@@ -71,20 +72,23 @@ type Interface interface {
 
 	// MacByIP returns the MAC address of a client with ip.  It returns nil if
 	// there is no such client, due to an assumption that a DHCP client must
-	// always have a HardwareAddr.
+	// always have a HardwareAddr.  Expired dynamic leases are ignored.
 	MACByIP(ip netip.Addr) (mac net.HardwareAddr)
 
 	// HostByIP returns the hostname of the DHCP client with the given IP
 	// address.  The address will be netip.Addr{} if there is no such client,
 	// due to an assumption that a DHCP client must always have an IP address.
+	// Expired dynamic leases are ignored.
 	HostByIP(ip netip.Addr) (host string)
 
 	// IPByHost returns the IP address of the DHCP client with the given
 	// hostname.  The address will be netip.Addr{} if there is no such client,
 	// due to an assumption that a DHCP client must always have an IP address.
+	// Expired dynamic leases are ignored.
 	IPByHost(host string) (ip netip.Addr)
 
-	WriteDiskConfig(c *ServerConfig)
+	// WriteDiskConfig writes the configuration to dc, dc must not be nil.
+	WriteDiskConfig(dc *configmgr.DHCPConfig)
 }
 
 // server is the DHCP service that handles DHCPv4, DHCPv6, and HTTP API.
@@ -140,13 +144,6 @@ func Create(ctx context.Context, conf *ServerConfig) (s *server, err error) {
 		return nil, fmt.Errorf("neither dhcpv4 nor dhcpv6 srv is configured")
 	}
 
-	// Migrate leases db if needed.
-	err = migrateDB(conf)
-	if err != nil {
-		// Don't wrap the error since it's informative enough as is.
-		return nil, err
-	}
-
 	// Don't delay database loading until the DHCP server is started,
 	// because we need static leases functionality available beforehand.
 	err = s.dbLoad()
@@ -170,7 +167,7 @@ func (s *server) setServers(
 	v4conf.notify = s.onNotify
 	v4conf.Enabled = s.conf.Enabled && v4conf.RangeStart.IsValid()
 
-	s.srv4, err = v4Create(&v4conf)
+	s.srv4, err = newV4Server(&v4conf)
 	if err != nil {
 		if v4conf.Enabled {
 			return false, false, fmt.Errorf("creating dhcpv4 srv: %w", err)
@@ -183,9 +180,9 @@ func (s *server) setServers(
 	v6conf.Logger = s.conf.Logger.With("ip_version", "6")
 	v6conf.InterfaceName = s.conf.InterfaceName
 	v6conf.notify = s.onNotify
-	v6conf.Enabled = s.conf.Enabled && len(v6conf.RangeStart) != 0
+	v6conf.Enabled = s.conf.Enabled && v6conf.RangeStart.IsValid()
 
-	s.srv6, err = v6Create(v6conf)
+	s.srv6, err = newV6Server(v6conf)
 	if err != nil {
 		return v4conf.Enabled, false, fmt.Errorf("creating dhcpv6 srv: %w", err)
 	}
@@ -237,14 +234,19 @@ func (s *server) notify(flags int) {
 	}
 }
 
-// WriteDiskConfig - write configuration
-func (s *server) WriteDiskConfig(c *ServerConfig) {
-	c.Enabled = s.conf.Enabled
-	c.InterfaceName = s.conf.InterfaceName
-	c.LocalDomainName = s.conf.LocalDomainName
+// WriteDiskConfig implements the [Interface] interface for *server.
+func (s *server) WriteDiskConfig(dc *configmgr.DHCPConfig) {
+	dc.Enabled = s.conf.Enabled
+	dc.InterfaceName = s.conf.InterfaceName
+	dc.LocalDomainName = s.conf.LocalDomainName
 
-	s.srv4.WriteDiskConfig4(&c.Conf4)
-	s.srv6.WriteDiskConfig6(&c.Conf6)
+	if dc.Conf4 != nil {
+		s.srv4.WriteDiskConfig4(dc.Conf4)
+	}
+
+	if dc.Conf6 != nil {
+		s.srv6.WriteDiskConfig6(dc.Conf6)
+	}
 }
 
 // Start will listen on port 67 and serve DHCP requests.

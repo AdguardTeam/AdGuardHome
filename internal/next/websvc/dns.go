@@ -11,7 +11,7 @@ import (
 	"github.com/AdguardTeam/dnsproxy/proxy"
 )
 
-// ReqPatchSettingsDNS describes the request to the PATCH /api/v1/settings/dns
+// ReqPatchSettingsDNS describes the request to the PATCH /api/v2/settings/dns
 // HTTP API.
 type ReqPatchSettingsDNS struct {
 	// TODO(a.garipov): Add more as we go.
@@ -58,7 +58,7 @@ type HTTPAPIDNSSettings struct {
 	UseDNS64            bool `json:"use_dns64"`
 }
 
-// handlePatchSettingsDNS is the handler for the PATCH /api/v1/settings/dns HTTP
+// handlePatchSettingsDNS is the handler for the PATCH /api/v2/settings/dns HTTP
 // API.
 func (svc *Service) handlePatchSettingsDNS(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

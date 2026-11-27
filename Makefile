@@ -24,7 +24,7 @@ DIST_DIR = dist
 GOAMD64 = v1
 GOPROXY = https://proxy.golang.org|direct
 GOTELEMETRY = off
-GOTOOLCHAIN = go1.27.2
+GOTOOLCHAIN = go1.27.4
 GPG_KEY = devteam@adguard.com
 GPG_KEY_PASSPHRASE = not-a-real-password
 NPM = npm
@@ -34,8 +34,6 @@ RACE = 0
 REVISION = $${REVISION:-$$(git rev-parse --short HEAD)}
 SIGN = 1
 VERSION = v0.0.0
-
-NEXTAPI = 0
 
 # Macros for the build-release target.  If FRONTEND_PREBUILT is 0, the default,
 # the macro $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT)) expands into
@@ -62,7 +60,6 @@ ENV = env \
 	GOTOOLCHAIN='$(GOTOOLCHAIN)' \
 	GPG_KEY='$(GPG_KEY)' \
 	GPG_KEY_PASSPHRASE='$(GPG_KEY_PASSPHRASE)' \
-	NEXTAPI='$(NEXTAPI)' \
 	PATH="$${PWD}/bin:$$("$(GO.MACRO)" env GOPATH)/bin:$${PATH}" \
 	RACE='$(RACE)' \
 	REVISION="$(REVISION)" \
@@ -103,13 +100,15 @@ build-release: $(BUILD_RELEASE_DEPS_$(FRONTEND_PREBUILT))
 	$(ENV) "$(SHELL)" ./scripts/make/build-release.sh
 pack-release:  ; $(ENV) "$(SHELL)" ./scripts/make/pack-release.sh
 
-.PHONY: js-build js-deps js-typecheck js-lint js-test js-test-e2e
-js-build:     ; $(NPM) $(NPM_FLAGS) run build-prod
-js-deps:      ; $(NPM) $(NPM_INSTALL_FLAGS) ci
-js-typecheck: ; $(NPM) $(NPM_FLAGS) run typecheck
-js-lint:      ; $(NPM) $(NPM_FLAGS) run lint
-js-test:      ; $(NPM) $(NPM_FLAGS) run test
-js-test-e2e:  ; $(NPM) $(NPM_FLAGS) run test:e2e
+.PHONY: js-build js-deps js-typecheck js-lint js-storybook js-storybook-build js-test js-test-e2e
+js-build:           ; $(NPM) $(NPM_FLAGS) run build-prod
+js-deps:            ; $(NPM) $(NPM_INSTALL_FLAGS) ci
+js-typecheck:       ; $(NPM) $(NPM_FLAGS) run typecheck
+js-lint:            ; $(NPM) $(NPM_FLAGS) run lint
+js-storybook:       ; $(NPM) $(NPM_FLAGS) run storybook
+js-storybook-build: ; $(NPM) $(NPM_FLAGS) run build-storybook
+js-test:            ; $(NPM) $(NPM_FLAGS) run test
+js-test-e2e:        ; $(NPM) $(NPM_FLAGS) run test:e2e
 
 # TODO(a.garipov): Think about making RACE='1' the default for all targets.
 .PHONY: go-bench go-build go-deps go-env go-fuzz go-lint go-test go-upd-tools

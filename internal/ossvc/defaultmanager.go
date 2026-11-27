@@ -315,13 +315,16 @@ func (m *manager) runInitdCommand(
 	action string,
 ) (err error) {
 	confPath := filepath.Join("/etc", "init.d", serviceName)
-	// Pass the script and action as a single string argument.
+
+	// NOTE: kardianos/service on System V sets init script file permissions to
+	// 0755, as it is required by OpenWrt.
+	//
+	// See https://github.com/kardianos/service/blob/v1.2.4/service_sysv_linux.go#L101-L103
+	// and https://openwrt.org/docs/techref/initscripts.
 	return executil.RunWithPeek(
 		ctx,
 		m.cmdCons,
 		aghos.MaxCmdOutputSize,
-		"sh",
-		"-c",
 		confPath,
 		action,
 	)

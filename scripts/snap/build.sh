@@ -22,6 +22,12 @@ log() {
 snapcraft_cmd="${SNAPCRAFT_CMD:-snapcraft}"
 readonly snapcraft_cmd
 
+# The version that the release build has recorded for the channel.  It is
+# empty in local builds and in builds that don't use the static storage, which
+# disables the check below.
+expected_version="${EXPECTED_VERSION:-}"
+readonly expected_version
+
 chmod +x ./AdGuardHome_amd64
 version="$(./AdGuardHome_amd64 --version | cut -d ' ' -f 4)"
 if [ "$version" = '' ]; then
@@ -32,6 +38,17 @@ fi
 readonly version
 
 log "version '$version'"
+
+if [ "$expected_version" != '' ]; then
+	log "expected version '$expected_version'"
+
+	if [ "$expected_version" != "$version" ]; then
+		printf 'version %s does not match expected version %s\n' \
+			"$version" "$expected_version" 1>&2
+
+		exit 1
+	fi
+fi
 
 for arch in \
 	'amd64' \

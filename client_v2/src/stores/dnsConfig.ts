@@ -63,7 +63,7 @@ const initialState: DnsConfigState = {
     bootstrap_dns: '',
     local_ptr_upstreams: '',
     ratelimit_whitelist: '',
-    upstream_mode: '',
+    upstream_mode: DNS_REQUEST_OPTIONS.LOAD_BALANCING,
     resolve_clients: false,
     use_private_ptr_resolvers: false,
     default_local_ptr_upstreams: [],
@@ -79,8 +79,7 @@ export const getDnsConfig = async () => {
             ...data,
             blocking_ipv4: data.blocking_ipv4 || DEFAULT_BLOCKING_IPV4,
             blocking_ipv6: data.blocking_ipv6 || DEFAULT_BLOCKING_IPV6,
-            upstream_mode:
-                data.upstream_mode === '' ? DNS_REQUEST_OPTIONS.LOAD_BALANCING : data.upstream_mode,
+            upstream_mode: data.upstream_mode || DNS_REQUEST_OPTIONS.LOAD_BALANCING,
             bootstrap_dns: data.bootstrap_dns?.join('\n') || '',
             fallback_dns: data.fallback_dns?.join('\n') || '',
             local_ptr_upstreams: data.local_ptr_upstreams?.join('\n') || '',

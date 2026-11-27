@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
+	"github.com/AdguardTeam/golibs/validate"
 )
 
 // Theme is an enum of all allowed UI themes.
@@ -83,10 +84,6 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	l := web.logger
 
-	if aghhttp.WriteTextPlainDeprecated(ctx, l, w, r) {
-		return
-	}
-
 	profileReq := &profileJSON{}
 	err := json.NewDecoder(r.Body).Decode(profileReq)
 	if err != nil {
@@ -104,6 +101,12 @@ func (web *webAPI) handlePutProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	theme := profileReq.Theme
+	err = validate.NotEmpty("theme", theme)
+	if err != nil {
+		aghhttp.ErrorAndLog(ctx, l, r, w, http.StatusBadRequest, "%s", err)
+
+		return
+	}
 
 	changed := false
 	func() {

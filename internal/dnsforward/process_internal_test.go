@@ -321,6 +321,15 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		ddrEnabled: true,
 		addrsDoT:   addrsDoT,
 		addrsDoH:   addrsDoH,
+	}, {
+		name:       "dot_doq_no_doh",
+		wantRes:    resultCodeFinish,
+		want:       []*dns.SVCB{dotSVCB, doqSVCB},
+		host:       ddrHostFQDN,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		addrsDoT:   addrsDoT,
+		addrsDoQ:   addrsDoQ,
 	}}
 
 	tlsConf, _, _ := createServerTLSConfig(t)

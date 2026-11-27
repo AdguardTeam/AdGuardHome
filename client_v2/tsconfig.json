@@ -5,8 +5,6 @@
     "jsxImportSource": "solid-js",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
     "allowArbitraryExtensions": true,
     "resolveJsonModule": true,
     "allowJs": true,
@@ -21,5 +19,5 @@
       "panel/*": ["./src/*"]
     }
   },
-  "include": ["src", "global.d.ts", "src/types/**/*.d.ts"]
+  "include": ["src", ".storybook", "global.d.ts", "src/types/**/*.d.ts"]
 }

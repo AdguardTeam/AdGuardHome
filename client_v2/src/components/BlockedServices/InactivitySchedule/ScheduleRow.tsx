@@ -12,6 +12,7 @@ import s from './InactivitySchedule.module.pcss';
 type Props = {
     day: DayKey;
     data: ScheduleDayData | undefined;
+    disabled?: boolean;
     onEdit: (day: DayKey) => void;
     onDelete: (day: DayKey) => void;
     onAdd: (day: DayKey) => void;
@@ -65,70 +66,78 @@ export const ScheduleRow = (props: Props) => {
                     <>
                         <div class={cn(s.actions, s.actionsDesktop)} />
                         <div class={s.actions}>
-                            <button
-                                type="button"
-                                class={cn(s.actionButton, s.actionButtonAdd)}
-                                onClick={() => props.onAdd(props.day)}
-                                aria-label={intl.getMessage('inactivity_schedule_add')}
-                                data-testid={`schedule-row-${props.day}-add`}
-                            >
-                                <Icon icon="plus" />
-                            </button>
+                            <Show when={!props.disabled}>
+                                <button
+                                    type="button"
+                                    class={cn(s.actionButton, s.actionButtonAdd)}
+                                    onClick={() => props.onAdd(props.day)}
+                                    aria-label={intl.getMessage('inactivity_schedule_add')}
+                                    data-testid={`schedule-row-${props.day}-add`}
+                                >
+                                    <Icon icon="plus" />
+                                </button>
+                            </Show>
                         </div>
                     </>
                 }
             >
                 <div class={cn(s.actions, s.actionsDesktop)}>
-                    <button
-                        type="button"
-                        class={cn(s.actionButton, s.actionButtonDelete)}
-                        onClick={() => props.onDelete(props.day)}
-                        aria-label={intl.getMessage('delete_table_action')}
-                        data-testid={`schedule-row-${props.day}-delete`}
-                    >
-                        <Icon icon="delete" />
-                    </button>
+                    <Show when={!props.disabled}>
+                        <button
+                            type="button"
+                            class={cn(s.actionButton, s.actionButtonDelete)}
+                            onClick={() => props.onDelete(props.day)}
+                            aria-label={intl.getMessage('delete_table_action')}
+                            data-testid={`schedule-row-${props.day}-delete`}
+                        >
+                            <Icon icon="delete" />
+                        </button>
+                    </Show>
                 </div>
                 <div class={cn(s.actions, s.actionsDesktop)}>
-                    <button
-                        type="button"
-                        class={s.actionButton}
-                        onClick={() => props.onEdit(props.day)}
-                        aria-label={intl.getMessage('inactivity_schedule_edit')}
-                        data-testid={`schedule-row-${props.day}-edit`}
-                    >
-                        <Icon icon="edit" />
-                    </button>
+                    <Show when={!props.disabled}>
+                        <button
+                            type="button"
+                            class={s.actionButton}
+                            onClick={() => props.onEdit(props.day)}
+                            aria-label={intl.getMessage('inactivity_schedule_edit')}
+                            data-testid={`schedule-row-${props.day}-edit`}
+                        >
+                            <Icon icon="edit" />
+                        </button>
+                    </Show>
                 </div>
                 <div class={cn(s.actions, s.actionsMobile)}>
-                    <Dropdown
-                        position="bottomRight"
-                        noIcon
-                        open={dropdownOpen()}
-                        onOpenChange={setDropdownOpen}
-                        menu={
-                            <div class={theme.dropdown.menu}>
-                                <button
-                                    type="button"
-                                    class={theme.dropdown.item}
-                                    onClick={handleEditClick}
-                                >
-                                    {intl.getMessage('inactivity_schedule_edit')}
-                                </button>
-                                <button
-                                    type="button"
-                                    class={cn(theme.dropdown.item, s.dropdownItemDanger)}
-                                    onClick={handleDeleteClick}
-                                >
-                                    {intl.getMessage('inactivity_schedule_delete')}
-                                </button>
+                    <Show when={!props.disabled}>
+                        <Dropdown
+                            position="bottomRight"
+                            noIcon
+                            open={dropdownOpen()}
+                            onOpenChange={setDropdownOpen}
+                            menu={
+                                <div class={theme.dropdown.menu}>
+                                    <button
+                                        type="button"
+                                        class={theme.dropdown.item}
+                                        onClick={handleEditClick}
+                                    >
+                                        {intl.getMessage('inactivity_schedule_edit')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class={cn(theme.dropdown.item, s.dropdownItemDanger)}
+                                        onClick={handleDeleteClick}
+                                    >
+                                        {intl.getMessage('inactivity_schedule_delete')}
+                                    </button>
+                                </div>
+                            }
+                        >
+                            <div class={s.actionButton}>
+                                <Icon icon="bullets" />
                             </div>
-                        }
-                    >
-                        <div class={s.actionButton}>
-                            <Icon icon="bullets" />
-                        </div>
-                    </Dropdown>
+                        </Dropdown>
+                    </Show>
                 </div>
             </Show>
         </div>

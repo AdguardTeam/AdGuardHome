@@ -3,7 +3,9 @@
 # This comment is used to simplify checking local copies of the script.  Bump
 # this number every time a significant change is made to this script.
 #
-# AdGuard-Project-Version: 4
+# AdGuard-Project-Version: 5
+
+set -e -f -o 'pipefail' -u
 
 verbose="${VERBOSE:-0}"
 readonly verbose
@@ -20,8 +22,6 @@ else
 	x_flags='-x=0'
 fi
 readonly x_flags
-
-set -e -f -u
 
 go="${GO:-go}"
 readonly go
