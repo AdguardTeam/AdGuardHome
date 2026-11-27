@@ -1472,6 +1472,13 @@
           'type': 'boolean'
         'edns_cs_custom_ip':
           'type': 'string'
+        'edns_cs_use_client_addr':
+          'type': 'boolean'
+          'description': >
+            Client address from EDNS Client Subnet instead of connection
+            address.  Only applies to requests from trusted proxies with a /32
+            or /128 subnet.  An ECS option used this way is not passed on to
+            the upstreams, and neither is ECS from other senders.
         'disable_ipv6':
           'type': 'boolean'
         'dnssec_enabled':
