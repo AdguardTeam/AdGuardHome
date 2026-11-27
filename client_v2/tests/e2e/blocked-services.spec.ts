@@ -415,11 +415,19 @@ test.describe('Blocked Services Page', () => {
         // Only the saved switch uses the disabled palette.
         await expect(whatsappTrack).toHaveCSS('background-color', disabledOnPalette);
         await expect(telegramTrack).toHaveCSS('background-color', beforePalette);
+        await expect(page.getByTestId('blocked-service-row-telegram')).toHaveCSS(
+            'cursor',
+            'default',
+        );
 
         // The PUT and the follow-up read are both slow, so the pending window
         // must survive the PUT and end only when the list is refreshed.
         await expect(list).toHaveAttribute('aria-busy', 'false', { timeout: 10000 });
         await expect(telegramInput).toBeEnabled();
+        await expect(page.getByTestId('blocked-service-row-telegram')).toHaveCSS(
+            'cursor',
+            'pointer',
+        );
 
         await page.locator('label[for="service_epic_games"]').click();
         await expect(list).toHaveAttribute('aria-busy', 'false', { timeout: 10000 });

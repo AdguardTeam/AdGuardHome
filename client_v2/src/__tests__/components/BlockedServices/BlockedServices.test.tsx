@@ -132,6 +132,9 @@ describe('BlockedServices global update pending state', () => {
         expect(document.querySelector('label[for="service_telegram"]')?.className).toMatch(
             /_busy_/,
         );
+        expect(screen.getByTestId('blocked-service-row-telegram').className).toMatch(
+            /_serviceRowDisabled_/,
+        );
     });
 
     it('shows the disabled palette only on the switch being saved', () => {

@@ -1,4 +1,6 @@
 import { createMemo } from 'solid-js';
+import cn from 'clsx';
+
 import { Switch } from 'panel/common/controls/Switch';
 import { decodeSvg } from 'panel/helpers/helpers';
 
@@ -31,7 +33,7 @@ export const ServiceRow = (props: Props) => {
 
     return (
         <div
-            class={s.serviceRow}
+            class={cn(s.serviceRow, { [s.serviceRowDisabled]: props.disabled })}
             onClick={handleRowClick}
             role="button"
             tabIndex={0}
