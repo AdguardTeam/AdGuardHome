@@ -408,6 +408,8 @@ Please note that these projects are not affiliated with AdGuard, but are made by
 
 - [ZimaOS App Store listing](https://www.zimaspace.com/zimaos/app-store/app/org.icewhale.adguardhome) by [ZimaOS Team](https://www.zimaspace.com/zimaos).
 
+- [Desktop shortcut icons for Windows and macOS](https://github.com/tnbnicer/adguard-home-icons) by [@tnbnicer](https://github.com/tnbnicer).
+
 ## <a href="#acknowledgments" id="acknowledgments" name="acknowledgments">Acknowledgments</a>
 
 This software wouldn't have been possible without:
