@@ -220,29 +220,20 @@ Optional environment:
 
 - `go run ./scripts/translations help`: print usage.
 
-- `go run ./scripts/translations download [-n <count>]`: download and save
-  all translations. `n` is an optional flag; count is a number of concurrent
-  downloads. It downloads locales for the project selected by
-  `TWOSKY_PROJECT_ID` and writes them to that project's `metadata.locales_dir`.
+- `go run ./scripts/translations download [-n <count>]`: download and save all translations. `n` is an optional flag; count is a number of concurrent downloads. It downloads locales for the project selected by `TWOSKY_PROJECT_ID` and writes them to that project's `metadata.locales_dir`.
 
 - `go run ./scripts/translations upload`: upload the base `en` locale.
 
 - `go run ./scripts/translations summary`: show the current locales summary.
 
     > [!NOTE]
-    > The following script searches for labels as substrings.  A project whose
-    > keys are generated from the base locale, such as `hostlists-registry`
-    > whose group map holds every key, always looks complete, so it cannot
-    > report orphaned labels.
+    > The following script searches for labels as substrings.  A project whose keys are generated from the base locale, such as `hostlists-registry` whose group map holds every key, always looks complete, so it cannot report orphaned labels.
 
 - `go run ./scripts/translations unused`: show the list of unused strings.
 
 - `go run ./scripts/translations auto-add`: add locales with additions to the git and restore locales with deletions.
 
-After the download you’ll find the output locales in the configured directory.
-A project may have more languages than its consumer uses: `hostlists-registry`
-has 36, while `client_v2` bundles 35, so
-`client_v2/src/__locales-services/zh-hk.json` is downloaded and unused.
+After the download you’ll find the output locales in the configured directory. A project may have more languages than its consumer uses: `hostlists-registry` has 36, while `client_v2` bundles 35, so `client_v2/src/__locales-services/zh-hk.json` is downloaded and unused.
 
 Optional environment:
 

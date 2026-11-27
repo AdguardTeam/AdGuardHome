@@ -579,7 +579,10 @@ vulnerabilities, supply-chain risk, and long-term maintenance cost.
 
 ## Markdown Formatting
 
-All Markdown files MUST follow these formatting rules:
+The repository-wide rules live in `.markdownlint.json`, which `make md-lint`
+enforces for the root documents and `scripts/*.md`. That configuration sets
+`line-length` to `false`, so those files do not hard-wrap paragraphs: keep each
+paragraph on one line. The rules below apply to the `client_v2` documents:
 
 - **Line length**: Keep lines at most 80 characters, but don't overwrap the
   lines artificially short just to hit the limit, keep them close to 80
