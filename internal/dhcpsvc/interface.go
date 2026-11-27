@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/netip"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -17,10 +18,12 @@ import (
 
 // macKey contains hardware address as byte array of 6, 8, or 20 bytes.
 //
-// TODO(e.burkov):  Move to aghnet or even to netutil.
+// TODO(e.burkov):  Move to aghnet or even to netutil.  See AGDNS-4777.
 //
 // TODO(e.burkov):  Identify IPv4 clients by the hardware address and the client
 // identifier option.  Identify IPv6 clients with DUID.
+//
+// TODO(e.burkov):  Consider naming variables of this type mk.
 type macKey any
 
 // macToKey converts mac into macKey, which is used as the key for the lease
@@ -47,7 +50,7 @@ type netInterface struct {
 	logger *slog.Logger
 
 	// addressChecker checks if an address is available for leasing.
-	addressChecker addressChecker
+	addressChecker AddressChecker
 
 	// clock is used to get the current time, which is necessary for lease
 	// expiration checks.
@@ -92,8 +95,11 @@ func (iface *netInterface) addLease(l *Lease) (err error) {
 
 	iface.leases[mk] = l
 
-	off, _ := iface.addrSpace.offset(l.IP)
-	iface.leasedOffsets.set(off, true)
+	// Don't set the offsets for the addresses outside of the range, as that
+	// would wrongly mark the first one occupied.
+	if off, ok := iface.addrSpace.offset(l.IP); ok {
+		iface.leasedOffsets.set(off, true)
+	}
 
 	return nil
 }
@@ -125,29 +131,53 @@ func (iface *netInterface) removeLease(l *Lease) (err error) {
 
 	delete(iface.leases, mk)
 
-	off, _ := iface.addrSpace.offset(l.IP)
-	iface.leasedOffsets.set(off, false)
+	// Don't clear the offsets for the addresses outside of the range, as that
+	// would wrongly mark the first one free.
+	if off, ok := iface.addrSpace.offset(l.IP); ok {
+		iface.leasedOffsets.set(off, false)
+	}
 
 	return nil
 }
 
 // blockLease marks l as blocked for a configured TTL, as reported by
-// [Lease.IsBlocked].  It also removes the lease from iface, but leaves it in
-// the index.  iface.indexMu must be locked, l and clock must not be nil.
+// [Lease.IsBlocked].  It removes the lease from iface, freeing the client's
+// hardware address and hostname mappings, but keeps the address occupied so
+// that it's not handed out to any client before the restart.  It also stores
+// the index, ensuring that the blocked lease is in it even if it hasn't been
+// committed yet.  iface.indexMu must be locked, l must not be nil.
+//
+// TODO(e.burkov):  Unblock the addresses when their blocking expires without a
+// restart.
 func (iface *netInterface) blockLease(
 	ctx context.Context,
 	l *Lease,
 	now time.Time,
 ) (err error) {
-	err = iface.removeLease(l)
-	if err != nil {
-		return fmt.Errorf("removing lease: %w", err)
+	// Do not use [netInterface.removeLease] here, as it clears the
+	// leasedOffsets bit, while the blocked address must stay excluded from
+	// allocation.
+	delete(iface.leases, macToKey(l.HWAddr))
+
+	// The lease may be committed and indexed by its hostname.  Free that
+	// mapping, so that the other clients could claim it, while the address
+	// itself stays blocked.
+	if name := strings.ToLower(l.Hostname); name != "" && iface.index.byName[name] == l {
+		delete(iface.index.byName, name)
 	}
 
 	l.HWAddr = blockedHardwareAddr
 	l.Hostname = ""
 	l.Expiry = now.Add(iface.leaseTTL)
 	l.IsStatic = false
+
+	// Make sure the address is marked occupied even if the lease hasn't been
+	// committed yet, e.g. when it has been refused during allocation.  Blocked
+	// leases also has no hostname.
+	if off, ok := iface.addrSpace.offset(l.IP); ok {
+		iface.leasedOffsets.set(off, true)
+	}
+	iface.index.byAddr[l.IP] = l
 
 	err = iface.index.dbStore(ctx)
 	if err != nil {
@@ -205,26 +235,40 @@ func (iface *netInterface) allocateLease(
 		}
 
 		var ok bool
-		ok, err = iface.addressChecker.IsAvailable(lease.IP)
+
+		// TODO(e.burkov):  Consider performing the check outside of the
+		// iface.indexMu critical section:  It's a blocking network I/O that
+		// stalls the other interfaces and the lease readers for its duration.
+		ok, err = iface.addressChecker.IsAvailable(ctx, lease.IP)
 		if err != nil {
 			return nil, fmt.Errorf("checking address availability: %w", err)
 		}
 
 		if ok {
-			iface.leases[macKey] = lease
-
-			off, _ := iface.addrSpace.offset(lease.IP)
-			iface.leasedOffsets.set(off, true)
+			iface.addAndSetLease(macKey, lease)
 
 			return lease, nil
 		}
 
 		iface.logger.DebugContext(ctx, "address not available", "ip", lease.IP)
 
+		// blockLease marks the address as occupied, so the next reserveLease
+		// call returns another one.
 		err = iface.blockLease(ctx, lease, now)
 		if err != nil {
 			return nil, fmt.Errorf("blocking unavailable address: %w", err)
 		}
+	}
+}
+
+// addAndSetLease adds the lease to the interface's lease map and marks its
+// offset as occupied if it falls within the address range.  lease must not be
+// nil.
+func (iface *netInterface) addAndSetLease(macKey macKey, lease *Lease) {
+	iface.leases[macKey] = lease
+
+	if off, inRange := iface.addrSpace.offset(lease.IP); inRange {
+		iface.leasedOffsets.set(off, true)
 	}
 }
 
@@ -257,6 +301,10 @@ func (iface *netInterface) reserveLease(
 	if err != nil {
 		// The lease may have been allocated but not yet committed.
 		iface.logger.DebugContext(ctx, "deleting expired lease", slogutil.KeyError, err)
+
+		// Remove the lease from iface by its old hardware address, so that it
+		// isn't reused by its previous client as well as the new one.
+		delete(iface.leases, macToKey(lease.HWAddr))
 	}
 
 	lease.HWAddr = slices.Clone(mac)

@@ -10,7 +10,6 @@ import (
 	"slices"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
@@ -32,6 +31,9 @@ type DHCPServer struct {
 
 	// deviceManager is the manager of network devices.
 	deviceManager NetworkDeviceManager
+
+	// addrChecker is used to check the availability of IP addresses.
+	addrChecker AddressChecker
 
 	// devices are the network devices opened in [DHCPServer.Start], mapped to
 	// their names.  Those are closed in [DHCPServer.Shutdown].
@@ -58,9 +60,6 @@ type DHCPServer struct {
 
 	// interfaces6 is the set of IPv6 interfaces sorted by interface name.
 	interfaces6 dhcpInterfacesV6
-
-	// icmpTimeout is the timeout for checking another DHCP server's presence.
-	icmpTimeout time.Duration
 }
 
 // New creates a new DHCP server with the given configuration.  conf must be
@@ -82,12 +81,12 @@ func New(ctx context.Context, conf *Config) (srv *DHCPServer, err error) {
 	srv = &DHCPServer{
 		enabled:       enabled,
 		logger:        l,
+		addrChecker:   conf.AddressChecker,
 		deviceManager: conf.NetworkDeviceManager,
 		localTLD:      conf.LocalDomainName,
 		serveWG:       &sync.WaitGroup{},
 		leasesMu:      &sync.RWMutex{},
 		leases:        newLeaseIndex(conf.Database),
-		icmpTimeout:   conf.ICMPTimeout,
 	}
 
 	srv.interfaces4, srv.interfaces6 = srv.newInterfaces(ctx, l, conf.Interfaces)

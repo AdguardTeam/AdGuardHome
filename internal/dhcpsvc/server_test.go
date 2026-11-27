@@ -337,6 +337,74 @@ func TestDHCPServer_RemoveLease(t *testing.T) {
 	}
 }
 
+func TestDHCPServer_RemoveLease_blocked(t *testing.T) {
+	t.Parallel()
+
+	reloadedLease := &dhcpsvc.Lease{
+		IP:       testIPv4Dynamic,
+		Expiry:   testExpiryDynamicLease,
+		Hostname: "",
+		HWAddr:   dhcpsvc.BlockedHardwareAddr,
+		IsStatic: false,
+	}
+
+	db2 := newTestDatabase(t)
+	db2.onLoad = func(_ context.Context) (leases []*dhcpsvc.Lease, err error) {
+		return []*dhcpsvc.Lease{reloadedLease}, nil
+	}
+	db2.onStore = func(_ context.Context, _ []*dhcpsvc.Lease) (err error) { return nil }
+
+	srv2 := newTestDHCPServer(t, &dhcpsvc.Config{
+		Database:   db2,
+		Interfaces: testIPv4InterfacesConf,
+		Enabled:    true,
+	})
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	require.NoError(t, srv2.RemoveLease(ctx, reloadedLease))
+}
+
+func TestDHCPServer_emptyHostname(t *testing.T) {
+	t.Parallel()
+
+	db := newTestDatabase(t)
+	db.onStore = func(_ context.Context, _ []*dhcpsvc.Lease) (err error) { return nil }
+
+	srv := newTestDHCPServer(t, &dhcpsvc.Config{
+		Database: db,
+		Enabled:  true,
+	})
+
+	ctx := testutil.ContextWithTimeout(t, testTimeout)
+
+	l1 := &dhcpsvc.Lease{
+		IP:       testIPv4Unknown,
+		HWAddr:   testHWUnknown,
+		IsStatic: true,
+	}
+	l2 := &dhcpsvc.Lease{
+		IP:       testIPv4Unknown.Next(),
+		HWAddr:   testHWAnother,
+		IsStatic: true,
+	}
+
+	require.NoError(t, srv.AddLease(ctx, l1))
+	require.NoError(t, srv.AddLease(ctx, l2))
+
+	leases := srv.Leases()
+	require.Contains(t, leases, l1)
+	require.Contains(t, leases, l2)
+
+	require.NoError(t, srv.UpdateStaticLease(ctx, l2))
+
+	require.NoError(t, srv.RemoveLease(ctx, l1))
+
+	leases = srv.Leases()
+	assert.NotContains(t, leases, l1)
+	assert.Contains(t, leases, l2)
+}
+
 func TestDHCPServer_Reset(t *testing.T) {
 	t.Parallel()
 

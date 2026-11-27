@@ -193,7 +193,7 @@ func (srv *DHCPServer) newDHCPInterfaceV4(
 		subnet:  netip.PrefixFrom(conf.GatewayIP, maskLen),
 		common: &netInterface{
 			logger:         baseLogger,
-			addressChecker: noopAddressChecker{},
+			addressChecker: srv.addrChecker,
 			indexMu:        srv.leasesMu,
 			index:          srv.leases,
 			leases:         map[macKey]*Lease{},

@@ -1,22 +1,26 @@
 package dhcpsvc
 
-import "net/netip"
+import (
+	"context"
+	"net/netip"
+)
 
-// addressChecker checks addresses for availability.
-type addressChecker interface {
+// AddressChecker checks addresses for availability.
+type AddressChecker interface {
 	// IsAvailable returns true if the address is available in the current
 	// subnet.  Any error is a network error.
-	IsAvailable(ip netip.Addr) (ok bool, err error)
+	IsAvailable(ctx context.Context, ip netip.Addr) (ok bool, err error)
 }
 
-// noopAddressChecker is an implementation of [addressChecker] that doesn't
+// EmptyAddressChecker is an [AddressChecker] implementation that doesn't
 // perform any checks.
-//
-// TODO(e.burkov):  Add ICMP implementation of [addressChecker], as required by
-// https://datatracker.ietf.org/doc/html/rfc2131#section-2.2.
-type noopAddressChecker struct{}
+type EmptyAddressChecker struct{}
 
-// IsAvailable implements the [addressChecker] interface for noopAddressChecker.
-func (c noopAddressChecker) IsAvailable(ip netip.Addr) (ok bool, err error) {
+// type check
+var _ AddressChecker = EmptyAddressChecker{}
+
+// IsAvailable implements the [AddressChecker] interface for
+// EmptyAddressChecker.
+func (EmptyAddressChecker) IsAvailable(_ context.Context, _ netip.Addr) (ok bool, err error) {
 	return true, nil
 }

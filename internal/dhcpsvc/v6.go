@@ -172,7 +172,7 @@ func (srv *DHCPServer) newDHCPInterfaceV6(
 	iface = &dhcpInterfaceV6{
 		common: &netInterface{
 			logger:         l,
-			addressChecker: noopAddressChecker{},
+			addressChecker: srv.addrChecker,
 			leases:         map[macKey]*Lease{},
 			indexMu:        srv.leasesMu,
 			index:          srv.leases,
