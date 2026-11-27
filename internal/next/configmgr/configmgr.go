@@ -131,6 +131,8 @@ func read(fileName string) (conf *config, err error) {
 	defer func() { err = errors.Annotate(err, "reading config: %w") }()
 
 	conf = &config{}
+	// #nosec G304 -- Trust the default path or the path explicitly given by the
+	// user.
 	f, err := os.Open(fileName)
 	if err != nil {
 		// Don't wrap the error, because it's informative enough as is.

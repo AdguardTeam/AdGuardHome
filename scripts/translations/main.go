@@ -147,6 +147,8 @@ func validateLanguageStr(str string, all languages) (langs []langCode, err error
 // readLocales reads file by name and returns a map, where the key is a text
 // label and the value is a localization.
 func readLocales(name string) (loc locales, err error) {
+	// #nosec G304 -- Trust the default path or the path explicitly given by the
+	// user.
 	b, err := os.ReadFile(name)
 	if err != nil {
 		// Don't wrap the error since it's informative enough as is.
@@ -274,6 +276,8 @@ func findUnused(fileNames []string, loc locales) (err error) {
 
 	for _, fn := range fileNames {
 		var buf []byte
+		// #nosec G304 -- Trust the default path or the path explicitly given by
+		// the user.
 		buf, err = os.ReadFile(fn)
 		if err != nil {
 			return fmt.Errorf("reading file: %w", err)

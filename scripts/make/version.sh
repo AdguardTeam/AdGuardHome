@@ -49,8 +49,8 @@ bump_minor='/^v[0-9]+\.[0-9]+\.0$/ {
 }'
 readonly bump_minor
 
-# get_last_minor_zero returns the last new minor release.
-get_last_minor_zero() {
+# get_last_patch_zero returns the last new minor release.
+get_last_patch_zero() {
 	# List all tags.  Then, select those that fit the pattern of a new minor
 	# release: a semver version with the patch part set to zero.
 	#
@@ -90,24 +90,24 @@ case "$channel" in
 	# version is often on a release-vX.Y branch, so the git rev-list command
 	# below might not actually count what it needs to count.
 
-	# last_minor_zero is the last new minor release.
-	last_minor_zero="$(get_last_minor_zero)"
-	readonly last_minor_zero
+	# last_patch_zero is the last new minor release.
+	last_patch_zero="$(get_last_patch_zero)"
+	readonly last_patch_zero
 
-	if [ "$last_minor_zero" = '' ]; then
-		printf 'last release with minor version set to zero not found\n' 1>&2
+	if [ "$last_patch_zero" = '' ]; then
+		printf 'last release with patch version set to zero not found\n' 1>&2
 
 		exit 1
 	fi
 
-	# num_commits_since_minor is the number of commits since the last new
-	# minor release.  If the current commit is the new minor release,
+	# num_commits_since_minor is the number of commits since the last new minor
+	# release.  If the current commit is the new minor release,
 	# num_commits_since_minor is zero.
-	num_commits_since_minor="$(git rev-list --count "${last_minor_zero}..HEAD")"
+	num_commits_since_minor="$(git rev-list --count "${last_patch_zero}..HEAD")"
 	readonly num_commits_since_minor
 
 	# next_minor is the next minor release version.
-	next_minor="$(printf '%s\n' "$last_minor_zero" | awk -F '.' "$bump_minor")"
+	next_minor="$(printf '%s\n' "$last_patch_zero" | awk -F '.' "$bump_minor")"
 	readonly next_minor
 
 	# Make this commit a prerelease version for the next minor release.  For

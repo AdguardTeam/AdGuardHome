@@ -60,6 +60,8 @@ func prepareMultipartMsg(
 		}
 	}
 
+	// #nosec G304 -- Trust the default path or the path explicitly given by the
+	// user.
 	file, err := os.Open(basePath)
 	if err != nil {
 		return nil, "", fmt.Errorf("opening file: %w", err)

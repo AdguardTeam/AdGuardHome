@@ -23,10 +23,10 @@ type metadata struct {
 // project.
 type twoskyConfig struct {
 	Languages        languages `json:"languages"`
-	ProjectID        string    `json:"project_id"`
 	BaseLangCode     langCode  `json:"base_locale"`
-	LocalizableFiles []string  `json:"localizable_files"`
 	Metadata         metadata  `json:"metadata"`
+	ProjectID        string    `json:"project_id"`
+	LocalizableFiles []string  `json:"localizable_files"`
 }
 
 // type check
