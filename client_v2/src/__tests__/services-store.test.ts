@@ -24,6 +24,7 @@ vi.mock('panel/common/intl', async () =>
 );
 
 import {
+    allowBlockedService,
     getBlockedServices,
     getAllBlockedServices,
     servicesState,
@@ -124,7 +125,7 @@ describe('updateBlockedServices — whole-list serialization', () => {
         mocks.blockedServicesScheduleUpdate.mockReturnValueOnce(put.promise);
         mocks.blockedServicesSchedule.mockReturnValueOnce(followUp.promise);
 
-        const update = updateBlockedServices({ ids: ['telegram'] }, 'telegram');
+        const update = updateBlockedServices(() => ({ ids: ['telegram'] }), 'telegram');
 
         expect(servicesState.processingSet).toBe(true);
         expect(servicesState.processingServiceId).toBe('telegram');
@@ -147,7 +148,7 @@ describe('updateBlockedServices — whole-list serialization', () => {
         mocks.blockedServicesScheduleUpdate.mockResolvedValue(undefined);
         mocks.blockedServicesSchedule.mockRejectedValueOnce(new Error('get failed'));
 
-        const ok = await updateBlockedServices({ ids: ['telegram'] });
+        const ok = await updateBlockedServices(() => ({ ids: ['telegram'] }));
 
         expect(ok).toBe(true);
         expect(servicesState.list.ids).toEqual(['telegram']);
@@ -159,7 +160,7 @@ describe('updateBlockedServices — whole-list serialization', () => {
     it('clears both flags when the update itself fails', async () => {
         mocks.blockedServicesScheduleUpdate.mockRejectedValueOnce(new Error('put failed'));
 
-        const ok = await updateBlockedServices({ ids: ['telegram'] });
+        const ok = await updateBlockedServices(() => ({ ids: ['telegram'] }));
 
         expect(ok).toBe(false);
         expect(servicesState.processingSet).toBe(false);
@@ -177,7 +178,7 @@ describe('updateBlockedServices — whole-list serialization', () => {
         const followUp = deferred<{ ids: string[] }>();
         mocks.blockedServicesScheduleUpdate.mockReturnValueOnce(put.promise);
         mocks.blockedServicesSchedule.mockReturnValueOnce(followUp.promise);
-        const update = updateBlockedServices({ ids: ['telegram'] });
+        const update = updateBlockedServices(() => ({ ids: ['telegram'] }));
 
         put.resolve();
         await vi.waitFor(() => expect(mocks.blockedServicesSchedule).toHaveBeenCalledTimes(2));
@@ -190,5 +191,90 @@ describe('updateBlockedServices — whole-list serialization', () => {
         expect(servicesState.list.ids).toEqual(['telegram']);
         expect(servicesState.processing).toBe(false);
     });
+
+    it('serializes overlapping updates so each payload sees the list accepted before it', async () => {
+        mocks.blockedServicesScheduleUpdate.mockResolvedValue(undefined);
+        mocks.blockedServicesSchedule.mockImplementation(async () => ({
+            ids: [...(servicesState.list?.ids || [])],
+        }));
+
+        const first = updateBlockedServices((current) => ({
+            ...current,
+            ids: [...(current.ids || []), 'telegram'],
+        }));
+        const second = updateBlockedServices((current) => ({
+            ...current,
+            ids: [...(current.ids || []), 'whatsapp'],
+        }));
+
+        await Promise.all([first, second]);
+
+        expect(mocks.blockedServicesScheduleUpdate).toHaveBeenNthCalledWith(1, {
+            ids: ['steam', 'telegram'],
+        });
+        expect(mocks.blockedServicesScheduleUpdate).toHaveBeenNthCalledWith(2, {
+            ids: ['steam', 'telegram', 'whatsapp'],
+        });
+        expect(servicesState.list.ids).toEqual(['steam', 'telegram', 'whatsapp']);
+        expect(servicesState.processingSet).toBe(false);
+        expect(servicesState.processingServiceId).toBeNull();
+    });
+
+    it('keeps the switches locked while a queued update is still pending', async () => {
+        const firstPut = deferred<void>();
+        const firstGet = deferred<{ ids: string[] }>();
+        mocks.blockedServicesScheduleUpdate.mockReturnValueOnce(firstPut.promise);
+        mocks.blockedServicesSchedule.mockReturnValueOnce(firstGet.promise);
+
+        const first = updateBlockedServices(() => ({ ids: ['telegram'] }));
+
+        mocks.blockedServicesScheduleUpdate.mockResolvedValueOnce(undefined);
+        mocks.blockedServicesSchedule.mockResolvedValueOnce({ ids: ['telegram', 'whatsapp'] });
+        const second = updateBlockedServices(() => ({ ids: ['telegram', 'whatsapp'] }));
+
+        firstPut.resolve();
+        await vi.waitFor(() => expect(mocks.blockedServicesSchedule).toHaveBeenCalledTimes(1));
+        firstGet.resolve({ ids: ['telegram'] });
+        await first;
+
+        expect(servicesState.processingSet).toBe(true);
+
+        await second;
+
+        expect(servicesState.processingSet).toBe(false);
+        expect(servicesState.processingServiceId).toBeNull();
+    });
 });
 
+describe('allowBlockedService — undo', () => {
+    beforeEach(async () => {
+        resetApiMocks();
+        await seedList(['steam', 'telegram']);
+    });
+
+    it('re-adds only the allowed service to the list as it is at undo time', async () => {
+        mocks.blockedServicesScheduleUpdate.mockResolvedValue(undefined);
+        mocks.blockedServicesSchedule.mockImplementation(async () => ({
+            ids: [...(servicesState.list?.ids || [])],
+        }));
+        let undo: (() => Promise<unknown>) | undefined;
+        mocks.createUndoToast.mockImplementation(
+            (_message: string, _undoMessage: string, onUndo: () => Promise<unknown>) => {
+                undo = onUndo;
+                return {};
+            },
+        );
+
+        await allowBlockedService('telegram');
+        await updateBlockedServices((current) => ({
+            ...current,
+            ids: [...(current.ids || []), 'whatsapp'],
+        }));
+
+        expect(servicesState.list.ids).toEqual(['steam', 'whatsapp']);
+
+        await undo?.();
+
+        expect(servicesState.list.ids).toEqual(['steam', 'whatsapp', 'telegram']);
+    });
+});

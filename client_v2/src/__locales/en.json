@@ -301,7 +301,6 @@
   "dns_rate_limit_title": "Rate limit",
   "dns_rate_limit_value": "%value% req/s",
   "dns_rewrite_exists": "This DNS rewrite already exists",
-  "dns_rewrite_same": "You can’t rewrite to the same domain or wildcard",
   "dns_rewrites": "DNS rewrites",
   "dns_rewrites_desc": "Lists your custom DNS responses for specific domain names",
   "dns_server_addresses": "Server addresses",

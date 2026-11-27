@@ -86,7 +86,7 @@
     }
 
     &:before {
-        color: var(--fills-switch-knob-disabled);
+        background-color: var(--fills-switch-knob-disabled);
     }
 }
 
@@ -100,7 +100,7 @@
     }
 
     &:before {
-        color: var(--fills-switch-knob-disabled);
+        background-color: var(--fills-switch-knob-disabled);
     }
 }
 
@@ -113,6 +113,10 @@
             background-color: var(--fills-switch-off-default);
         }
     }
+
+    &:before {
+        background-color: var(--fills-switch-knob);
+    }
 }
 
 .busy .input:checked:disabled + .handler {
@@ -122,5 +126,9 @@
         &:hover {
             background-color: var(--fills-switch-on-default);
         }
+    }
+
+    &:before {
+        background-color: var(--fills-switch-knob);
     }
 }

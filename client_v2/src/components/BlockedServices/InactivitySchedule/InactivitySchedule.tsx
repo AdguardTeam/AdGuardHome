@@ -8,6 +8,8 @@ import { PageLoader } from 'panel/common/ui/Loader';
 import { Select } from 'panel/common/controls/Select';
 import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
 import type { ClientFormState } from 'panel/initialState';
+import type { DayRange } from 'panel/api/model/dayRange';
+import type { Schedule } from 'panel/api/model/schedule';
 import { getBlockedServices, updateBlockedServices, servicesState } from 'panel/stores/services';
 import theme from 'panel/lib/theme';
 
@@ -32,6 +34,22 @@ const TIMEZONE_OPTIONS = [
 
 type Props = {
     clientScope?: boolean;
+};
+
+const scheduleWithoutDay = (base: Schedule | undefined, day: DayKey): Schedule => {
+    const next: Schedule = { ...base };
+    delete next[day];
+    return next;
+};
+
+const scheduleWithDay = (
+    base: Schedule | undefined,
+    day: DayKey,
+    range: DayRange,
+): Schedule => {
+    const next: Schedule = { ...base };
+    next[day] = range;
+    return next;
 };
 
 export const InactivitySchedule = (props: Props) => {
@@ -77,13 +95,17 @@ export const InactivitySchedule = (props: Props) => {
         if (!option || isReadOnly()) {
             return;
         }
-        const newSchedule = props.clientScope
-            ? { ...clientFormState.blocked_services_schedule, time_zone: option.value }
-            : { ...schedule(), time_zone: option.value };
         if (props.clientScope) {
+            const newSchedule = {
+                ...clientFormState.blocked_services_schedule,
+                time_zone: option.value,
+            };
             updateClientFormField('blocked_services_schedule', newSchedule, true);
         } else {
-            updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
+            updateBlockedServices((current) => ({
+                ...current,
+                schedule: { ...current.schedule, time_zone: option.value },
+            }));
         }
     };
 
@@ -115,40 +137,46 @@ export const InactivitySchedule = (props: Props) => {
         if (!dayToDelete) {
             return;
         }
-        const newSchedule: Record<string, unknown> = { time_zone: currentTimezone() };
-        DAYS_OF_WEEK.forEach((d) => {
-            if (d !== dayToDelete && schedule()?.[d]) {
-                newSchedule[d] = schedule()![d];
-            }
-        });
         if (props.clientScope) {
+            const newSchedule: Record<string, unknown> = { time_zone: currentTimezone() };
+            DAYS_OF_WEEK.forEach((d) => {
+                if (d !== dayToDelete && schedule()?.[d]) {
+                    newSchedule[d] = schedule()![d];
+                }
+            });
             updateClientFormField(
                 'blocked_services_schedule',
                 newSchedule as ClientFormState['blocked_services_schedule'],
                 true,
             );
         } else {
-            updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
+            updateBlockedServices((current) => ({
+                ...current,
+                schedule: scheduleWithoutDay(current.schedule, dayToDelete),
+            }));
         }
         setDeleteDay(null);
     };
 
     const handleModalSave = (day: DayKey, start: number, end: number) => {
-        const newSchedule: Record<string, unknown> = { time_zone: currentTimezone() };
-        DAYS_OF_WEEK.forEach((d) => {
-            if (schedule()?.[d]) {
-                newSchedule[d] = schedule()![d];
-            }
-        });
-        newSchedule[day] = { start, end };
         if (props.clientScope) {
+            const newSchedule: Record<string, unknown> = { time_zone: currentTimezone() };
+            DAYS_OF_WEEK.forEach((d) => {
+                if (schedule()?.[d]) {
+                    newSchedule[d] = schedule()![d];
+                }
+            });
+            newSchedule[day] = { start, end };
             updateClientFormField(
                 'blocked_services_schedule',
                 newSchedule as ClientFormState['blocked_services_schedule'],
                 true,
             );
         } else {
-            updateBlockedServices({ ids: servicesState.list?.ids || [], schedule: newSchedule });
+            updateBlockedServices((current) => ({
+                ...current,
+                schedule: scheduleWithDay(current.schedule, day, { start, end }),
+            }));
         }
         setModalVisible(false);
         setEditDay(undefined);

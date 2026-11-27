@@ -10,6 +10,7 @@ import s from './Tooltip.module.pcss';
 
 const SHOW_DELAY = 200;
 const HIDE_DELAY = 300;
+const TOOLTIP_GUTTER = 4;
 
 export const TOOLTIP_POSITIONS = [
     'bottomRight',
@@ -53,7 +54,7 @@ export const Tooltip = (props: Props) => {
 
     const positioning = createMemo(() => ({
         placement: placement(),
-        gutter: 4,
+        gutter: TOOLTIP_GUTTER,
         flip: true,
     }));
 
@@ -116,7 +117,10 @@ export const Tooltip = (props: Props) => {
                     )}
                 />
                 <ArkTooltip.Positioner>
-                    <ArkTooltip.Content class={cn(s.overlay, props.overlayClass)}>
+                    <ArkTooltip.Content
+                        class={cn(s.overlay, props.overlayClass)}
+                        style={{ '--tooltip-gutter': `${TOOLTIP_GUTTER}px` }}
+                    >
                         <div
                             ref={(el) => {
                                 contentRef = el;

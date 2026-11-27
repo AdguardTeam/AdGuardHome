@@ -371,12 +371,10 @@ export const useUserRulesActions = (
                               ),
                           };
                       })
-                    : updateBlockedServices({
-                          ...servicesState.list,
-                          ids: (servicesState.list?.ids || []).filter(
-                              (id: string) => id !== matchedService.id,
-                          ),
-                      }),
+                    : updateBlockedServices((current) => ({
+                          ...current,
+                          ids: (current.ids || []).filter((id: string) => id !== matchedService.id),
+                      })),
             message: intl.getMessage('user_rules_service_allowed', { value: matchedService.name }),
             undo: () =>
                 clientSnapshot
@@ -384,9 +382,14 @@ export const useUserRulesActions = (
                           ...clientSnapshot,
                           blocked_services: [...previousBlockedServiceIds],
                       })
-                    : updateBlockedServices({
-                          ...servicesState.list,
-                          ids: previousBlockedServiceIds,
+                    : updateBlockedServices((current) => {
+                          const ids = current.ids || [];
+                          return {
+                              ...current,
+                              ids: ids.includes(matchedService.id)
+                                  ? ids
+                                  : [...ids, matchedService.id],
+                          };
                       }),
             refresh: async () => {
                 await getBlockedServices();

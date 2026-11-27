@@ -55,7 +55,7 @@ describe('ConfigureRewritesModal self-rewrite', () => {
 
         await submitSelfRewrite(copyInDom('add'));
 
-        expect(screen.queryByText(copyInDom('dns_rewrite_same'))).toBeNull();
+        expect(screen.queryByTestId('rewrite-answer-input-error')).toBeNull();
         expect(mocks.onSubmit).toHaveBeenCalledWith({
             domain: SELF_REWRITE,
             answer: SELF_REWRITE,
@@ -78,7 +78,7 @@ describe('ConfigureRewritesModal self-rewrite', () => {
         await userEvent.type(answerInput, SELF_REWRITE);
         await userEvent.click(screen.getByRole('button', { name: copyInDom('save') }));
 
-        expect(screen.queryByText(copyInDom('dns_rewrite_same'))).toBeNull();
+        expect(screen.queryByTestId('rewrite-answer-input-error')).toBeNull();
         expect(mocks.onSubmit).toHaveBeenCalledWith({
             domain: SELF_REWRITE,
             answer: SELF_REWRITE,

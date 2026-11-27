@@ -131,9 +131,14 @@
     transition: background-color 0.2s;
     border-radius: 8px;
 
-    &:hover,
     &:focus-visible {
         background-color: var(--hovered-page-background);
+    }
+
+    @media (hover: hover) {
+        &:not(.serviceRowDisabled):hover {
+            background-color: var(--hovered-page-background);
+        }
     }
 }
 

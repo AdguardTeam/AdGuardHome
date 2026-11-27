@@ -17,38 +17,25 @@
     outline: none;
 }
 
-/* Matches the 4px gutter in Tooltip.tsx: the bridge keeps the pointer on
-   an interactive card while it crosses the gap towards the trigger, instead
-   of handing the adjacent whole-row trigger its own hover. */
+/* Keeps the pointer on an interactive card while it crosses the gap to the
+   trigger instead of handing the adjacent whole-row trigger its own hover.
+   The gutter value comes from TOOLTIP_GUTTER in Tooltip.tsx. */
 [data-scope='tooltip'][data-part='content']::before {
     content: '';
     position: absolute;
 }
 
-[data-scope='tooltip'][data-part='content'][data-side='bottom']::before {
+[data-scope='tooltip'][data-part='content'][data-side='bottom']::before,
+[data-scope='tooltip'][data-part='content'][data-side='top']::before {
     right: 0;
-    bottom: 100%;
     left: 0;
-    height: 4px;
+    height: var(--tooltip-gutter);
+}
+
+[data-scope='tooltip'][data-part='content'][data-side='bottom']::before {
+    bottom: 100%;
 }
 
 [data-scope='tooltip'][data-part='content'][data-side='top']::before {
     top: 100%;
-    right: 0;
-    left: 0;
-    height: 4px;
-}
-
-[data-scope='tooltip'][data-part='content'][data-side='left']::before {
-    top: 0;
-    right: 100%;
-    bottom: 0;
-    width: 4px;
-}
-
-[data-scope='tooltip'][data-part='content'][data-side='right']::before {
-    top: 0;
-    bottom: 0;
-    left: 100%;
-    width: 4px;
 }

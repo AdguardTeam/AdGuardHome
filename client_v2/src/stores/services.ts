@@ -85,28 +85,59 @@ export const getAllBlockedServices = async () => {
     }
 };
 
-export const updateBlockedServices = async (
-    values: BlockedServicesSchedule,
-    serviceId?: string,
-): Promise<boolean> => {
-    setState({ processingSet: true, processingServiceId: serviceId ?? null });
-    const updateId = beginServicesGet();
-    try {
-        await blockedServicesScheduleUpdate(values);
-        // The accepted payload is authoritative until the follow-up read lands;
-        // a failed read must not re-enable editing against a stale list.
-        setState('list', values);
-        await getBlockedServices();
-        return true;
-    } catch (error) {
-        addErrorToast({ error });
-        if (isLatestServicesGet(updateId)) {
-            setState('processing', false);
-        }
-        return false;
-    } finally {
+type ServicesUpdate = (current: BlockedServicesSchedule) => BlockedServicesSchedule;
+
+// The endpoint replaces the whole list, so overlapping writes would overwrite
+// each other.  Queue them and let each payload see the list accepted before it.
+let updateQueue: Promise<void> = Promise.resolve();
+let latestUpdate = 0;
+
+const finishUpdate = (updateId: number) => {
+    // An older write must not unlock editing while a newer one is pending.
+    if (updateId === latestUpdate) {
         setState({ processingSet: false, processingServiceId: null });
     }
+};
+
+export const updateBlockedServices = (
+    makeValues: ServicesUpdate,
+    serviceId?: string,
+): Promise<boolean> => {
+    latestUpdate += 1;
+    const updateId = latestUpdate;
+
+    // Set synchronously so the page locks the switches as soon as the user acts.
+    setState({ processingSet: true, processingServiceId: serviceId ?? null });
+
+    const run = async (): Promise<boolean> => {
+        const readId = beginServicesGet();
+        try {
+            // Build the payload only in the serialized section, so it includes
+            // every change accepted before this write starts.
+            const values = makeValues(untrack(() => state.list));
+            await blockedServicesScheduleUpdate(values);
+            // The accepted payload is authoritative until the follow-up read
+            // lands; a failed read must not re-enable editing against a stale
+            // list.
+            setState('list', values);
+            await getBlockedServices();
+            return true;
+        } catch (error) {
+            addErrorToast({ error });
+            if (isLatestServicesGet(readId)) {
+                setState('processing', false);
+            }
+            return false;
+        }
+    };
+
+    const result = updateQueue.then(run, run);
+    updateQueue = result.then(
+        () => finishUpdate(updateId),
+        () => finishUpdate(updateId),
+    );
+
+    return result;
 };
 
 export const allowBlockedService = async (serviceId: string): Promise<boolean> => {
@@ -120,10 +151,10 @@ export const allowBlockedService = async (serviceId: string): Promise<boolean> =
     const serviceName =
         state.allServices.find((s) => s.id === serviceId)?.name || serviceId;
     const didUpdate = await updateBlockedServices(
-        {
-            ids: currentIds.filter((id: string) => id !== serviceId),
-            schedule: list?.schedule,
-        },
+        (current) => ({
+            ...current,
+            ids: (current.ids || []).filter((id: string) => id !== serviceId),
+        }),
         serviceId,
     );
     if (!didUpdate) return false;
@@ -132,10 +163,15 @@ export const allowBlockedService = async (serviceId: string): Promise<boolean> =
             intl.getMessage('user_rules_service_allowed', { value: serviceName }),
             intl.getMessage('notify_undo'),
             async () => {
+                // Re-add this service to the list as it is now, not to the
+                // snapshot from before the update.
                 await updateBlockedServices(
-                    {
-                        ids: [...currentIds, serviceId],
-                        schedule: list?.schedule,
+                    (current) => {
+                        const ids = current.ids || [];
+                        return {
+                            ...current,
+                            ids: ids.includes(serviceId) ? ids : [...ids, serviceId],
+                        };
                     },
                     serviceId,
                 );

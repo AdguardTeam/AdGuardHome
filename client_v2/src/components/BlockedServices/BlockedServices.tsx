@@ -148,11 +148,15 @@ export const BlockedServices = (props: Props) => {
         if (isGlobalUpdatePending()) {
             return;
         }
-        const currentIds = servicesState.list?.ids || [];
-        const newIds = checked
-            ? [...currentIds, serviceId]
-            : currentIds.filter((id: string) => id !== serviceId);
-        updateBlockedServices({ ids: newIds, schedule: servicesState.list?.schedule }, serviceId);
+        updateBlockedServices((current) => {
+            const currentIds = current.ids || [];
+            const newIds = checked
+                ? currentIds.includes(serviceId)
+                    ? currentIds
+                    : [...currentIds, serviceId]
+                : currentIds.filter((id: string) => id !== serviceId);
+            return { ...current, ids: newIds };
+        }, serviceId);
     };
 
     const handleUseGlobalBlockedServices = (e: Event) => {
