@@ -15,7 +15,6 @@ import {
     validateDomain,
     validateRequiredValue,
     validateRewriteNotExists,
-    validateRewriteNotSame,
 } from 'panel/helpers/validators';
 import { DomainFaqTooltip } from './DomainFaqTooltip';
 import { AnswerFaqTooltip } from './AnswerFaqTooltip';
@@ -90,7 +89,6 @@ export const ConfigureRewritesModal = (props: Props) => {
         const err =
             validateRequiredValue(answer()) ||
             validateAnswer(answer()) ||
-            validateRewriteNotSame(domain(), answer()) ||
             validateRewriteNotExists(domain(), answer(), rewritesState.list, props.rewriteToEdit);
         setAnswerError(err || undefined);
         return !err;

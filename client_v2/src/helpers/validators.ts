@@ -475,26 +475,6 @@ export const validateRewriteNotExists = (
 };
 
 /**
- * Validates that the domain and answer are not the same value.
- *
- * @example validateRewriteNotSame("example.com", "example.com")
- *          // "You can't rewrite to the same domain or wildcard"
- * @example validateRewriteNotSame("example.com", "192.168.1.1")
- *          // undefined (valid)
- */
-export const validateRewriteNotSame = (domain: string, answer: string): ValidationResult => {
-    if (!domain || !answer) {
-        return undefined;
-    }
-
-    if (domain.toLowerCase() === answer.toLowerCase()) {
-        return intl.getMessage('dns_rewrite_same');
-    }
-
-    return undefined;
-};
-
-/**
  * Validates an absolute file path or URL format.
  *
  * @example validatePath("/usr/local/bin")      // undefined (valid)

@@ -12,6 +12,10 @@ const ADD_REWRITE: RewriteEntry = {
     domain: 'e2e-add-example.org',
     answer: '192.168.1.100',
 };
+const SELF_REWRITE: RewriteEntry = {
+    domain: 'e2e-self-rewrite-example.org',
+    answer: 'e2e-self-rewrite-example.org',
+};
 const TOGGLE_REWRITE: RewriteEntry = {
     domain: 'e2e-toggle-example.org',
     answer: '192.168.1.101',
@@ -138,6 +142,43 @@ test.describe('DNS Rewrites', () => {
             .catch(() => {});
 
         await expectRewriteVisible(page, ADD_REWRITE);
+    });
+
+    test('should add a rewrite whose answer repeats the domain', async ({ page }) => {
+        await removeRewriteIfPresent(page, SELF_REWRITE.domain);
+        await openDnsRewritesPage(page);
+
+        await page.getByTestId('add-rewrite').click();
+
+        const domainInput = page.locator('input#domain');
+        const answerInput = page.locator('input#answer');
+
+        await expect(domainInput).toBeVisible({ timeout: 10000 });
+        await domainInput.fill(SELF_REWRITE.domain);
+        await answerInput.fill(SELF_REWRITE.answer);
+        await answerInput.blur();
+
+        await expect(
+            page.locator('[data-testid="rewrite-answer-input-error"]'),
+        ).toHaveCount(0);
+
+        await page.locator('button#save').click();
+        await page
+            .waitForSelector('button#save', { state: 'hidden', timeout: 5000 })
+            .catch(() => {});
+
+        await expectRewriteVisible(page, SELF_REWRITE);
+        await expect
+            .poll(async () =>
+                (await listRewrites(page)).some(
+                    (rewrite) =>
+                        rewrite.domain === SELF_REWRITE.domain &&
+                        rewrite.answer === SELF_REWRITE.answer,
+                ),
+            )
+            .toBe(true);
+
+        await removeRewriteIfPresent(page, SELF_REWRITE.domain);
     });
 
     test('should toggle global rewrite switch in table header', async ({ page }) => {

@@ -18,7 +18,6 @@ import {
     validateMinValue,
     validateCacheSize,
     validateRewriteNotExists,
-    validateRewriteNotSame,
     validateLeaseTime,
 } from 'panel/helpers/validators';
 
@@ -652,29 +651,6 @@ describe('validateRewriteNotExists', () => {
             { domain: 'example.com', answer: '1.2.3.4' },
         ]);
         expect(result).toBeTruthy();
-    });
-});
-
-describe('validateRewriteNotSame', () => {
-    it('returns undefined when domain and answer differ', () => {
-        const result = validateRewriteNotSame('example.com', '192.168.1.1');
-        expect(result).toBeUndefined();
-    });
-
-    it('returns error when domain equals answer', () => {
-        const result = validateRewriteNotSame('example.com', 'example.com');
-        expect(result).toBeTruthy();
-    });
-
-    it('returns error case-insensitively', () => {
-        const result = validateRewriteNotSame('Example.COM', 'example.com');
-        expect(result).toBeTruthy();
-    });
-
-    it('returns undefined for empty values', () => {
-        expect(validateRewriteNotSame('', 'example.com')).toBeUndefined();
-        expect(validateRewriteNotSame('example.com', '')).toBeUndefined();
-        expect(validateRewriteNotSame('', '')).toBeUndefined();
     });
 });
 
