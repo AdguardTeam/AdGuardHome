@@ -35,6 +35,8 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Fixed
 
+- Interactive cards in the new web interface becoming unreachable when the pointer crossed the gap between a row and its card ([#8779]).
+
 - Rapid changes to global blocked services in the new web interface silently overwriting each other ([#8769]).
 
 - DNS rewrites to the same domain being rejected by the new web interface ([#8775]).
@@ -79,6 +81,7 @@ NOTE: Add new changes BELOW THIS COMMENT.
 [#8763]:       https://github.com/AdguardTeam/AdGuardHome/issues/8763
 [#8769]:       https://github.com/AdguardTeam/AdGuardHome/issues/8769
 [#8775]:       https://github.com/AdguardTeam/AdGuardHome/issues/8775
+[#8779]:       https://github.com/AdguardTeam/AdGuardHome/issues/8779
 
 <!--
 NOTE: Add new changes ABOVE THIS COMMENT.

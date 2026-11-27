@@ -9,9 +9,46 @@
 }
 
 [data-scope='tooltip'][data-part='content'] {
+    position: relative;
     border-radius: 8px;
     box-shadow:
         0 8px 18px -6px var(--dropdown-box-shadow),
         0 12px 42px -4px var(--dropdown-box-shadow);
     outline: none;
+}
+
+/* Matches the 4px gutter in Tooltip.tsx: the bridge keeps the pointer on
+   an interactive card while it crosses the gap towards the trigger, instead
+   of handing the adjacent whole-row trigger its own hover. */
+[data-scope='tooltip'][data-part='content']::before {
+    content: '';
+    position: absolute;
+}
+
+[data-scope='tooltip'][data-part='content'][data-side='bottom']::before {
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    height: 4px;
+}
+
+[data-scope='tooltip'][data-part='content'][data-side='top']::before {
+    top: 100%;
+    right: 0;
+    left: 0;
+    height: 4px;
+}
+
+[data-scope='tooltip'][data-part='content'][data-side='left']::before {
+    top: 0;
+    right: 100%;
+    bottom: 0;
+    width: 4px;
+}
+
+[data-scope='tooltip'][data-part='content'][data-side='right']::before {
+    top: 0;
+    bottom: 0;
+    left: 100%;
+    width: 4px;
 }

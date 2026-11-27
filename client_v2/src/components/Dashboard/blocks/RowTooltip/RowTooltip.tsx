@@ -9,8 +9,10 @@ import s from './RowTooltip.module.pcss';
 type Props = {
     content: JSX.Element;
     class?: string;
-    /** Overrides the overlay, e.g. to make a non-interactive card transparent to the pointer. */
+    /** Overrides the overlay class, e.g. to adjust its width. */
     overlayClass?: string;
+    /** Whether the card can receive the pointer, e.g. to follow a link. */
+    interactive?: boolean;
     children: JSX.Element;
 };
 
@@ -29,6 +31,7 @@ export const RowTooltip = (props: Props) => {
             position="bottomLeft"
             disabled={isTouch()}
             overlayClass={props.overlayClass}
+            interactive={props.interactive}
             class={cn(s.rowTrigger, props.class)}
         >
             {props.children}

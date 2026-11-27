@@ -26,12 +26,14 @@ const meta = {
             options: [...TOOLTIP_POSITIONS],
         },
         disabled: { control: 'boolean' },
+        interactive: { control: 'boolean' },
         class: { control: false },
         overlayClass: { control: false },
         triggerAttrs: { control: false },
     },
     args: {
         content: 'Tooltip content',
+        interactive: true,
     },
     render: (args) => (
         <Tooltip {...args} content={<div class={s.tooltipContent}>{args.content}</div>}>
@@ -74,5 +76,12 @@ export const Disabled: Story = {
     args: {
         disabled: true,
         content: 'This tooltip never opens',
+    },
+};
+
+export const NonInteractive: Story = {
+    args: {
+        interactive: false,
+        content: 'Plain text that lets the pointer pass through',
     },
 };

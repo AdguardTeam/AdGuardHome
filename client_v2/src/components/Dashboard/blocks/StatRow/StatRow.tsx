@@ -114,7 +114,7 @@ export const StatRow = (props: StatRowProps) => {
     return (
         <RowTooltip
             content={<div class={cn(theme.text.t3, s.statTooltip)}>{props.tooltip}</div>}
-            overlayClass={s.queryTooltipOverlay}
+            interactive={false}
         >
             <Show when={props.linkTo} fallback={<div class={rowClass()}>{rowContent()}</div>}>
                 {(to) => (

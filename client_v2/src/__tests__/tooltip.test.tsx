@@ -94,6 +94,34 @@ describe('Tooltip', () => {
         expect(content?.className).toContain('custom-overlay');
     });
 
+    it('makes the content receive the pointer by default', () => {
+        render(() => (
+            <Tooltip content="Help text">
+                <span>Trigger</span>
+            </Tooltip>
+        ));
+
+        const content = screen.getByText('Help text').closest(
+            '[data-part="content"]',
+        ) as HTMLElement;
+
+        expect(content.style.pointerEvents).toBe('auto');
+    });
+
+    it('makes the content transparent to the pointer when non-interactive', () => {
+        render(() => (
+            <Tooltip content="Help text" interactive={false}>
+                <span>Trigger</span>
+            </Tooltip>
+        ));
+
+        const content = screen.getByText('Help text').closest(
+            '[data-part="content"]',
+        ) as HTMLElement;
+
+        expect(content.style.pointerEvents).toBe('none');
+    });
+
     // ---- desktop hover (default matchMedia mock → (hover: none) = false) ----
 
     it('opens on hover after open delay on desktop', async () => {

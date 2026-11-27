@@ -25,6 +25,8 @@ type Props = {
     overlayClass?: string;
     class?: string;
     disabled?: boolean;
+    /** Whether the content can receive the pointer, e.g. to follow a link. */
+    interactive?: boolean;
     children?: JSX.Element;
     triggerAttrs?: JSX.HTMLAttributes<HTMLDivElement>;
 };
@@ -87,7 +89,7 @@ export const Tooltip = (props: Props) => {
                 onOpenChange={(details) => setHoverOpen(details.open)}
                 openDelay={SHOW_DELAY}
                 closeDelay={HIDE_DELAY}
-                interactive
+                interactive={props.interactive ?? true}
                 positioning={positioning()}
                 closeOnClick={false}
                 closeOnPointerDown={false}

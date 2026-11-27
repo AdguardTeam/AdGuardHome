@@ -17,7 +17,7 @@ export const QueriesTooltip = (props: Props) => (
     <Tooltip
         position="top"
         disabled={props.count <= MIN_COUNT_FOR_TOOLTIP}
-        overlayClass={s.queryTooltipOverlay}
+        interactive={false}
         content={
             <div class={s.queryTooltip}>
                 {intl.getMessage('queries_tooltip', {
