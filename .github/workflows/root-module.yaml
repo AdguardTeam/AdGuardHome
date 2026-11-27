@@ -1,0 +1,86 @@
+name: root-module
+
+# Đóng gói module root (Magisk / KernelSU / APatch) trong thư mục root-module/.
+# Build the root module (Magisk / KernelSU / APatch) that lives in root-module/.
+
+'on':
+  workflow_dispatch:
+    inputs:
+      agh_version:
+        description: 'AdGuardHome release tag to bundle (empty = latest)'
+        required: false
+        default: ''
+  push:
+    tags:
+      - 'module-v*'
+  pull_request:
+    paths:
+      - 'root-module/**'
+      - '.github/workflows/root-module.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax (sh and dash)
+        run: |
+          set -eu
+          for f in root-module/module/*.sh root-module/module/scripts/*.sh root-module/pack.sh \
+            root-module/module/META-INF/com/google/android/update-binary; do
+            case "$f" in
+              */pack.sh) bash -n "$f" ;;
+              *) sh -n "$f" && dash -n "$f" ;;
+            esac
+          done
+      - name: ShellCheck
+        run: shellcheck -x -s sh -S warning root-module/module/scripts/*.sh
+      - name: WebUI JavaScript syntax
+        run: |
+          set -eu
+          node --check root-module/module/webroot/assets/app.js
+          node --check root-module/module/webroot/assets/i18n.js
+
+  package:
+    name: Build ${{ matrix.arch }}
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, armv7]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pack
+        env:
+          AGH_VERSION: ${{ github.event.inputs.agh_version }}
+        run: |
+          set -eu
+          [ -n "$AGH_VERSION" ] || unset AGH_VERSION
+          bash root-module/pack.sh "${{ matrix.arch }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AdGuardHome-for-Superuser_${{ matrix.arch }}
+          path: root-module/dist/*.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: package
+    if: startsWith(github.ref, 'refs/tags/module-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: AdGuardHome-for-Superuser_*
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: '*.zip'
+          generate_release_notes: true
