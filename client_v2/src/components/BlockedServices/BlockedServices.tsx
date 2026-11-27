@@ -1,17 +1,8 @@
-import {
-    createSignal,
-    createEffect,
-    createMemo,
-    onMount,
-    onCleanup,
-    Show,
-    For,
-} from 'solid-js';
+import { createSignal, createMemo, onMount, Show, For } from 'solid-js';
 import cn from 'clsx';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { Icon } from 'panel/common/ui/Icon';
-import { InlineLoader } from 'panel/common/ui/Loader';
 import { SettingLink } from 'panel/common/ui/SettingLink';
 import { SwitchGroup } from 'panel/common/ui/SettingsGroup';
 import { updateClientFormField, clientFormState } from 'panel/stores/clientForm';
@@ -52,14 +43,11 @@ type Props = {
     };
 };
 
-const BUSY_LOADER_DELAY = 150;
-
 export const BlockedServices = (props: Props) => {
     const [search, setSearch] = createSignal('');
     const [groupFilter, setGroupFilter] = createSignal<string[]>([]);
     const [showBlockedOnly, setShowBlockedOnly] = createSignal(false);
     const [showUnblockedOnly, setShowUnblockedOnly] = createSignal(false);
-    const [showBusyLoader, setShowBusyLoader] = createSignal(false);
 
     onMount(() => {
         if (!props.clientScope) {
@@ -74,15 +62,6 @@ export const BlockedServices = (props: Props) => {
     // switches stay locked until the shown list is the saved one.
     const isGlobalUpdatePending = () =>
         !props.clientScope && (servicesState.processingSet || servicesState.processing);
-
-    createEffect(() => {
-        if (!isGlobalUpdatePending()) {
-            setShowBusyLoader(false);
-            return;
-        }
-        const timer = setTimeout(() => setShowBusyLoader(true), BUSY_LOADER_DELAY);
-        onCleanup(() => clearTimeout(timer));
-    });
 
     const blockedSet = createMemo(() => {
         if (props.clientScope) {
@@ -237,21 +216,16 @@ export const BlockedServices = (props: Props) => {
                 <div class={cn(theme.layout.containerIn, theme.layout.containerIn_one_col)}>
                     <Show when={!props.clientScope && !props.breadcrumbs}>
                         <div class={s.header}>
-                            <div class={s.titleRow}>
-                                <h1
-                                    class={cn(
-                                        theme.layout.title,
-                                        theme.title.h4,
-                                        theme.title.h3_tablet,
-                                    )}
-                                    data-testid="blocked-services-title"
-                                >
-                                    {intl.getMessage('blocked_services')}
-                                </h1>
-                                <Show when={showBusyLoader()}>
-                                    <InlineLoader class={s.busyLoader} />
-                                </Show>
-                            </div>
+                            <h1
+                                class={cn(
+                                    theme.layout.title,
+                                    theme.title.h4,
+                                    theme.title.h3_tablet,
+                                )}
+                                data-testid="blocked-services-title"
+                            >
+                                {intl.getMessage('blocked_services')}
+                            </h1>
                             <p class={s.description}>{intl.getMessage('blocked_services_desc')}</p>
                         </div>
                     </Show>
