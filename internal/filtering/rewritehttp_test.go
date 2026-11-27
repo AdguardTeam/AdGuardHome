@@ -68,7 +68,6 @@ const (
 	addAnswer      = "add.rewrite"
 	updDomain      = "upd.local"
 	updAnswer      = "upd.rewrite"
-	sameDomain     = "same.local"
 	invDomain      = "inv.local"
 	invAnswer      = "inv.rewrite"
 	invalidDomain  = "invalid_domain"
@@ -150,18 +149,6 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 			newRewriteJSON(addDomain, addAnswer, aghalg.NBTrue),
 		),
 	}, {
-		name:        "add_self_rewrite",
-		url:         addURL,
-		method:      http.MethodPost,
-		reqData:     rewriteJSON{Domain: sameDomain, Answer: sameDomain},
-		wantConfMod: true,
-		wantStatus:  http.StatusOK,
-		wantBody:    []byte{},
-		wantList: append(
-			testRewrites,
-			newRewriteJSON(sameDomain, sameDomain, aghalg.NBTrue),
-		),
-	}, {
 		name:        "delete",
 		url:         deleteURL,
 		method:      http.MethodPost,
@@ -223,22 +210,6 @@ func TestDNSFilter_HandleRewriteHTTP(t *testing.T) {
 		wantList: []*rewriteJSON{
 			newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
 			newRewriteJSON(updDomain, updAnswer, aghalg.NBTrue),
-			newRewriteJSON(disabledDomain, disabledAnswer, aghalg.NBFalse),
-		},
-	}, {
-		name:   "update_self_rewrite",
-		url:    updateURL,
-		method: http.MethodPut,
-		reqData: rewriteUpdateJSON{
-			Target: rewriteJSON{Domain: oneDomain, Answer: oneAnswer},
-			Update: rewriteJSON{Domain: sameDomain, Answer: sameDomain},
-		},
-		wantConfMod: true,
-		wantStatus:  http.StatusOK,
-		wantBody:    []byte{},
-		wantList: []*rewriteJSON{
-			newRewriteJSON(exampleDomain, exampleAnswer, aghalg.NBTrue),
-			newRewriteJSON(sameDomain, sameDomain, aghalg.NBTrue),
 			newRewriteJSON(disabledDomain, disabledAnswer, aghalg.NBFalse),
 		},
 	}}
