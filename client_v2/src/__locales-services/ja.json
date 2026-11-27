@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "人工知能（AI）"
+    "message": "AI（人工知能）"
   },
   "servicesgroup.cdn.name": {
-    "message": "コンテンツ配信ネットワーク（CDN）"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "出会い系サービス"
+    "message": "出会い系・マッチング"
   },
   "servicesgroup.gambling.name": {
-    "message": "ギャンブルおよび賭博"
+    "message": "ギャンブル・賭博"
   },
   "servicesgroup.gaming.name": {
     "message": "ゲーム"
@@ -18,7 +18,7 @@
     "message": "ウェブホスティング"
   },
   "servicesgroup.messenger.name": {
-    "message": "メッセージサービス"
+    "message": "メッセージ"
   },
   "servicesgroup.privacy.name": {
     "message": "プライバシーツール"
@@ -33,6 +33,6 @@
     "message": "ソフトウェア開発"
   },
   "servicesgroup.streaming.name": {
-    "message": "ストリーミングサービス"
+    "message": "ストリーミング（動画配信サービス等）"
   }
 }

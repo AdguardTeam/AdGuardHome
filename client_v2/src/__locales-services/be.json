@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Штучны інтэлект"
+    "message": "ШІ"
   },
   "servicesgroup.cdn.name": {
-    "message": "Сеткі дастаўкі змесціва (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Сэрвісы знаёмстваў"
+    "message": "Знаёмствы"
   },
   "servicesgroup.gambling.name": {
-    "message": "Азартныя гульні і стаўкі"
+    "message": "Азартныя гульні, стаўкі"
   },
   "servicesgroup.gaming.name": {
     "message": "Гульні"
@@ -18,7 +18,7 @@
     "message": "Вэб-хостынг"
   },
   "servicesgroup.messenger.name": {
-    "message": "Сэрвісы абмену паведамленнямі"
+    "message": "Абмен паведамленнямі"
   },
   "servicesgroup.privacy.name": {
     "message": "Інструменты прыватнасці"
@@ -33,6 +33,6 @@
     "message": "Распрацоўка праграмнага забеспячэння"
   },
   "servicesgroup.streaming.name": {
-    "message": "Сэрвісы трансляцый"
+    "message": "Трансляцыя"
   }
 }

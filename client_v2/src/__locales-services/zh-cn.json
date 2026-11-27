@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "人工智能"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "内容分发网络（CDN）"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "交友服务"
+    "message": "交友"
   },
   "servicesgroup.gambling.name": {
-    "message": "赌博和博彩"
+    "message": "赌博、投注"
   },
   "servicesgroup.gaming.name": {
     "message": "游戏"
@@ -18,7 +18,7 @@
     "message": "网站托管"
   },
   "servicesgroup.messenger.name": {
-    "message": "消息服务"
+    "message": "即时通讯"
   },
   "servicesgroup.privacy.name": {
     "message": "隐私工具"
@@ -33,6 +33,6 @@
     "message": "软件开发"
   },
   "servicesgroup.streaming.name": {
-    "message": "串流服务"
+    "message": "串流"
   }
 }

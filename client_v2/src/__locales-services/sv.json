@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Artificiell intelligens"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "Innehållsleveransnätverk (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Dejtingtjänster"
+    "message": "Dejting"
   },
   "servicesgroup.gambling.name": {
-    "message": "Spel och vadslagning"
+    "message": "Hasardspel, vadslagning"
   },
   "servicesgroup.gaming.name": {
     "message": "Gaming"
@@ -18,7 +18,7 @@
     "message": "Webbhotell"
   },
   "servicesgroup.messenger.name": {
-    "message": "Meddelandetjänster"
+    "message": "Meddelanden"
   },
   "servicesgroup.privacy.name": {
     "message": "Integritetsverktyg"
@@ -33,6 +33,6 @@
     "message": "Programvaruutveckling"
   },
   "servicesgroup.streaming.name": {
-    "message": "Streamingtjänster"
+    "message": "Streaming"
   }
 }

@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Изкуствен интелект"
+    "message": "ИИ"
   },
   "servicesgroup.cdn.name": {
-    "message": "Мрежи за доставяне на съдържание (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Услуги за запознанства"
+    "message": "Запознанства"
   },
   "servicesgroup.gambling.name": {
-    "message": "Хазарт и залагания"
+    "message": "Хазарт, залагания"
   },
   "servicesgroup.gaming.name": {
     "message": "Игри"
@@ -18,7 +18,7 @@
     "message": "Уеб хостинг"
   },
   "servicesgroup.messenger.name": {
-    "message": "Услуги за съобщения"
+    "message": "Съобщения"
   },
   "servicesgroup.privacy.name": {
     "message": "Инструменти за поверителност"
@@ -33,6 +33,6 @@
     "message": "Разработка на софтуер"
   },
   "servicesgroup.streaming.name": {
-    "message": "Стрийминг услуги"
+    "message": "Стрийминг"
   }
 }

@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Umelá inteligencia"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "Siete na doručovanie obsahu (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Zoznamovacie služby"
+    "message": "Zoznamovanie"
   },
   "servicesgroup.gambling.name": {
-    "message": "Hazardné hry a stávkovanie"
+    "message": "Hazardné hry, stávkovanie"
   },
   "servicesgroup.gaming.name": {
     "message": "Hranie hier"
@@ -18,7 +18,7 @@
     "message": "Webhosting"
   },
   "servicesgroup.messenger.name": {
-    "message": "Služby zasielania správ"
+    "message": "Správy"
   },
   "servicesgroup.privacy.name": {
     "message": "Nástroje na ochranu súkromia"
@@ -33,6 +33,6 @@
     "message": "Vývoj softvéru"
   },
   "servicesgroup.streaming.name": {
-    "message": "Streamovacie služby"
+    "message": "Streamovanie"
   }
 }

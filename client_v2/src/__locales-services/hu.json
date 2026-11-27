@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Mesterséges intelligencia"
+    "message": "MI"
   },
   "servicesgroup.cdn.name": {
-    "message": "Tartalomszolgáltató hálózatok (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Társkereső szolgáltatások"
+    "message": "Társkeresés"
   },
   "servicesgroup.gambling.name": {
-    "message": "Szerencsejáték és fogadás"
+    "message": "Szerencsejáték, fogadás"
   },
   "servicesgroup.gaming.name": {
     "message": "Játék"
@@ -18,7 +18,7 @@
     "message": "Webtárhely"
   },
   "servicesgroup.messenger.name": {
-    "message": "Üzenetküldő szolgáltatások"
+    "message": "Üzenetküldés"
   },
   "servicesgroup.privacy.name": {
     "message": "Adatvédelmi eszközök"
@@ -33,6 +33,6 @@
     "message": "Szoftverfejlesztés"
   },
   "servicesgroup.streaming.name": {
-    "message": "Streaming szolgáltatások"
+    "message": "Streaming"
   }
 }

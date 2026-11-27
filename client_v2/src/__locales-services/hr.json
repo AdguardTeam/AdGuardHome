@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Umjetna inteligencija"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "Mreže za isporuku sadržaja (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Usluge za upoznavanje"
+    "message": "Upoznavanje"
   },
   "servicesgroup.gambling.name": {
-    "message": "Kockanje i klađenje"
+    "message": "Kockanje, klađenje"
   },
   "servicesgroup.gaming.name": {
     "message": "Igre"
@@ -18,7 +18,7 @@
     "message": "Web hosting"
   },
   "servicesgroup.messenger.name": {
-    "message": "Usluge razmjene poruka"
+    "message": "Poruke"
   },
   "servicesgroup.privacy.name": {
     "message": "Alati za privatnost"
@@ -33,6 +33,6 @@
     "message": "Razvoj softwarea"
   },
   "servicesgroup.streaming.name": {
-    "message": "Usluge streaminga"
+    "message": "Streaming"
   }
 }

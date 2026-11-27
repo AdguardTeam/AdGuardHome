@@ -3,13 +3,13 @@
     "message": "هوش مصنوعی"
   },
   "servicesgroup.cdn.name": {
-    "message": "شبکه‌های تحویل محتوا (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "خدمات دوستیابی"
+    "message": "دوستیابی"
   },
   "servicesgroup.gambling.name": {
-    "message": "قمار و شرط‌بندی"
+    "message": "قمار، شرط‌بندی"
   },
   "servicesgroup.gaming.name": {
     "message": "بازی"
@@ -18,7 +18,7 @@
     "message": "میزبانی وب"
   },
   "servicesgroup.messenger.name": {
-    "message": "خدمات پیام رسان"
+    "message": "پیام‌رسانی"
   },
   "servicesgroup.privacy.name": {
     "message": "ابزارهای حریم خصوصی"
@@ -33,6 +33,6 @@
     "message": "توسعه نرمافزار"
   },
   "servicesgroup.streaming.name": {
-    "message": "خدمات استریم"
+    "message": "پخش برخط"
   }
 }

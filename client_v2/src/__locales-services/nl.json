@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Kunstmatige intelligentie"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "Content Delivery Networks (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Datingdiensten"
+    "message": "Daten"
   },
   "servicesgroup.gambling.name": {
-    "message": "Gokken en wedden"
+    "message": "Gokken, wedden"
   },
   "servicesgroup.gaming.name": {
     "message": "Gamen"
@@ -18,7 +18,7 @@
     "message": "Webhosting"
   },
   "servicesgroup.messenger.name": {
-    "message": "Berichtendiensten"
+    "message": "Berichten"
   },
   "servicesgroup.privacy.name": {
     "message": "Privacyhulpmiddelen"
@@ -33,6 +33,6 @@
     "message": "Softwareontwikkeling"
   },
   "servicesgroup.streaming.name": {
-    "message": "Streamingdiensten"
+    "message": "Streaming"
   }
 }

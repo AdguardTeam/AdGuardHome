@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Tekoäly"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "Sisällönjakeluverkot (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Deittipalvelut"
+    "message": "Seurustelu"
   },
   "servicesgroup.gambling.name": {
-    "message": "Uhkapelit ja vedonlyönti"
+    "message": "Uhkapelaaminen, vedonlyönti"
   },
   "servicesgroup.gaming.name": {
     "message": "Pelaaminen"
@@ -18,7 +18,7 @@
     "message": "Web-hosting"
   },
   "servicesgroup.messenger.name": {
-    "message": "Viestipalvelut"
+    "message": "Viestit"
   },
   "servicesgroup.privacy.name": {
     "message": "Yksityisyyden työkalut"
@@ -33,6 +33,6 @@
     "message": "Ohjelmistokehitys"
   },
   "servicesgroup.streaming.name": {
-    "message": "Suoratoistopalvelut"
+    "message": "Suoratoisto"
   }
 }

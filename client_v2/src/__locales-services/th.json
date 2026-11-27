@@ -3,10 +3,10 @@
     "message": "ปัญญาประดิษฐ์"
   },
   "servicesgroup.cdn.name": {
-    "message": "เครือข่ายการจัดส่งเนื้อหา (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "บริการหาคู่"
+    "message": "การหาคู่"
   },
   "servicesgroup.gambling.name": {
     "message": "การพนันและการเดิมพัน"
@@ -18,7 +18,7 @@
     "message": "เว็บโฮสติ้ง"
   },
   "servicesgroup.messenger.name": {
-    "message": "บริการส่งข้อความ"
+    "message": "การส่งข้อความ"
   },
   "servicesgroup.privacy.name": {
     "message": "เครื่องมือความเป็นส่วนตัว"
@@ -33,6 +33,6 @@
     "message": "การพัฒนาซอฟต์แวร์"
   },
   "servicesgroup.streaming.name": {
-    "message": "บริการสตรีมมิ่ง"
+    "message": "Streaming"
   }
 }

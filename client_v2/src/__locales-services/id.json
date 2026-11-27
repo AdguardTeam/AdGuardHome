@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "Kecerdasan buatan"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "Jaringan pengiriman konten (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Layanan kencan"
+    "message": "Kencan"
   },
   "servicesgroup.gambling.name": {
-    "message": "Perjudian dan taruhan"
+    "message": "Perjudian, taruhan"
   },
   "servicesgroup.gaming.name": {
     "message": "Permainan"
@@ -18,7 +18,7 @@
     "message": "Hosting web"
   },
   "servicesgroup.messenger.name": {
-    "message": "Layanan pesan"
+    "message": "Perpesanan"
   },
   "servicesgroup.privacy.name": {
     "message": "Alat privasi"
@@ -33,6 +33,6 @@
     "message": "Pengembangan software"
   },
   "servicesgroup.streaming.name": {
-    "message": "Layanan siar"
+    "message": "Streaming"
   }
 }

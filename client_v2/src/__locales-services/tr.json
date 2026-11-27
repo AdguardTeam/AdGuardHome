@@ -3,13 +3,13 @@
     "message": "Yapay zekâ"
   },
   "servicesgroup.cdn.name": {
-    "message": "İçerik dağıtım ağları (CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "Flört hizmetleri"
+    "message": "Tanışma"
   },
   "servicesgroup.gambling.name": {
-    "message": "Kumar ve bahis"
+    "message": "Kumar, bahis"
   },
   "servicesgroup.gaming.name": {
     "message": "Oyun"
@@ -18,7 +18,7 @@
     "message": "Web barındırma"
   },
   "servicesgroup.messenger.name": {
-    "message": "Mesajlaşma hizmetleri"
+    "message": "Mesajlaşma"
   },
   "servicesgroup.privacy.name": {
     "message": "Gizlilik araçları"
@@ -33,6 +33,6 @@
     "message": "Yazılım geliştirme"
   },
   "servicesgroup.streaming.name": {
-    "message": "Canlı yayın akışı hizmetleri"
+    "message": "Canlı yayın akışı"
   }
 }

@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "人工智慧"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "內容傳遞網路（CDN）"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "約會服務"
+    "message": "交友"
   },
   "servicesgroup.gambling.name": {
-    "message": "博弈與賭博"
+    "message": "賭博、投注"
   },
   "servicesgroup.gaming.name": {
     "message": "遊戲"
@@ -18,7 +18,7 @@
     "message": "Web 主機服務"
   },
   "servicesgroup.messenger.name": {
-    "message": "訊息服務"
+    "message": "即時通訊"
   },
   "servicesgroup.privacy.name": {
     "message": "隱私工具"
@@ -33,6 +33,6 @@
     "message": "軟體開發"
   },
   "servicesgroup.streaming.name": {
-    "message": "串流服務"
+    "message": "串流"
   }
 }

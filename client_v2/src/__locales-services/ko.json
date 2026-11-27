@@ -1,15 +1,15 @@
 {
   "servicesgroup.ai.name": {
-    "message": "인공지능"
+    "message": "AI"
   },
   "servicesgroup.cdn.name": {
-    "message": "콘텐츠 전송 네트워크(CDN)"
+    "message": "CDN"
   },
   "servicesgroup.dating.name": {
-    "message": "데이트 서비스"
+    "message": "데이팅"
   },
   "servicesgroup.gambling.name": {
-    "message": "도박 및 베팅"
+    "message": "도박, 베팅"
   },
   "servicesgroup.gaming.name": {
     "message": "게임"
@@ -18,7 +18,7 @@
     "message": "웹 호스팅"
   },
   "servicesgroup.messenger.name": {
-    "message": "메시징 서비스"
+    "message": "메신저"
   },
   "servicesgroup.privacy.name": {
     "message": "개인정보 보호 도구"
@@ -33,6 +33,6 @@
     "message": "소프트웨어 개발"
   },
   "servicesgroup.streaming.name": {
-    "message": "스트리밍 서비스"
+    "message": "스트리밍"
   }
 }
