@@ -31,8 +31,6 @@ NOTE: Add new changes BELOW THIS COMMENT.
 
 ### Changed
 
-- Blocked service group names in the new web interface now come from Hostlists Registry.
-
 - Dark theme colors in the new web interface have been aligned with the design system, including dashboard charts, notifications, dropdowns, and tooltips.
 
 ### Fixed
