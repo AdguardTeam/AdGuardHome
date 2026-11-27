@@ -496,6 +496,21 @@ func newTestDatabase(tb testing.TB) (db *testDatabase) {
 	}
 }
 
+// testAddressChecker is a [dhcpsvc.AddressChecker] stub with a customizable
+// IsAvailable method for tests.
+type testAddressChecker struct {
+	onIsAvailable func(ctx context.Context, ip netip.Addr) (ok bool, err error)
+}
+
+// type check
+var _ dhcpsvc.AddressChecker = (*testAddressChecker)(nil)
+
+// IsAvailable implements the [dhcpsvc.AddressChecker] interface for
+// *testAddressChecker.
+func (c *testAddressChecker) IsAvailable(ctx context.Context, ip netip.Addr) (ok bool, err error) {
+	return c.onIsAvailable(ctx, ip)
+}
+
 // newTestDHCPServer creates a new DHCPServer for testing.  It uses the default
 // values of config in case it's nil or some of its fields aren't set.
 func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPServer) {
@@ -509,10 +524,13 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 		conf.NetworkDeviceManager,
 		dhcpsvc.EmptyNetworkDeviceManager{},
 	)
+	conf.AddressChecker = cmp.Or[dhcpsvc.AddressChecker](
+		conf.AddressChecker,
+		dhcpsvc.EmptyAddressChecker{},
+	)
 	conf.Logger = cmp.Or(conf.Logger, testLogger)
 	conf.LocalDomainName = cmp.Or(conf.LocalDomainName, testLocalTLD)
 	conf.Database = cmp.Or[dhcpsvc.Database](conf.Database, dhcpsvc.EmptyDatabase{})
-	conf.ICMPTimeout = cmp.Or(conf.ICMPTimeout, testTimeout)
 	if conf.Interfaces == nil {
 		conf.Interfaces = testInterfaceConf
 	}
@@ -523,10 +541,15 @@ func newTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv *dhcpsvc.DHCPSe
 	return srv
 }
 
-// startTestDHCPServer creates a new DHCPServer for testing and starts it,
-// adding a cleanup function to stop the server on test completion.
-func startTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) {
-	servicetest.RequireRun(tb, newTestDHCPServer(tb, conf), testTimeout)
+// startTestDHCPServer creates a new DHCPServer for testing, starts it, adding a
+// cleanup function to stop the server on test completion, and returns it.
+func startTestDHCPServer(tb testing.TB, conf *dhcpsvc.Config) (srv dhcpsvc.Interface) {
+	tb.Helper()
+
+	srv = newTestDHCPServer(tb, conf)
+	servicetest.RequireRun(tb, srv, testTimeout)
+
+	return srv
 }
 
 // newTestPacket creates a valid packet from ls using first as first layer
