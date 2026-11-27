@@ -5,7 +5,7 @@
 #
 # AdGuard-Project-Version: 20
 
-set -e -f -o 'pipefail' -u
+set -e -f -u
 
 if (set -o 'pipefail'); then
 	set -o 'pipefail'
